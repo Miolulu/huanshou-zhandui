@@ -38,6 +38,42 @@ function patchEffects(effects, evo) {
   }
 }
 
+function primarySkillNumericBonus(skill) {
+  const dmg = skill.effects.find(e => e.type === 'DEAL_DAMAGE')?.amount || 0;
+  const heal = skill.effects.find(e => e.type === 'HEAL')?.amount || 0;
+  const shield = skill.effects.find(e => e.type === 'SHIELD')?.amount || 0;
+  const status = skill.effects.find(e => e.type === 'APPLY_STATUS')?.value || 0;
+  return {
+    damageBonus: Math.round(dmg * 0.35),
+    healBonus: Math.round(heal * 0.35),
+    shieldBonus: Math.round(shield * 0.35),
+    statusValueBonus: Math.round(status * 0.3),
+  };
+}
+
+function applyStar2Enhancement(skills, tpl) {
+  const list = skills.map(cloneSkill);
+  if (!list.length) return list;
+
+  const primary = list[0];
+  patchEffects(primary.effects, primarySkillNumericBonus(primary));
+  if (primary.cooldown > 1) primary.cooldown -= 1;
+  primary.description = `${primary.description || primary.name}（★2强化）`;
+
+  if (list.length > 1 && tpl?.upgradeEvolution?.skillId) {
+    const second = list.find(s => s.id === tpl.upgradeEvolution.skillId) || list[1];
+    if (second && second !== primary) {
+      patchEffects(second.effects, {
+        damageBonus: Math.round((second.effects.find(e => e.type === 'DEAL_DAMAGE')?.amount || 0) * 0.2),
+        shieldBonus: Math.round((second.effects.find(e => e.type === 'SHIELD')?.amount || 0) * 0.2),
+      });
+      second.description = `${second.description || second.name}（★2强化）`;
+    }
+  }
+
+  return list;
+}
+
 function applyUpgradeEvolution(skills, evo) {
   const list = skills.map(cloneSkill);
   if (!list.length) return list;
@@ -50,7 +86,7 @@ function applyUpgradeEvolution(skills, evo) {
       shieldBonus: Math.round((first.effects.find(e => e.type === 'SHIELD')?.amount || 0) * 0.5),
       statusValueBonus: Math.round((first.effects.find(e => e.type === 'APPLY_STATUS')?.value || 0) * 0.3),
     });
-    first.description = `${first.description || first.name} ★3强化`;
+    first.description = `${first.description || first.name}（★3究极）`;
     first.evolved = true;
     return list;
   }
@@ -97,28 +133,30 @@ function applyUpgradeEvolution(skills, evo) {
     for (const sk of evo.addSkills) list.push(cloneSkill(sk));
   }
 
-  targetSkill.description = evo.desc || `${targetSkill.description || targetSkill.name} ★3进化`;
+  targetSkill.description = evo.desc || `${targetSkill.description || targetSkill.name}（★3究极）`;
   targetSkill.evolved = true;
   return list;
 }
 
-function buildSkills(tpl, upgradeTier) {
+/** 按星级构建技能：1星基础 · 2星强化 · 3星究极进化 */
+function buildSkills(tpl, star) {
   const base = tpl.skills.map(cloneSkill);
-  if (upgradeTier >= 3) return applyUpgradeEvolution(base, tpl.upgradeEvolution);
+  if (star >= 3) return applyUpgradeEvolution(base, tpl.upgradeEvolution);
+  if (star >= 2) return applyStar2Enhancement(base, tpl);
   return base;
 }
 
-export function createCard(templateId, level = 1, upgradeTier = 1, playerId = '', position = 0) {
+/** @param {number} star 星级 1-3 */
+export function createCard(templateId, star = 1, playerId = '', position = 0) {
   const tpl = getTemplate(templateId);
   if (!tpl) throw new Error(`Unknown template: ${templateId}`);
 
-  const tierMul = CONFIG.TIER_MULTIPLIER[upgradeTier];
-  const levelMul = tpl.levelMultipliers[level - 1] || 1;
+  const tierMul = CONFIG.TIER_MULTIPLIER[star] || 1;
 
-  const maxHp = Math.round(tpl.baseHp * levelMul * tierMul);
-  const attack = Math.round(tpl.baseAttack * levelMul * tierMul);
-  const speed = Math.round(tpl.baseSpeed * levelMul * tierMul);
-  const defense = Math.round(tpl.baseDefense * levelMul * tierMul);
+  const maxHp = Math.round(tpl.baseHp * tierMul);
+  const attack = Math.round(tpl.baseAttack * tierMul);
+  const speed = Math.round(tpl.baseSpeed * tierMul);
+  const defense = Math.round(tpl.baseDefense * tierMul);
 
   return {
     id: `card_${++cardIdCounter}`,
@@ -136,9 +174,9 @@ export function createCard(templateId, level = 1, upgradeTier = 1, playerId = ''
     critRate: tpl.baseCritRate ?? CONFIG.BASE_CRIT_RATE,
     critDamage: tpl.baseCritDamage ?? CONFIG.BASE_CRIT_DAMAGE,
     shield: 0,
-    level,
-    upgradeTier,
-    skills: buildSkills(tpl, upgradeTier),
+    star,
+    upgradeTier: star,
+    skills: buildSkills(tpl, star),
     statusEffects: [],
     bondMods: {},
     position,
@@ -148,7 +186,7 @@ export function createCard(templateId, level = 1, upgradeTier = 1, playerId = ''
 }
 
 export function cloneCardForBattle(card, playerId) {
-  const c = createCard(card.templateId, card.level, card.upgradeTier, playerId, card.position);
+  const c = createCard(card.templateId, card.star ?? card.upgradeTier, playerId, card.position);
   c.id = card.id + '_battle';
   return c;
 }
@@ -160,16 +198,22 @@ export function resetCardIdCounter() {
 export function recalculateCardStats(card, fullHeal = true) {
   const tpl = getTemplate(card.templateId);
   if (!tpl) return;
-  const tierMul = CONFIG.TIER_MULTIPLIER[card.upgradeTier];
-  const levelMul = tpl.levelMultipliers[card.level - 1] || 1;
+  const star = card.star ?? card.upgradeTier ?? 1;
+  card.star = star;
+  card.upgradeTier = star;
+  const tierMul = CONFIG.TIER_MULTIPLIER[star] || 1;
   const ratio = card.maxHp > 0 ? card.hp / card.maxHp : 1;
 
-  card.maxHp = Math.round(tpl.baseHp * levelMul * tierMul);
-  card.attack = Math.round(tpl.baseAttack * levelMul * tierMul);
-  card.speed = Math.round(tpl.baseSpeed * levelMul * tierMul);
-  card.defense = Math.round(tpl.baseDefense * levelMul * tierMul);
+  card.maxHp = Math.round(tpl.baseHp * tierMul);
+  card.attack = Math.round(tpl.baseAttack * tierMul);
+  card.speed = Math.round(tpl.baseSpeed * tierMul);
+  card.defense = Math.round(tpl.baseDefense * tierMul);
   card.critRate = tpl.baseCritRate ?? CONFIG.BASE_CRIT_RATE;
   card.critDamage = tpl.baseCritDamage ?? CONFIG.BASE_CRIT_DAMAGE;
   card.hp = fullHeal ? card.maxHp : Math.max(1, Math.round(card.maxHp * ratio));
-  card.skills = buildSkills(tpl, card.upgradeTier);
+  card.skills = buildSkills(tpl, star);
+}
+
+export function getStarLabel(star) {
+  return `★${star}`;
 }

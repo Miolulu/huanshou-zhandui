@@ -967,3 +967,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 .bond-tier-list li { padding: 2px 0; color: #8b949e; }
 .el-mul { font-size: 0.7rem; color: #6e7681; margin-left: 4px; }
 
+.slot.filled.star-2 { box-shadow: 0 0 8px rgba(240, 136, 62, 0.35); }
+.slot.filled.star-3 { box-shadow: 0 0 12px rgba(63, 185, 80, 0.45); border-color: #3fb950 !important; }
+.merge-hint { color: #f0883e; margin-top: 8px; font-size: 0.8rem; }
+

@@ -1,14 +1,11 @@
 import {
   CONFIG,
+  getTeamSlotUpgradeCost,
+  getTavernUpgradeCost,
   getAvailableRarities,
-  getShopLevelRange,
   getInterest,
   getStreakBonus,
   getTurnBaseGold,
-  getTeamSlotUpgradeCost,
-  getTavernUpgradeCost,
-  getCardUpgradeCost,
-  getMaxCardLevelForPlayer,
   getStageDamage,
 } from './config.js';
 import { CARD_TEMPLATES, createCard, recalculateCardStats } from './cards.js';
@@ -181,7 +178,6 @@ export class GameEngine {
       return;
     }
     player.shop.cards = [];
-    const { minLevel, maxLevel } = getShopLevelRange(player.tavernTier);
 
     for (let i = 0; i < CONFIG.SHOP_SIZE; i++) {
       const rarity = this.rollRarity(player.tavernTier);
@@ -192,7 +188,6 @@ export class GameEngine {
       if (!candidates.length) continue;
 
       const tpl = candidates[Math.floor(Math.random() * candidates.length)];
-      const level = minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
       player.shop.cards.push({
         shopIndex: i,
         cardTemplateId: tpl.id,
@@ -200,9 +195,8 @@ export class GameEngine {
         rarity: tpl.rarity,
         element: tpl.element,
         cardClass: tpl.class,
-        level,
         cost: CONFIG.BUY_COST,
-        upgradeTier: 1,
+        star: 1,
       });
     }
     if (!player.shop.frozen) player.shop.frozen = false;
@@ -236,11 +230,11 @@ export class GameEngine {
     if (emptyPos === -1) return false;
 
     player.gold -= shopCard.cost;
-    const card = createCard(shopCard.cardTemplateId, shopCard.level, 1, player.id, emptyPos);
+    const card = createCard(shopCard.cardTemplateId, 1, player.id, emptyPos);
     player.team.cards[emptyPos] = card;
     this.poolRemaining[shopCard.cardTemplateId]--;
     player.shop.cards.splice(shopIndex, 1);
-    this.checkUpgrade(player);
+    this.checkStarMerge(player);
     this.notify();
     return true;
   }
@@ -255,7 +249,7 @@ export class GameEngine {
   sellCard(player, position) {
     const card = player.team.cards[position];
     if (!card) return false;
-    player.gold += card.upgradeTier;
+    player.gold += card.star ?? card.upgradeTier;
     player.team.cards[position] = null;
     this.poolRemaining[card.templateId]++;
     this.notify();
@@ -295,22 +289,6 @@ export class GameEngine {
     return true;
   }
 
-  upgradeCardLevel(player, position) {
-    const card = player.team.cards[position];
-    if (!card) return false;
-    const maxLv = getMaxCardLevelForPlayer(player.tavernTier);
-    if (card.level >= maxLv) return false;
-
-    const cost = getCardUpgradeCost(card.level);
-    if (player.gold < cost) return false;
-
-    player.gold -= cost;
-    card.level++;
-    recalculateCardStats(card, true);
-    this.notify();
-    return true;
-  }
-
   moveCard(player, fromPos, toPos) {
     if (fromPos === toPos) return false;
     if (toPos >= player.team.maxSize) return false;
@@ -325,29 +303,38 @@ export class GameEngine {
     return true;
   }
 
-  checkUpgrade(player) {
-    const groups = {};
-    for (let i = 0; i < player.team.maxSize; i++) {
-      const c = player.team.cards[i];
-      if (!c) continue;
-      const key = `${c.templateId}_${c.upgradeTier}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push({ card: c, pos: i });
-    }
+  /** 3张同名同星自动合成下一星（最高3星） */
+  checkStarMerge(player) {
+    let merged = true;
+    while (merged) {
+      merged = false;
+      const groups = {};
+      for (let i = 0; i < player.team.maxSize; i++) {
+        const c = player.team.cards[i];
+        if (!c) continue;
+        const star = c.star ?? c.upgradeTier ?? 1;
+        const key = `${c.templateId}_${star}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push({ card: c, pos: i, star });
+      }
 
-    for (const [, cards] of Object.entries(groups)) {
-      while (cards.length >= 3 && cards[0].card.upgradeTier < 3) {
-        const toMerge = cards.splice(0, 3);
-        const maxLevel = Math.max(...toMerge.map(x => x.card.level));
+      for (const [, cards] of Object.entries(groups)) {
+        if (cards.length < 3 || cards[0].star >= 3) continue;
+        const toMerge = cards.slice(0, 3);
         const pos = toMerge[0].pos;
-        for (const { card, pos: p } of toMerge) {
+        const templateId = toMerge[0].card.templateId;
+        const newStar = toMerge[0].star + 1;
+
+        for (const { pos: p } of toMerge) {
           player.team.cards[p] = null;
-          this.poolRemaining[card.templateId]++;
         }
-        const newTier = toMerge[0].card.upgradeTier + 1;
-        const newCard = createCard(toMerge[0].card.templateId, maxLevel, newTier, player.id, pos);
+        // 合成消耗2张副本，剩余2张回到公共卡池
+        this.poolRemaining[templateId] = (this.poolRemaining[templateId] || 0) + 2;
+
+        const newCard = createCard(templateId, newStar, player.id, pos);
         player.team.cards[pos] = newCard;
-        cards.push({ card: newCard, pos });
+        merged = true;
+        break;
       }
     }
   }
@@ -555,6 +542,14 @@ export class GameEngine {
       maxHp: CONFIG.BASE_HP,
     }));
     this.poolRemaining = data.poolRemaining || {};
+    for (const p of this.players) {
+      for (const c of p.team.cards) {
+        if (!c) continue;
+        if (!c.star) c.star = c.upgradeTier ?? 1;
+        c.upgradeTier = c.star;
+        recalculateCardStats(c, true);
+      }
+    }
     this.notify();
     return true;
   }

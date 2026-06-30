@@ -2,9 +2,7 @@ import {
   CONFIG,
   getTeamSlotUpgradeCost,
   getTavernUpgradeCost,
-  getCardUpgradeCost,
-  getMaxCardLevelForPlayer,
-  getShopLevelRange,
+  getAvailableRarities,
   ELEMENT_NAMES,
   RARITY_NAMES,
 } from './config.js';
@@ -52,7 +50,6 @@ export class UI {
       selectedElement: document.getElementById('selected-card-element'),
       selectedDesc: document.getElementById('selected-card-desc'),
       teamBonds: document.getElementById('team-bonds'),
-      cardUpgradeCost: document.getElementById('card-upgrade-cost'),
       overlay: document.getElementById('overlay'),
       overlayTitle: document.getElementById('overlay-title'),
       overlayBody: document.getElementById('overlay-body'),
@@ -76,11 +73,6 @@ export class UI {
     };
     document.getElementById('btn-upgrade-team').onclick = () => {
       this.game.upgradeTeam(this.game.getHuman());
-    };
-    document.getElementById('btn-upgrade-card').onclick = () => {
-      if (this.selectedTeamPos !== null) {
-        this.game.upgradeCardLevel(this.game.getHuman(), this.selectedTeamPos);
-      }
     };
     document.getElementById('btn-sell-card').onclick = () => {
       if (this.selectedTeamPos !== null) {
@@ -161,13 +153,13 @@ export class UI {
 
     const tavernCost = getTavernUpgradeCost(human.tavernTier);
     const teamCost = getTeamSlotUpgradeCost(human.team.maxSize);
-    const { minLevel, maxLevel } = getShopLevelRange(human.tavernTier);
+    const rarities = getAvailableRarities(human.tavernTier).map(r => RARITY_NAMES[r]).join('/');
 
     this.el.tavernCost.textContent = human.tavernTier >= CONFIG.MAX_TAVERN_TIER
       ? '(满级)' : `(${tavernCost}金→${human.tavernTier + 1}级)`;
     this.el.teamCost.textContent = human.team.maxSize >= CONFIG.MAX_TEAM_SIZE
       ? '(满)' : `(${teamCost}金→${human.team.maxSize + 1}格)`;
-    this.el.shopHint.textContent = `货架 Lv${minLevel}-${maxLevel} · 卡牌最高可升至 Lv${getMaxCardLevelForPlayer(human.tavernTier)}`;
+    this.el.shopHint.textContent = `货架均为 ★1 · 可刷出 ${rarities}`;
     document.getElementById('freeze-state').textContent = human.shop.frozen ? '开' : '关';
   }
 
@@ -195,7 +187,7 @@ export class UI {
           <div class="card-name">${sc.name}</div>
           <div class="card-badges">${elementBadgeHtml(sc.element)}${classBadgeHtml(sc.cardClass || tpl?.class)}</div>
         </div>
-        <div class="card-meta">★1 · Lv${sc.level} · ${RARITY_NAMES[sc.rarity]}</div>
+        <div class="card-meta">★1 · ${RARITY_NAMES[sc.rarity]}</div>
         <div class="card-desc">${tpl?.description || ''}</div>
         <div class="card-skills-mini">${skillsHtml}</div>
         <div class="card-cost">${sc.cost} 金</div>
@@ -219,13 +211,15 @@ export class UI {
       if (!card) {
         return `<div class="slot empty" data-pos="${i}">${i + 1}</div>`;
       }
+      const star = card.star ?? card.upgradeTier ?? 1;
+      const starCls = star >= 3 ? 'star-3' : star >= 2 ? 'star-2' : 'star-1';
       return `
-        <div class="slot filled ${RARITY_CLASS[card.rarity]} ${this.selectedTeamPos === i ? 'selected' : ''}" data-pos="${i}">
+        <div class="slot filled ${RARITY_CLASS[card.rarity]} ${starCls} ${this.selectedTeamPos === i ? 'selected' : ''}" data-pos="${i}">
           <div class="card-head">
             <div class="card-name">${card.name}</div>
             <div class="card-badges">${elementBadgeHtml(card.element)}${classBadgeHtml(card.cardClass)}</div>
           </div>
-          <div class="card-meta">★${card.upgradeTier} · Lv${card.level} · ${CLASS_NAMES[card.cardClass] || ''}</div>
+          <div class="card-meta">${'★'.repeat(star)}${'☆'.repeat(3 - star)} · ${CLASS_NAMES[card.cardClass] || ''}</div>
           <div class="card-stats">HP${card.maxHp} ATK${card.attack} SPD${card.speed}</div>
         </div>`;
     }).join('');
@@ -241,25 +235,34 @@ export class UI {
       return;
     }
     this.el.cardPanel.classList.remove('hidden');
-    this.el.selectedName.textContent = `${card.name} ★${card.upgradeTier} Lv${card.level}`;
-
-    const maxLv = getMaxCardLevelForPlayer(human.tavernTier);
-    const upCost = getCardUpgradeCost(card.level);
-    const canUp = card.level < maxLv;
+    const star = card.star ?? card.upgradeTier ?? 1;
+    this.el.selectedName.textContent = `${card.name} ${'★'.repeat(star)}${star >= 3 ? '（最终形态）' : ''}`;
 
     this.el.selectedStats.textContent =
-      `HP ${card.maxHp} · ATK ${card.attack} · DEF ${card.defense} · SPD ${card.speed} · 最高 Lv${maxLv}`;
+      `HP ${card.maxHp} · ATK ${card.attack} · DEF ${card.defense} · SPD ${card.speed}`;
     this.el.selectedElement.innerHTML =
       `${elementBadgeHtml(card.element)} ${classBadgeHtml(card.cardClass)}`;
     if (this.el.selectedDesc) {
       this.el.selectedDesc.textContent = card.description || getTemplate(card.templateId)?.description || '';
     }
     this.el.selectedSkills.innerHTML = formatSkillList(card.skills);
-    this.el.cardUpgradeCost.textContent = canUp ? `(${upCost}金→Lv${card.level + 1})` : '(已达上限)';
+    const mergeHint = star < 3 ? `再收集 ${Math.max(0, 3 - this.countSameStar(human, card))} 张同名 ★${star} → 自动合成 ★${star + 1}` : '已达最高星级 ★3';
+    if (!this.el.selectedMergeHint) {
+      const hint = document.createElement('p');
+      hint.id = 'selected-merge-hint';
+      hint.className = 'hint merge-hint';
+      this.el.cardPanel.querySelector('.card-detail-left')?.appendChild(hint);
+      this.el.selectedMergeHint = hint;
+    }
+    this.el.selectedMergeHint.textContent = mergeHint;
+    document.getElementById('btn-sell-card').textContent = `卖出 (+${star}金)`;
+  }
 
-    const btnUp = document.getElementById('btn-upgrade-card');
-    btnUp.disabled = !canUp || human.gold < upCost;
-    document.getElementById('btn-sell-card').textContent = `卖出 (+${card.upgradeTier}金)`;
+  countSameStar(human, card) {
+    const star = card.star ?? card.upgradeTier ?? 1;
+    return human.team.cards.filter(c =>
+      c && c.templateId === card.templateId && (c.star ?? c.upgradeTier ?? 1) === star
+    ).length;
   }
 
   renderBattleBonds(human, phase) {
@@ -312,7 +315,7 @@ export class UI {
     this.el.opponent.innerHTML = `
       <h3>${opp.name} · ${opp.hp}HP · 酒馆${opp.tavernTier || 1}级</h3>
       <div>${cards.map(c =>
-        `<span class="tag ${RARITY_CLASS[c.rarity]}">${c.name}★${c.upgradeTier}L${c.level}</span>`
+        `<span class="tag ${RARITY_CLASS[c.rarity]}">${c.name}${'★'.repeat(c.star ?? c.upgradeTier ?? 1)}</span>`
       ).join(' ') || '无阵容'}</div>`;
   }
 
@@ -345,7 +348,7 @@ export class UI {
         <h4>${label}</h4>
         ${cards.map(c => `
           <div class="battle-card ${c.isAlive && c.hp > 0 ? '' : 'dead'} ${RARITY_CLASS[c.rarity]}">
-            ${c.name}★${c.upgradeTier} Lv${c.level}<br>
+            ${c.name}${'★'.repeat(c.star ?? c.upgradeTier ?? 1)}<br>
             ${c.hp}/${c.maxHp}${c.shield ? ` 🛡${c.shield}` : ''}
           </div>`).join('')}
       </div>`;

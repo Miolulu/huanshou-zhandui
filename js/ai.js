@@ -1,4 +1,4 @@
-import { CONFIG, getTeamSlotUpgradeCost, getTavernUpgradeCost, getCardUpgradeCost, getMaxCardLevelForPlayer } from './config.js';
+import { CONFIG, getTeamSlotUpgradeCost, getTavernUpgradeCost, getAvailableRarities } from './config.js';
 import { getTemplate } from './cards.js';
 
 export const AI_CONFIG = {
@@ -103,7 +103,9 @@ function maybeSellWeak(player, game, params, analysis) {
   if (Math.random() > params.sellThreshold) return;
   for (let i = 0; i < player.team.maxSize; i++) {
     const card = player.team.cards[i];
-    if (!card || card.star >= 2) continue;
+    if (!card) continue;
+    const star = card.star ?? card.upgradeTier ?? 1;
+    if (star >= 3) continue;
     const tpl = getTemplate(card.templateId || card.cardTemplateId);
     if (!tpl) continue;
     const elCount = analysis.elementCount[tpl.element] || 0;
@@ -149,16 +151,6 @@ export function runAIDecisions(player, game) {
     if (bestIdx >= 0 && bestScore > 40 + (1 - params.synergyFocus) * 20) {
       game.buyCard(player, bestIdx);
     } else break;
-  }
-
-  for (let i = 0; i < player.team.maxSize; i++) {
-    const card = player.team.cards[i];
-    if (!card) continue;
-    const maxLv = getMaxCardLevelForPlayer(player.tavernTier);
-    while (card.level < maxLv && player.gold >= getCardUpgradeCost(card.level)) {
-      if (Math.random() < params.upgradePriority + 0.3) game.upgradeCardLevel(player, i);
-      else break;
-    }
   }
 
   const refreshCost = game.gameOptions?.economy?.refreshCost ?? CONFIG.REFRESH_COST;
