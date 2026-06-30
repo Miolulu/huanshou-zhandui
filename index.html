@@ -91,7 +91,7 @@
       <div class="menu-container">
         <div class="menu-logo">
           <h1>幻兽战队</h1>
-          <p>8人策略卡牌 · 炉石酒馆战棋 · 种族技能联动 · 自动战斗</p>
+          <p>8人策略卡牌 · 属性克制 · 生态族群 · 融合觉醒 · 自动战斗</p>
         </div>
         <div class="menu-form">
           <h3 class="section-label">选择模式</h3>
@@ -146,7 +146,7 @@
     </div>
   </div>
 
-  <!-- ===== 游戏界面（炉石酒馆战棋布局） ===== -->
+  <!-- ===== 游戏界面 ===== -->
   <div id="screen-game" class="screen bg-screen">
     <header class="bg-hud-bar">
       <div class="bg-hud-left">
@@ -162,7 +162,7 @@
       <div class="bg-hud-right">
         <div class="bg-tavern-badge">
           <span class="shield-lv" id="tavern-tier">1</span>
-          <span class="bg-tavern-label">酒馆<br>等级</span>
+          <span class="bg-tavern-label">探索<br>等级</span>
         </div>
         <div id="shop-odds-list" class="bg-odds-list"></div>
       </div>
@@ -171,7 +171,7 @@
     <div class="bg-body">
       <aside class="bg-side-panel panel panel-glass">
         <div class="trait-head">
-          <h2>种族构成</h2>
+          <h2>生态构成</h2>
           <button type="button" id="btn-toggle-bond-guide" class="btn-small btn-gold">图鉴</button>
         </div>
         <div id="team-bonds" class="bg-tribe-list"></div>
@@ -207,7 +207,7 @@
               </div>
               <div class="hud-right">
                 <div class="combo-box">
-                  <span class="label">种族</span>
+                  <span class="label">生态</span>
                   <strong id="battle-hud-combo">—</strong>
                 </div>
               </div>
@@ -221,7 +221,7 @@
               <div class="magic-circle" aria-hidden="true"></div>
               <div class="effect-layer battle-effect-layer z-effects" id="battle-effect-layer"></div>
               <div class="floating-text-layer z-effects" id="floating-text-layer"></div>
-              <div id="battle-idle-msg" class="battle-idle-msg">从左至右自动攻击 · 研究技能搭配</div>
+              <div id="battle-idle-msg" class="battle-idle-msg">从左至右出战 · 研究出战技与站位搭配</div>
             </section>
 
             <section class="player-area battle-player-area z-gameplay" id="battle-player-area" aria-label="我方区域"></section>
@@ -231,7 +231,7 @@
         <section class="bg-bench-section">
           <div class="bench-head">
             <h2>战队栏位</h2>
-            <span class="hint">单击交换站位 · 拖拽调整顺序 · 3张同名同星合成</span>
+            <span class="hint">单击交换站位 · 拖拽调整顺序 · 3只同名同阶融合觉醒</span>
           </div>
           <div id="team-slots" class="bg-bench"></div>
         </section>
@@ -245,7 +245,7 @@
           </div>
           <div id="selected-card-skills" class="card-skills-detail"></div>
           <div class="card-action-btns">
-            <button id="btn-sell-card" class="btn-danger">卖出</button>
+            <button id="btn-sell-card" class="btn-danger">放生</button>
           </div>
         </section>
       </main>
@@ -257,8 +257,8 @@
 
       <section class="bg-tavern-section">
         <div class="bg-tavern-head">
-          <h2>🍺 鲍勃的酒馆</h2>
-          <span class="hint">点击购买 · 三连自动发现高费随从</span>
+          <h2>🌿 幻兽驿站</h2>
+          <span class="hint">点击收服 · 三只同种融合后野性邂逅</span>
         </div>
         <div id="shop-tier-hint" class="hidden"></div>
         <div id="shop-cards" class="bg-shop-slots"></div>
@@ -269,11 +269,11 @@
       <div class="bg-action-left">
         <button id="btn-upgrade-tavern" class="bg-round-btn bg-buy-xp">
           <span class="btn-icon">⬆</span>
-          <span class="btn-label">升级酒馆</span>
+          <span class="btn-label">提升探索</span>
           <span id="tavern-cost" class="btn-cost"></span>
         </button>
         <button id="btn-freeze" class="bg-round-btn bg-freeze">
-          <span class="btn-label">冻结</span>
+          <span class="btn-label">留住</span>
           <span id="freeze-state">关</span>
         </button>
       </div>
@@ -293,7 +293,7 @@
         <button id="btn-battle-speed" class="bg-speed-btn" title="战斗倍速">1×</button>
         <button id="btn-refresh" class="bg-round-btn bg-refresh">
           <span class="btn-icon">↻</span>
-          <span class="btn-label">刷新</span>
+          <span class="btn-label">重新探索</span>
           <span class="btn-cost">2</span>
         </button>
         <div class="bg-gold-pile">
@@ -306,13 +306,13 @@
 
   <div id="dialog-root" class="dialog-root" aria-live="polite">
     <div id="tooltip-root" class="tooltip-root"></div>
-    <div id="bond-guide-panel" class="bg-guide-modal hidden" role="dialog" aria-modal="true" aria-label="种族图鉴"></div>
-    <div id="discover-panel" class="bg-discover-modal hidden" role="dialog" aria-modal="true" aria-label="三连发现">
+    <div id="bond-guide-panel" class="bg-guide-modal hidden" role="dialog" aria-modal="true" aria-label="生态图鉴"></div>
+    <div id="discover-panel" class="bg-discover-modal hidden" role="dialog" aria-modal="true" aria-label="野性邂逅">
       <div class="bg-discover-box panel panel-glass">
-        <h2>✨ 三连发现</h2>
-        <p id="discover-hint" class="hint">选择一张随从加入战队</p>
+        <h2>✨ 野性邂逅</h2>
+        <p id="discover-hint" class="hint">融合觉醒后，选择一只野外稀有个体加入战队</p>
         <div id="discover-options" class="discover-options"></div>
-        <p class="hint discover-slot-hint">需要战队有空栏位；可先卖出或拖拽调整站位</p>
+        <p class="hint discover-slot-hint">需要战队有空栏位；可先放生或调整站位</p>
       </div>
     </div>
     <div id="overlay" class="overlay" style="display:none" role="dialog" aria-modal="true">

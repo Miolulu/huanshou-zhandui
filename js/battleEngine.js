@@ -70,7 +70,7 @@ export class BattleEngine {
   }
 
   applyBonds() {
-    /* 炉石酒馆模式：无羁绊加成，流派靠单卡技能联动 */
+    /* 幻兽战队：无羁绊条，靠出战技/倒下技/站位搭配 */
   }
 
   isSilenced(card) {
@@ -289,7 +289,7 @@ export class BattleEngine {
         break;
       case 'AURA_DOUBLE_DEATHRATTLE':
         caster.deathrattleAura = true;
-        this.emit({ type: 'AURA_APPLIED', cardId: caster.id, cardName: caster.name, aura: '双倍亡语' });
+        this.emit({ type: 'AURA_APPLIED', cardId: caster.id, cardName: caster.name, aura: '倒下回响×2' });
         break;
       case 'REBORN':
         if (!caster._rebornUsed) {
@@ -353,7 +353,7 @@ export class BattleEngine {
         currentCooldown: 0,
         usedThisBattle: false,
       });
-      this.emit({ type: 'LEAPFROG_SPREAD', cardId: target.id, cardName: target.name });
+      this.emit({ type: 'LEAPFROG_SPREAD', cardId: target.id, cardName: target.name, label: '灵性接力' });
     }
   }
 

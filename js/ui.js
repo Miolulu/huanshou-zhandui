@@ -14,6 +14,7 @@ import { getTribe, tribeBadgeHtml } from './tribes.js';
 import { renderTribeGuideHTML, renderTeamTribeSummary } from './tribeGuide.js';
 import { formatDiscoverOption } from './discover.js';
 import { formatLobbyTribes } from './lobbyTribes.js';
+import { TERMS, formatStarDisplay, starStageLabel } from './gameTerms.js';
 import { renderHeroCardRow } from './components/HeroCard.js';
 import { renderBattleTimeline, getTimelineOrder } from './components/BattleTimeline.js';
 import { BattleEffects, getBattleLogClass } from './components/BattleEffects.js';
@@ -241,7 +242,7 @@ export class UI {
     const nextSlots = human.tavernTier < CONFIG.MAX_TAVERN_TIER
       ? getTeamSlotsForTavern(human.tavernTier + 1) : human.team.maxSize;
     const slotsHint = human.tavernTier >= CONFIG.MAX_TAVERN_TIER
-      ? '满级' : `${tavernCost}金 → Lv${human.tavernTier + 1} · ${nextSlots}人口`;
+      ? '满级' : `${tavernCost}金 → 探索${human.tavernTier + 1} · ${nextSlots}栏位`;
 
     this.el.tavernCost.textContent = slotsHint;
     if (this.el.teamCost) this.el.teamCost.textContent = '';
@@ -271,7 +272,7 @@ export class UI {
 
     if (!canShop) {
       this.el.shop.innerHTML = Array.from({ length: CONFIG.SHOP_SIZE }, () =>
-        `<div class="bg-shop-card sold-out disabled"><div class="bg-shop-portrait">—</div><div class="bg-shop-name">战斗中</div></div>`
+        `<div class="bg-shop-card sold-out disabled"><div class="bg-shop-portrait">—</div><div class="bg-shop-name">远征中</div></div>`
       ).join('');
       return;
     }
@@ -302,7 +303,7 @@ export class UI {
     this.el.shop.querySelectorAll('[data-shop-buy]').forEach((card) => {
       card.onclick = () => {
         const idx = parseInt(card.dataset.shopBuy, 10);
-        if (this.game.buyCard(human, idx)) showToast('购买成功');
+        if (this.game.buyCard(human, idx)) showToast('收服成功');
       };
     });
   }
@@ -325,7 +326,7 @@ export class UI {
             <div class="card-name">${card.name}</div>
             <div class="card-badges">${tribeBadgeHtml(card.tribe || 'neutral')}${elementBadgeHtml(card.element)}</div>
           </div>
-          <div class="card-meta">${'★'.repeat(star)}${'☆'.repeat(3 - star)} · ${getTribe(card.tribe).name}</div>
+          <div class="card-meta">${formatStarDisplay(star)} · ${getTribe(card.tribe).name}</div>
           <div class="card-stats">HP${card.maxHp} ATK${card.attack} SPD${card.speed}</div>
         </div>`;
     }).join('');
@@ -387,7 +388,7 @@ export class UI {
     }
     this.el.cardPanel.classList.remove('hidden');
     const star = card.star ?? card.upgradeTier ?? 1;
-    this.el.selectedName.textContent = `${card.name} ${'★'.repeat(star)}${star >= 3 ? '（最终形态）' : ''}`;
+    this.el.selectedName.textContent = `${card.name} ${formatStarDisplay(star)}${star >= 3 ? '' : ''}`;
 
     this.el.selectedStats.textContent =
       `HP ${card.maxHp} · ATK ${card.attack} · DEF ${card.defense} · SPD ${card.speed}`;
@@ -398,8 +399,8 @@ export class UI {
     }
     this.el.selectedSkills.innerHTML = formatSkillList(card.skills);
     const mergeHint = star < 3
-      ? `再收集 ${Math.max(0, 3 - this.countSameStar(human, card))} 张同名 ★${star} → 合成 ★${star + 1}并发现高费随从`
-      : '已达最高星级 ★3';
+      ? `再收服 ${Math.max(0, 3 - this.countSameStar(human, card))} 只同名 ${starStageLabel(star)} → ${TERMS.fusion}并${TERMS.encounter}`
+      : `已达最高阶 · ${starStageLabel(3)}`;
     if (!this.el.selectedMergeHint) {
       const hint = document.createElement('p');
       hint.id = 'selected-merge-hint';
@@ -409,7 +410,7 @@ export class UI {
     }
     this.el.selectedMergeHint.textContent = mergeHint;
     document.getElementById('btn-sell-card').textContent =
-      `卖出 (+${getCardBuyCost(card.rarity, getTemplate(card.templateId)?.costTier)}金)`;
+      `${TERMS.release} (+${getCardBuyCost(card.rarity, getTemplate(card.templateId)?.costTier)}金)`;
   }
 
   countSameStar(human, card) {
@@ -444,7 +445,7 @@ export class UI {
     if (!this.el.lobbyTribesHint) return;
     const tribes = state.lobbyTribes || [];
     this.el.lobbyTribesHint.innerHTML = tribes.length
-      ? `<p class="hint lobby-pool-label">本局种族池</p><p class="lobby-pool-tags">${formatLobbyTribes(tribes)}</p>`
+      ? `<p class="hint lobby-pool-label">${TERMS.ecology}</p><p class="lobby-pool-tags">${formatLobbyTribes(tribes)}</p><p class="hint" style="font-size:0.65rem;margin-top:4px">${TERMS.ecologyHint}</p>`
       : '';
   }
 
@@ -461,8 +462,8 @@ export class UI {
     const canAdd = this.game.findEmptyTeamSlot(human) !== -1;
     if (this.el.discoverHint) {
       this.el.discoverHint.textContent = canAdd
-        ? `发现 ${d.discoverTier} 费随从 · 三连奖励，选一张加入战队`
-        : `发现 ${d.discoverTier} 费随从 · 请先腾出空栏位（卖出或合成）`;
+        ? `${TERMS.encounter}：探索${d.discoverTier}阶稀有个体 · 融合觉醒奖励`
+        : `${TERMS.encounter}：探索${d.discoverTier}阶 · 请先腾出空栏位`;
     }
     if (!this.el.discoverOptions) return;
     this.el.discoverOptions.innerHTML = d.options.map((id) => {
@@ -476,9 +477,9 @@ export class UI {
     this.el.discoverOptions.querySelectorAll('[data-discover-id]').forEach((btn) => {
       btn.onclick = () => {
         if (this.game.resolveDiscover(btn.dataset.discoverId)) {
-          showToast('发现成功！');
+          showToast('邂逅成功！');
         } else {
-          showToast('需要空栏位才能发现随从');
+          showToast('需要空栏位才能完成邂逅');
         }
       };
     });
@@ -516,7 +517,7 @@ export class UI {
     }
     const cards = opp.team.cards.filter((c, i) => c && i < opp.team.maxSize);
     this.el.opponent.innerHTML = `
-      <h3>${opp.name} · ${opp.hp}HP · 酒馆${opp.tavernTier || 1}级</h3>
+      <h3>${opp.name} · ${opp.hp}HP · 探索${opp.tavernTier || 1}级</h3>
       <div>${cards.map(c =>
         `<span class="tag ${RARITY_CLASS[c.rarity]}">${c.name}${'★'.repeat(c.star ?? c.upgradeTier ?? 1)}</span>`
       ).join(' ') || '无阵容'}</div>`;
@@ -666,10 +667,10 @@ export class UI {
         return e.relation === 'strong'
           ? `⚡ ${e.attackerName}(${e.attackerElement}) 克制 ${e.defenderName}(${e.defenderElement}) ×${e.multiplier}`
           : `🛡 ${e.attackerName}(${e.attackerElement}) 被 ${e.defenderName}(${e.defenderElement}) 克制 ×${e.multiplier}`;
-      case 'LEAPFROG_SPREAD': return `🐸 跳蛙传承 → ${e.cardName}`;
+      case 'LEAPFROG_SPREAD': return `🌲 灵性接力 → ${e.cardName}`;
       case 'STAT_BUFF': return `📈 ${e.cardName} +${e.attack || 0}攻 +${e.defense || 0}防`;
       case 'TOKEN_SUMMONED': return `✨ 召唤 ${e.cardName}`;
-      case 'DEATHRATTLE_TRIGGER': return `💫 ${e.cardName}【${e.skillName}】亡语触发`;
+      case 'DEATHRATTLE_TRIGGER': return `💫 ${e.cardName}【${e.skillName}】倒下技触发`;
       case 'AURA_APPLIED': return `🌀 ${e.cardName} ${e.aura}`;
       case 'ACTION_SKIPPED':
         return `⏭ ${e.cardName} 跳过行动（${e.reason}）`;

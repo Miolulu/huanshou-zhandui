@@ -4,7 +4,7 @@ import { getTribe } from './tribes.js';
 import { isTemplateInLobby } from './lobbyTribes.js';
 
 /**
- * 三连合成后发现更高费随从（炉石酒馆机制）
+ * 野性邂逅 — 融合觉醒后从野外选择稀有个体
  */
 export function getDiscoverTier(player, newStar) {
   const bonus = newStar >= 3 ? 2 : 1;

@@ -1,5 +1,5 @@
 /**
- * 对局种族池 — 每局随机 5 个种族 + 中立（炉石酒馆轮换）
+ * 本局生态 — 每场随机开放若干族群栖息地
  */
 import { TRIBE_LIST } from './tribes.js';
 import { resolveCardTribe } from './tribeAssignment.js';

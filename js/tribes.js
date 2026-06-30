@@ -1,49 +1,62 @@
-/** 炉石酒馆战棋式种族 — 无羁绊加成，靠单卡技能联动 */
+/**
+ * 幻兽生态族群 — 按栖息地划分，无羁绊条加成，靠单卡技能与站位搭配
+ */
 
 export const TRIBES = {
   beast: {
-    id: 'beast', name: '野兽', icon: '🐾', color: '#c4a35a',
-    playstyle: '跳蛙传承、亡语召唤、攻击触发亡语（跳蛙流 / 狼爹流）',
+    id: 'beast', name: '丛林族', icon: '🌲', color: '#6ab04c',
+    habitat: '密林谷地',
+    playstyle: '灵性接力、倒下分裂、攻击触发倒下技（接力队）',
   },
   murloc: {
-    id: 'murloc', name: '鱼人', icon: '🐟', color: '#58a6ff',
-    playstyle: '鱼人军团战吼叠攻，人海换质量',
+    id: 'murloc', name: '潮汐族', icon: '🫧', color: '#48dbfb',
+    habitat: '浅海礁湾',
+    playstyle: '出战集结、人海铺场、以量换质量',
   },
   pirate: {
-    id: 'pirate', name: '海盗', icon: '🏴‍☠️', color: '#f0883e',
-    playstyle: '花费金币成长、战吼悬赏、后期无限资源（海盗流）',
+    id: 'pirate', name: '巡浪族', icon: '🌊', color: '#2e86de',
+    habitat: '风暴航线',
+    playstyle: '击杀赏励、出战强化、滚雪球推进',
   },
   undead: {
-    id: 'undead', name: '亡灵', icon: '💀', color: '#a371f7',
-    playstyle: '复生、亡语连锁、永久成长（亡灵流）',
+    id: 'undead', name: '幽冥族', icon: '🌑', color: '#9b59b6',
+    habitat: '暮色裂隙',
+    playstyle: '蜕生残响、倒下连锁、越战越强',
   },
   elemental: {
-    id: 'elemental', name: '元素', icon: '⚡', color: '#79c0ff',
-    playstyle: '刷新触发、法术伤害、回合末成长',
+    id: 'elemental', name: '灵能族', icon: '✨', color: '#74b9ff',
+    habitat: '元素涡流',
+    playstyle: '法术爆发、回合成长、控场伤害',
   },
   dragon: {
-    id: 'dragon', name: '龙族', icon: '🐉', color: '#ff7b72',
-    playstyle: '高费核心、回合结束全队成长',
+    id: 'dragon', name: '天翔族', icon: '🪽', color: '#e17055',
+    habitat: '苍穹峰岭',
+    playstyle: '高阶核心、回合末全队成长',
   },
   mech: {
-    id: 'mech', name: '机械', icon: '⚙️', color: '#8b949e',
-    playstyle: '圣盾、磁力合体、护盾叠层',
+    id: 'mech', name: '机巧族', icon: '⚙️', color: '#b2bec3',
+    habitat: '遗迹工坊',
+    playstyle: '护盾护体、倒下零件、抗线换输出',
   },
   quilboar: {
-    id: 'quilboar', name: '野猪人', icon: '🐗', color: '#e3b341',
-    playstyle: '血宝石叠属性、关键词宝石（野猪流）',
+    id: 'quilboar', name: '硬角族', icon: '🦬', color: '#f9ca24',
+    habitat: '荒原丘陵',
+    playstyle: '成长印记叠层、开战全队强化',
   },
   demon: {
-    id: 'demon', name: '恶魔', icon: '😈', color: '#da3633',
-    playstyle: '吞噬成长、卖血换力量',
+    id: 'demon', name: '梦魇族', icon: '😶‍🌫️', color: '#c0392b',
+    habitat: '深渊裂口',
+    playstyle: '友方倒下吞噬、以牺牲换力量',
   },
   naga: {
-    id: 'naga', name: '纳迦', icon: '🐍', color: '#56d364',
-    playstyle: '塑造法术、相邻友军强化',
+    id: 'naga', name: '鳞裔族', icon: '🐍', color: '#1dd1a1',
+    habitat: '蔓藤沼泽',
+    playstyle: '连携塑造、相邻友方强化',
   },
   neutral: {
-    id: 'neutral', name: '中立', icon: '◆', color: '#b1bac4',
-    playstyle: '万金油补位，可嵌入任意阵容',
+    id: 'neutral', name: '百变族', icon: '🔮', color: '#dfe6e9',
+    habitat: '各处可见',
+    playstyle: '万金油补位，可嵌入任意生态队',
   },
 };
 
@@ -55,7 +68,7 @@ export function getTribe(id) {
 
 export function tribeBadgeHtml(tribeId) {
   const t = getTribe(tribeId);
-  return `<span class="tribe-badge tribe-${tribeId}" title="${t.playstyle}">${t.icon} ${t.name}</span>`;
+  return `<span class="tribe-badge tribe-${tribeId}" title="${t.habitat} · ${t.playstyle}">${t.icon} ${t.name}</span>`;
 }
 
 export function countTeamTribes(cards) {

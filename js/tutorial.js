@@ -1,14 +1,16 @@
-/** 新手教程（文档第七章简化版） */
+/** 新手教程 */
 import { completeTutorial, loadProfile } from './playerProfile.js';
 import { showToast } from './appShell.js';
+import { TERMS } from './gameTerms.js';
 
 const STEPS = [
-  { title: '欢迎来到幻兽战队', text: '这是一款8人策略卡牌自走棋。每回合在酒馆购买幻兽、组建战队，然后自动战斗。', target: null },
+  { title: '欢迎来到幻兽战队', text: '8人策略自走棋。每回合在幻兽驿站收服野生幻兽、组建战队，然后自动对战。', target: null },
   { title: '选择游戏模式', text: '主界面可选择排位、休闲、人机对战等模式。人机模式可单独练习。', target: '.mode-grid' },
   { title: '创建或加入房间', text: '多人对战可创建房间邀请好友，或输入6位房间号加入。', target: '.menu-actions' },
-  { title: '种族与技能', text: '每局随机5个种族进入卡池（左侧可见）。无羁绊加成，靠战吼/亡语自行搭配；图鉴有跳蛙流、海盗流等思路。', target: null },
-  { title: '三连发现', text: '3张同名同星自动合成升星，并弹出「发现」：从更高费随从中选一张免费加入战队（需有空栏位）。', target: null },
-  { title: '站位调整', text: '准备阶段可拖拽栏位，或先点一张再点另一张交换位置。从左到右攻击，跳蛙流等流派很吃站位。', target: null },
+  { title: '生态与技能', text: `每场随机开放${TERMS.ecology}。无羁绊条，靠出战技/倒下技自行搭配。左侧图鉴有推荐队伍思路。`, target: null },
+  { title: TERMS.elementCounter, text: TERMS.elementCounterHint + ' 这是本游戏区别于同类玩法的核心特色。', target: null },
+  { title: TERMS.fusion + ' · ' + TERMS.encounter, text: `3只同名同阶幻兽${TERMS.fusion}升阶（幼体→成体→觉醒体），并触发${TERMS.encounter}：选一只高阶稀有个体加入战队。`, target: null },
+  { title: '站位与连携', text: '准备阶段可拖拽栏位或点击交换。从左至右出战；部分技能强化连携位（相邻）同伴。', target: null },
   { title: '段位与成长', text: '排位赛会升降段位星数。完成任务和签到可获得金币经验。', target: '.profile-panel' },
   { title: '开始游戏', text: '点击模式卡片即可开始。人机对战无需房间，直接开局！', target: '.mode-grid' },
 ];

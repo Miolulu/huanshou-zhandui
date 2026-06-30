@@ -53,10 +53,10 @@ export const PASSIVE_TRIGGERS = new Set([
 ]);
 
 export const TRIGGER_NAMES = {
-  BATTLE_START: '战斗开始', TURN_START: '回合开始', BEFORE_ATTACK: '攻击前',
-  AFTER_ATTACK: '攻击后', ON_HIT: '受击时', ON_KILL: '击杀时', ON_DEATH: '死亡时',
-  ON_ALLY_DEATH: '友方死亡', PREPARE_PHASE: '准备阶段', ON_BUY: '购买时',
-  ON_UPGRADE: '合成升星', ON_SHOP_REFRESH: '刷新商店',
+  BATTLE_START: '出战技', TURN_START: '回合技', BEFORE_ATTACK: '攻击前',
+  AFTER_ATTACK: '攻击后', ON_HIT: '受击时', ON_KILL: '击倒时', ON_DEATH: '倒下技',
+  ON_ALLY_DEATH: '同伴倒下', PREPARE_PHASE: '准备阶段', ON_BUY: '收服时',
+  ON_UPGRADE: '融合升阶', ON_SHOP_REFRESH: '重新探索',
 };
 
 export function getSkillType(trigger) {

@@ -1,37 +1,36 @@
 /**
- * 炉石酒馆式流派核心技能覆盖
- * 玩家自行研究搭配，无羁绊条加成
+ * 幻兽战队 — 核心生态流派技能（出战技 / 倒下技 / 连携）
  */
 import { buildSkillPatches } from './tribeSkillCatalog.js';
 
 const LEAPFROG_SKILL = {
-  id: 'leapfrog_dr',
-  name: '跳蛙传承',
+  id: 'spirit_relay',
+  name: '灵性接力',
   trigger: 'ON_DEATH',
   target: 'SELF',
-  description: '亡语：使一个友方野兽获得+2/+2，并继承此亡语',
+  description: '倒下技：使一名丛林族同伴+2/+2，并继承此倒下技',
   cooldown: 0,
   condition: null,
   effects: [{ type: 'LEAPFROG_DR', target: 'RANDOM_TRIBE_ALLY', tribe: 'beast', attack: 2, defense: 2 }],
 };
 
 const MACAW_SKILL = {
-  id: 'macaw_attack',
-  name: '巨喙连击',
+  id: 'swift_echo',
+  name: '迅翼回响',
   trigger: 'AFTER_ATTACK',
   target: 'SELF',
-  description: '攻击后：触发一个友方随机亡语',
+  description: '攻击后：触发一名同伴的随机倒下技',
   cooldown: 0,
   condition: null,
   effects: [{ type: 'TRIGGER_ALLY_DEATHRATTLE', target: 'RANDOM_ALLY' }],
 };
 
 const BARON_AURA = {
-  id: 'baron_aura',
-  name: '亡语领主',
+  id: 'echo_core',
+  name: '回响核心',
   trigger: 'BATTLE_START',
   target: 'SELF',
-  description: '你的亡语触发两次',
+  description: '你的倒下技触发两次',
   cooldown: 0,
   condition: null,
   effects: [{ type: 'AURA_DOUBLE_DEATHRATTLE', target: 'SELF' }],
@@ -39,32 +38,32 @@ const BARON_AURA = {
 
 const MAMA_BEAR_SKILL = {
   id: 'mama_bear',
-  name: '母熊之怒',
+  name: '族群之怒',
   trigger: 'ON_ALLY_DEATH',
   target: 'SELF',
-  description: '每当一个友方野兽死亡，获得+2/+2',
+  description: '丛林族同伴倒下时：自身+2/+2',
   cooldown: 0,
   condition: { tribe: 'beast' },
   effects: [{ type: 'STAT_BUFF', target: 'SELF', attack: 2, defense: 2 }],
 };
 
 const PIRATE_GOLD_SKILL = {
-  id: 'pirate_plunder',
-  name: '海上掠夺',
+  id: 'wave_bounty',
+  name: '浪锋赏励',
   trigger: 'ON_KILL',
   target: 'SELF',
-  description: '击杀后：本回合下次购买减1金（战斗内展示为全队+1攻）',
+  description: '击倒后：全队+1攻（巡浪族赏励）',
   cooldown: 0,
   condition: null,
   effects: [{ type: 'STAT_BUFF', target: 'TEAM_ALL', attack: 1, defense: 0 }],
 };
 
 const UNDEAD_REBORN = {
-  id: 'undead_reborn',
-  name: '复生',
+  id: 'shed_shell',
+  name: '蜕生残壳',
   trigger: 'ON_DEATH',
   target: 'SELF',
-  description: '亡语：以1点生命复生（每场一次）',
+  description: '倒下技：以1点生命蜕生（每场一次）',
   cooldown: 0,
   condition: null,
   oncePerBattle: true,
@@ -72,72 +71,71 @@ const UNDEAD_REBORN = {
 };
 
 const QUILBOAR_GEM = {
-  id: 'blood_gem',
-  name: '血宝石',
+  id: 'growth_mark',
+  name: '成长印记',
   trigger: 'BATTLE_START',
   target: 'TEAM_ALL',
-  description: '战斗开始：所有友方野猪人+1/+2',
+  description: '出战技：所有硬角族+1/+2',
   cooldown: 0,
   condition: null,
   effects: [{ type: 'BUFF_TRIBE', target: 'TEAM_ALL', tribe: 'quilboar', attack: 1, defense: 2 }],
 };
 
 const MECH_SHIELD = {
-  id: 'mech_divine',
-  name: '圣盾协议',
+  id: 'mech_aegis',
+  name: '护体协议',
   trigger: 'BATTLE_START',
   target: 'SELF',
-  description: '战斗开始：获得圣盾（抵挡一次伤害）',
+  description: '出战技：获得护体（抵挡一次伤害）',
   cooldown: 0,
   condition: null,
   effects: [{ type: 'APPLY_STATUS', target: 'SELF', status: 'INVINCIBLE', duration: 1, value: 0 }],
 };
 
 const DRAGON_SCALE = {
-  id: 'dragon_end_turn',
-  name: '龙鳞成长',
+  id: 'sky_growth',
+  name: '天鳞成长',
   trigger: 'TURN_START',
   target: 'TEAM_ALL',
-  description: '回合开始：所有友方龙族+2/+2',
+  description: '回合技：所有天翔族+2/+2',
   cooldown: 0,
   condition: null,
   effects: [{ type: 'BUFF_TRIBE', target: 'TEAM_ALL', tribe: 'dragon', attack: 2, defense: 2 }],
 };
 
 const MURLOC_SWARM = {
-  id: 'murloc_war_cry',
-  name: '鱼人集结',
+  id: 'tide_rally',
+  name: '潮汐集结',
   trigger: 'BATTLE_START',
   target: 'TEAM_ALL',
-  description: '战斗开始：所有友方鱼人+1/+1',
+  description: '出战技：所有潮汐族+1/+1',
   cooldown: 0,
   condition: null,
   effects: [{ type: 'BUFF_TRIBE', target: 'TEAM_ALL', tribe: 'murloc', attack: 1, defense: 1 }],
 };
 
 const SUMMON_RAT = {
-  id: 'rat_pack',
-  name: '鼠群涌现',
+  id: 'split_spawn',
+  name: '分裂幼体',
   trigger: 'ON_DEATH',
   target: 'SELF',
-  description: '亡语：召唤两只1/1野兽衍生物',
+  description: '倒下技：召唤两只1/1丛林幼体',
   cooldown: 0,
   condition: null,
-  effects: [{ type: 'SUMMON_TOKEN', target: 'SELF', name: '鼠群', attack: 1, defense: 1, hp: 1, tribe: 'beast', count: 2 }],
+  effects: [{ type: 'SUMMON_TOKEN', target: 'SELF', name: '丛林幼体', attack: 1, defense: 1, hp: 1, tribe: 'beast', count: 2 }],
 };
 
 const PIRATE_BOUNTY = {
-  id: 'proud_privateer',
-  name: '骄傲私掠',
+  id: 'wave_rally',
+  name: '浪锋集结',
   trigger: 'BATTLE_START',
   target: 'TEAM_ALL',
-  description: '战斗开始：所有友方海盗+2/+0',
+  description: '出战技：所有巡浪族+2/+0',
   cooldown: 0,
   condition: null,
   effects: [{ type: 'BUFF_TRIBE', target: 'TEAM_ALL', tribe: 'pirate', attack: 2, defense: 0 }],
 };
 
-/** 核心流派补丁（replace 或叠加在 catalog 之上） */
 const CORE_TRIBE_PATCHES = {
   charge_rabbit: { replace: true, skills: [LEAPFROG_SKILL, SUMMON_RAT] },
   storm_eagle: { replace: false, add: [MACAW_SKILL] },
