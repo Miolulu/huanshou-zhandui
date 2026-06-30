@@ -129,6 +129,23 @@ export class GameEngine {
     }
   }
 
+  grantStarterCards(player) {
+    const count = CONFIG.STARTER_CARD_COUNT || 0;
+    if (!count) return;
+    let placed = 0;
+    for (let n = 0; n < count * 3 && placed < count; n++) {
+      const costTier = this.rollCostTier(1);
+      const tpl = this.pickShopTemplate(costTier);
+      if (!tpl) break;
+      const pos = this.findEmptyTeamSlot(player);
+      if (pos === -1) break;
+      const card = createCard(tpl.id, 1, player.id, pos);
+      player.team.cards[pos] = card;
+      this.poolRemaining[tpl.id] = Math.max(0, (this.poolRemaining[tpl.id] || 0) - 1);
+      placed++;
+    }
+  }
+
   startGame(playerConfigs, options = {}) {
     this.gameModeId = options.modeId || 'ranked';
     this.isRanked = options.isRanked === true;
@@ -161,7 +178,10 @@ export class GameEngine {
     this.scoutedOpponent = null;
     this._trainerTargetMode = null;
     this.initPool();
-    for (const p of this.players) this.syncTeamSlots(p);
+    for (const p of this.players) {
+      this.syncTeamSlots(p);
+      this.grantStarterCards(p);
+    }
     this.beginPreparePhase();
     this.notify();
   }
@@ -644,6 +664,15 @@ export class GameEngine {
 
   async endPreparePhase(fromTimer = false) {
     if (this.phase !== 'PREPARE' || this._endingPrepare) return;
+    const human = this.getHuman();
+    const humanCards = human?.team.cards.filter(Boolean).length ?? 0;
+    if (human && humanCards === 0 && !fromTimer) {
+      return { blocked: true, reason: 'empty_team' };
+    }
+    if (human && humanCards === 0 && fromTimer) {
+      this._lastPrepareWarning = 'empty_team';
+    }
+
     this._endingPrepare = true;
     this.clearPrepareTimer();
     if (fromTimer) this.prepareTimedOut = true;
@@ -678,7 +707,10 @@ export class GameEngine {
         battleSpeed: this.battleSpeed,
       });
 
-      if (isHumanBattle) this.currentBattle = engine;
+      if (isHumanBattle) {
+        this.currentBattle = engine;
+        this.notify();
+      }
       const pace = isHumanBattle ? {
         turnDelay: Math.max(300, CONFIG.TURN_INTERVAL / (this.battleSpeed || 1)),
         actionDelay: Math.max(200, CONFIG.ACTION_INTERVAL_MS / (this.battleSpeed || 1)),
@@ -690,9 +722,12 @@ export class GameEngine {
 
       if (isHumanBattle) {
         this.lastHumanResult = result;
+        this.currentBattle = engine;
+        this.notify();
       }
     }
 
+    this.currentBattle = null;
     await this.settlePhase();
   }
 

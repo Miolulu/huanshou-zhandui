@@ -103,7 +103,12 @@ export class UI {
 
   bindActions() {
     document.getElementById('btn-end-prepare').onclick = () => {
-      if (this.game.phase === 'PREPARE') this.game.endPreparePhase();
+      if (this.game.phase !== 'PREPARE') return;
+      this.game.endPreparePhase().then((r) => {
+        if (r?.blocked || r?.reason === 'empty_team') {
+          showToast('战队为空！请先从驿站收服幻兽');
+        }
+      });
     };
     document.getElementById('btn-refresh').onclick = () => {
       this.game.refreshShopManual(this.game.getHuman());
@@ -227,7 +232,15 @@ export class UI {
       this._shownTimeoutToast = true;
       showToast('准备时间结束，自动开战！');
     }
-    if (state.phase === 'PREPARE') this._shownTimeoutToast = false;
+    if (state.phase === 'PREPARE' && this.game._lastPrepareWarning === 'empty_team' && !this._shownEmptyTeamToast) {
+      this._shownEmptyTeamToast = true;
+      showToast('战队为空，本回合战斗将直接判负');
+      this.game._lastPrepareWarning = null;
+    }
+    if (state.phase === 'PREPARE') {
+      this._shownTimeoutToast = false;
+      this._shownEmptyTeamToast = false;
+    }
     this.renderPlayers(state);
     this.renderTavernControls(human, state);
     this.renderShop(human);
@@ -963,7 +976,7 @@ export class UI {
     if (event.type === 'TRAINER_COMMAND_PROMPT') {
       this.showTrainerBattlePanel();
     }
-    if (event.type === 'TRAINER_COMMAND_END') {
+    if (event.type === 'TRAINER_COMMAND_END' || event.type === 'TURN_END') {
       this.hideTrainerBattlePanel();
     }
     if (this.battleEffects?.shouldPlay(event)) {

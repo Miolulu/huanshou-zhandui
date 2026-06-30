@@ -82,7 +82,9 @@ export const CONFIG = {
   /** 训练师指令 */
   TRAINER_RALLY_ATK: 4,
   TRAINER_INSPIRE_ATK: 8,
-  TRAINER_BATTLE_COMMAND_TIMEOUT_MS: 4500,
+  TRAINER_BATTLE_COMMAND_TIMEOUT_MS: 12000,
+  /** 开局每人赠送的幼体数量（避免空战队秒结束） */
+  STARTER_CARD_COUNT: 2,
 };
 
 export const ELEMENT_NAMES = {

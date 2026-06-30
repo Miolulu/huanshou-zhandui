@@ -175,19 +175,16 @@ export class BattleEngine {
   }
 
   async waitForTrainerCommand(paced, speed = 1) {
-    if (!this.isHumanBattle || this.trainerCommandUsedThisTurn) return;
-    const timeout = Math.max(800, (CONFIG.TRAINER_BATTLE_COMMAND_TIMEOUT_MS || 4500) / (speed || 1));
+    if (!this.isHumanBattle || !paced) return;
+    const timeout = Math.max(2000, (CONFIG.TRAINER_BATTLE_COMMAND_TIMEOUT_MS || 12000) / (speed || 1));
     this.emit({ type: 'TRAINER_COMMAND_PROMPT', turn: this.turn, timeout });
-    await new Promise((resolve) => {
-      this._trainerCommandResolver = resolve;
-      setTimeout(() => {
-        if (this._trainerCommandResolver === resolve) {
-          this._trainerCommandResolver = null;
-          resolve();
-        }
-      }, timeout);
-    });
+    // 非阻塞：战斗照常进行，训练师指令在回合内并行可用
+  }
+
+  onTurnActionPhaseEnd() {
+    if (!this.isHumanBattle) return;
     this.emit({ type: 'TRAINER_COMMAND_END', turn: this.turn });
+    this._resolveTrainerPrompt();
   }
 
   isSilenced(card) {
@@ -421,8 +418,7 @@ export class BattleEngine {
         this.summonTokens(caster, effect);
         break;
       case 'BUFF_ADJACENT': {
-        const team = this.getTeam(caster);
-        const adjacent = this.resolveTargets('ADJACENT_ALLIES', caster, source);
+        const adjacent = this.resolveTargets('ADJACENT_ALLIES', caster, target);
         for (const ally of adjacent) {
           this.applyDirectStatBuff(ally, effect.attack || 0, effect.defense || 0, caster);
         }
@@ -881,7 +877,7 @@ export class BattleEngine {
         return result;
       }
 
-      await this.waitForTrainerCommand(paced, this.options.battleSpeed || 1);
+      this.waitForTrainerCommand(paced, this.options.battleSpeed || 1);
 
       result = this.checkBattleEnd();
       if (result) {
@@ -901,6 +897,7 @@ export class BattleEngine {
       }
 
       this.processTurnEndEffects();
+      this.onTurnActionPhaseEnd();
       this.emit({ type: 'TURN_END', turn: this.turn });
 
       result = this.checkBattleEnd();

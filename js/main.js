@@ -131,11 +131,13 @@ function init() {
         if (event.type === 'BATTLE_START') ui.onBattleStart();
 
         const renderEvents = [
+          'BATTLE_START', 'BATTLE_READY', 'BATTLE_END',
           'DAMAGE_TAKEN', 'CARD_DEATH', 'TURN_START', 'TURN_END',
           'HEAL', 'CRIT', 'SKILL_TRIGGER', 'STATUS_APPLIED',
           'ELEMENT_EFFECT', 'CARD_REVIVED', 'TEAM_DEFEATED', 'ATTACK', 'DODGE', 'EXECUTE',
           'CARD_ACTION_END', 'CARD_ACTION_START', 'ATTACK_WINDUP',
           'PARTNER_LINK', 'TRAINER_COMMAND', 'TRAINER_COMMAND_PROMPT', 'TRAINER_COMMAND_END', 'INSIGHT_REVEAL',
+          'STAT_BUFF',
         ];
         if (renderEvents.includes(event.type)) {
           ui.render(game.getState());
