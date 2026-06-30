@@ -2,7 +2,19 @@ import { CONFIG, getStarMultiplier } from './config.js';
 import { CARD_TEMPLATES as BASE_TEMPLATES } from './cardData.js';
 import { CARD_DATA_EXTRA } from './cardDataExtra.js';
 
-export const CARD_TEMPLATES = [...BASE_TEMPLATES, ...CARD_DATA_EXTRA];
+function resolveCostTier(tpl) {
+  if (tpl.costTier) return tpl.costTier;
+  return CONFIG.RARITY_COST_TIER[tpl.rarity] ?? 1;
+}
+
+export const CARD_TEMPLATES = [...BASE_TEMPLATES, ...CARD_DATA_EXTRA].map((tpl) => ({
+  ...tpl,
+  costTier: resolveCostTier(tpl),
+}));
+
+export function getTemplateCostTier(tpl) {
+  return tpl?.costTier ?? resolveCostTier(tpl);
+}
 
 let cardIdCounter = 0;
 

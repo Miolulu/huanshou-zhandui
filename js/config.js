@@ -19,7 +19,9 @@ export const CONFIG = {
   BATTLE_START_PAUSE_MS: 800,
   DAMAGE_VARIANCE: 0.1,
   MIN_DAMAGE: 1,
-  /** 金铲铲式公共卡池：每张英雄独立计数（S13 近似） */
+  /** 金铲铲式公共卡池：按费用档计数（每张英雄独立） */
+  CARD_POOL_LIMITS_BY_COST: { 1: 30, 2: 25, 3: 18, 4: 12, 5: 9 },
+  /** @deprecated 兼容旧逻辑，优先用 CARD_POOL_LIMITS_BY_COST */
   CARD_POOL_LIMITS: { common: 30, rare: 25, epic: 18, legendary: 9 },
   /** 费用 = 购买金币（1/2/3/4/5 费） */
   CARD_BUY_COST: { common: 1, rare: 2, epic: 3, epic4: 4, legendary: 5 },
@@ -41,7 +43,7 @@ export const CONFIG = {
   INITIAL_TAVERN_TIER: 1,
   /** 酒馆等级 → 出战栏位（金铲铲：升人口随等级解锁） */
   TAVERN_TEAM_SLOTS: [3, 4, 5, 6, 7, 7, 7],
-  /** 酒馆等级 → 商店稀有度权重（越高越容易刷出高费） */
+  /** 酒馆等级 → 商店稀有度权重（兼容展示） */
   TAVERN_RARITY_WEIGHTS: {
     1: { common: 100 },
     2: { common: 72, rare: 28 },
@@ -50,6 +52,16 @@ export const CONFIG = {
     5: { common: 32, rare: 34, epic: 26, legendary: 8 },
     6: { common: 22, rare: 30, epic: 32, legendary: 16 },
     7: { common: 15, rare: 25, epic: 35, legendary: 25 },
+  },
+  /** 酒馆等级 → 费用档刷新权重（金铲铲：3费/4费史诗分池） */
+  TAVERN_COST_WEIGHTS: {
+    1: { 1: 100 },
+    2: { 1: 75, 2: 25 },
+    3: { 1: 55, 2: 35, 3: 10 },
+    4: { 1: 42, 2: 36, 3: 18, 4: 4 },
+    5: { 1: 32, 2: 34, 3: 26, 4: 8 },
+    6: { 1: 22, 2: 30, 3: 32, 4: 16 },
+    7: { 1: 15, 2: 25, 3: 30, 4: 22, 5: 8 },
   },
   /** 每回合固定基础金币（炉石酒馆规则） */
   BASE_GOLD: 10,
@@ -79,6 +91,16 @@ export function getTavernRarityWeights(tavernTier) {
   return CONFIG.TAVERN_RARITY_WEIGHTS[tier] || CONFIG.TAVERN_RARITY_WEIGHTS[1];
 }
 
+export function getTavernCostWeights(tavernTier) {
+  const tier = Math.min(Math.max(tavernTier, 1), CONFIG.MAX_TAVERN_TIER);
+  return CONFIG.TAVERN_COST_WEIGHTS[tier] || CONFIG.TAVERN_COST_WEIGHTS[1];
+}
+
+export function getPoolLimitForCost(costTier) {
+  return CONFIG.CARD_POOL_LIMITS_BY_COST[costTier]
+    ?? CONFIG.CARD_POOL_LIMITS_BY_COST[1];
+}
+
 export function getCardBuyCost(rarity, costTier) {
   if (costTier) return costTier;
   return CONFIG.RARITY_COST_TIER[rarity] ?? CONFIG.BUY_COST;
@@ -91,10 +113,11 @@ export function getStarMultiplier(rarity, star, costTier) {
 }
 
 export function formatTavernShopOdds(tavernTier) {
-  const w = getTavernRarityWeights(tavernTier);
+  const w = getTavernCostWeights(tavernTier);
   const total = Object.values(w).reduce((a, b) => a + b, 0);
   return Object.entries(w)
-    .map(([r, v]) => `${RARITY_NAMES[r]}${Math.round((v / total) * 100)}%`)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([cost, v]) => `${cost}费${Math.round((v / total) * 100)}%`)
     .join(' · ');
 }
 

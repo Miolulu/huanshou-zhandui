@@ -239,7 +239,7 @@ export class UI {
           <div class="card-name">${sc.name}</div>
           <div class="card-badges">${elementBadgeHtml(sc.element)}${classBadgeHtml(sc.cardClass || tpl?.class)}</div>
         </div>
-        <div class="card-meta">★1 · ${RARITY_NAMES[sc.rarity]}</div>
+        <div class="card-meta">★1 · ${sc.costTier ?? sc.cost}费 · ${RARITY_NAMES[sc.rarity]}</div>
         <div class="card-desc">${tpl?.description || ''}</div>
         <div class="card-skills-mini">${skillsHtml}</div>
         <div class="card-cost">${sc.cost} 金</div>

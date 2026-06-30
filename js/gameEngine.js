@@ -1,7 +1,8 @@
 import {
   CONFIG,
   getTavernUpgradeCost,
-  getTavernRarityWeights,
+  getTavernCostWeights,
+  getPoolLimitForCost,
   getTeamSlotsForTavern,
   getInterest,
   getStreakBonus,
@@ -9,7 +10,7 @@ import {
   getCardBuyCost,
   getStageDamage,
 } from './config.js';
-import { CARD_TEMPLATES, createCard, recalculateCardStats, getTemplate } from './cards.js';
+import { CARD_TEMPLATES, createCard, recalculateCardStats, getTemplate, getTemplateCostTier } from './cards.js';
 import { BattleEngine } from './battleEngine.js';
 import { runAIDecisions } from './ai.js';
 
@@ -109,7 +110,7 @@ export class GameEngine {
   initPool() {
     this.poolRemaining = {};
     for (const tpl of CARD_TEMPLATES) {
-      this.poolRemaining[tpl.id] = CONFIG.CARD_POOL_LIMITS[tpl.rarity];
+      this.poolRemaining[tpl.id] = getPoolLimitForCost(getTemplateCostTier(tpl));
     }
   }
 
@@ -205,17 +206,34 @@ export class GameEngine {
     return { base, streakBonus, streakLabel, interest, skillGold, total, goldBeforeIncome };
   }
 
-  rollRarity(tavernTier) {
-    const weights = getTavernRarityWeights(tavernTier);
-    const available = Object.keys(weights);
-    const vals = available.map(r => weights[r]);
+  rollCostTier(tavernTier) {
+    const weights = getTavernCostWeights(tavernTier);
+    const tiers = Object.keys(weights).map(Number).sort((a, b) => a - b);
+    const vals = tiers.map((t) => weights[t]);
     const total = vals.reduce((a, b) => a + b, 0);
     let roll = Math.random() * total;
-    for (let i = 0; i < available.length; i++) {
+    for (let i = 0; i < tiers.length; i++) {
       roll -= vals[i];
-      if (roll <= 0) return available[i];
+      if (roll <= 0) return tiers[i];
     }
-    return 'common';
+    return 1;
+  }
+
+  pickShopTemplate(costTier) {
+    const inPool = (tpl) => (this.poolRemaining[tpl.id] || 0) > 0;
+    let candidates = CARD_TEMPLATES.filter(
+      (t) => getTemplateCostTier(t) === costTier && inPool(t),
+    );
+    if (!candidates.length) {
+      candidates = CARD_TEMPLATES.filter(
+        (t) => getTemplateCostTier(t) <= costTier && inPool(t),
+      );
+    }
+    if (!candidates.length) {
+      candidates = CARD_TEMPLATES.filter((t) => getTemplateCostTier(t) === 1 && inPool(t));
+    }
+    if (!candidates.length) return null;
+    return candidates[Math.floor(Math.random() * candidates.length)];
   }
 
   refreshShop(player) {
@@ -225,14 +243,10 @@ export class GameEngine {
     player.shop.cards = [];
 
     for (let i = 0; i < CONFIG.SHOP_SIZE; i++) {
-      const rarity = this.rollRarity(player.tavernTier);
-      let candidates = CARD_TEMPLATES.filter(t => t.rarity === rarity && (this.poolRemaining[t.id] || 0) > 0);
-      if (!candidates.length) {
-        candidates = CARD_TEMPLATES.filter(t => t.rarity === 'common' && (this.poolRemaining[t.id] || 0) > 0);
-      }
-      if (!candidates.length) continue;
+      const costTier = this.rollCostTier(player.tavernTier);
+      const tpl = this.pickShopTemplate(costTier);
+      if (!tpl) continue;
 
-      const tpl = candidates[Math.floor(Math.random() * candidates.length)];
       player.shop.cards.push({
         shopIndex: i,
         cardTemplateId: tpl.id,
@@ -241,6 +255,7 @@ export class GameEngine {
         element: tpl.element,
         cardClass: tpl.class,
         cost: getCardBuyCost(tpl.rarity, tpl.costTier),
+        costTier: tpl.costTier,
         star: 1,
       });
     }

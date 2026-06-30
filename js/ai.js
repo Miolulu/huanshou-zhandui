@@ -55,7 +55,7 @@ function evaluateCard(shopCard, analysis, params, playerGold) {
   const tpl = getTemplate(shopCard.cardTemplateId);
   if (!tpl) return 0;
 
-  score += (RARITY_WEIGHT[tpl.rarity] || 0) * params.riskTolerance;
+  score += ((tpl.costTier || 1) * 4 + (RARITY_WEIGHT[tpl.rarity] || 0)) * params.riskTolerance;
 
   const elCount = analysis.elementCount[tpl.element] || 0;
   if (elCount > 0) {

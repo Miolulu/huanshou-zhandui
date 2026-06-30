@@ -279,8 +279,10 @@ export class BattleEngine {
 
     switch (targetType) {
       case 'SELF': return [caster];
-      case 'ALL_ALLIES': return aliveAllies;
-      case 'ALL_ENEMIES': return aliveEnemies;
+      case 'ALL_ALLIES':
+      case 'TEAM_ALL': return aliveAllies;
+      case 'ALL_ENEMIES':
+      case 'ENEMY_ALL': return aliveEnemies;
       case 'RANDOM_ENEMY':
         return aliveEnemies.length ? [aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)]] : [];
       case 'RANDOM_ALLY':
@@ -289,11 +291,13 @@ export class BattleEngine {
         const sorted = [...aliveEnemies].sort((a, b) => a.position - b.position);
         return sorted.length ? [sorted[0]] : [];
       }
-      case 'LOWEST_HP_ENEMY': {
+      case 'LOWEST_HP_ENEMY':
+      case 'ENEMY_LOWEST_HP': {
         const sorted = [...aliveEnemies].sort((a, b) => hpRatio(a) - hpRatio(b));
         return sorted.length ? [sorted[0]] : [];
       }
-      case 'LOWEST_HP_ALLY': {
+      case 'LOWEST_HP_ALLY':
+      case 'TEAM_LOWEST_HP': {
         const sorted = [...aliveAllies].sort((a, b) => hpRatio(a) - hpRatio(b));
         return sorted.length ? [sorted[0]] : [];
       }
