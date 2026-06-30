@@ -3,9 +3,10 @@ import { UI } from './ui.js';
 import { RoomManager } from './roomManager.js';
 import { initMenu, refreshMenuProfile } from './menuUI.js';
 import { LobbyUI } from './lobbyUI.js';
-import { showScreen, renderElementChart, showToast } from './appShell.js';
+import { initAuth } from './authUI.js';
+import { showScreen, showToast } from './appShell.js';
 import { getGameMode } from './gameModes.js';
-import { onGameEnd, loadProfile } from './playerProfile.js';
+import { onGameEnd, loadProfile, ensureProfileForAccount, checkDailyLogin } from './playerProfile.js';
 import { saveGameSession, loadGameSession, clearGameSession } from './session.js';
 
 let game;
@@ -13,6 +14,7 @@ let ui;
 let roomManager;
 let lobbyUI;
 let lastGameOptions = {};
+let appReady = false;
 
 function startGameFromRoom(playerConfigs, options = {}) {
   const room = roomManager.currentRoom;
@@ -58,11 +60,65 @@ function recoverSession() {
   }
 }
 
+function enterMainMenu() {
+  ensureProfileForAccount();
+  checkDailyLogin(loadProfile());
+  showScreen('menu');
+  if (!appReady) {
+    initApp();
+    appReady = true;
+  } else {
+    refreshMenuProfile();
+  }
+}
+
+function initApp() {
+  roomManager = new RoomManager((state) => lobbyUI?.render(state));
+  lobbyUI = new LobbyUI(roomManager, startGameFromRoom, leaveLobby);
+
+  if (roomManager.channel) {
+    roomManager.onChannelMessage((e) => {
+      if (e.data?.type === 'GAME_START' && e.data.code === roomManager.currentRoom?.code) {
+        const configs = RoomManager.configsForClient(e.data.room, roomManager.playerId);
+        startGameFromRoom(configs, { modeId: e.data.modeId, aiDifficulty: e.data.aiDifficulty });
+      } else if (e.data?.code === roomManager.currentRoom?.code && e.data.room) {
+        roomManager.currentRoom = e.data.room;
+        roomManager.mySlotIndex = e.data.room.slots.findIndex(s => s.id === roomManager.playerId);
+        lobbyUI.render(roomManager.getLobbyState());
+      }
+    });
+  }
+
+  initMenu(
+    (nickname, opts) => { roomManager.createRoom(nickname, opts); enterLobby(); },
+    (code, nickname) => { roomManager.joinRoom(code, nickname); enterLobby(); },
+    startQuickGame,
+    recoverSession,
+  );
+
+  const recoverBtn = document.getElementById('btn-recover-session');
+  if (recoverBtn) recoverBtn.onclick = recoverSession;
+
+  document.getElementById('btn-back-lobby').onclick = () => {
+    if (confirm('确定退出对局？')) {
+      clearGameSession();
+      showScreen('menu');
+      roomManager.leaveRoom();
+      refreshMenuProfile();
+    }
+  };
+
+  document.getElementById('overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'btn-restart') {
+      showScreen('menu');
+      roomManager.leaveRoom();
+      refreshMenuProfile();
+    }
+  });
+}
+
 function init() {
   try {
-    renderElementChart(document.getElementById('menu-element-chart'));
-    renderElementChart(document.getElementById('element-chart'), true);
-
     game = new GameEngine(
       (state) => {
         ui?.render(state);
@@ -87,48 +143,7 @@ function init() {
 
     ui = new UI(game);
 
-    roomManager = new RoomManager((state) => lobbyUI?.render(state));
-    lobbyUI = new LobbyUI(roomManager, startGameFromRoom, leaveLobby);
-
-    if (roomManager.channel) {
-      roomManager.onChannelMessage((e) => {
-        if (e.data?.type === 'GAME_START' && e.data.code === roomManager.currentRoom?.code) {
-          const configs = RoomManager.configsForClient(e.data.room, roomManager.playerId);
-          startGameFromRoom(configs, { modeId: e.data.modeId, aiDifficulty: e.data.aiDifficulty });
-        } else if (e.data?.code === roomManager.currentRoom?.code && e.data.room) {
-          roomManager.currentRoom = e.data.room;
-          roomManager.mySlotIndex = e.data.room.slots.findIndex(s => s.id === roomManager.playerId);
-          lobbyUI.render(roomManager.getLobbyState());
-        }
-      });
-    }
-
-    initMenu(
-      (nickname, opts) => { roomManager.createRoom(nickname, opts); enterLobby(); },
-      (code, nickname) => { roomManager.joinRoom(code, nickname); enterLobby(); },
-      startQuickGame,
-      recoverSession,
-    );
-
-    const recoverBtn = document.getElementById('btn-recover-session');
-    if (recoverBtn) recoverBtn.onclick = recoverSession;
-
-    document.getElementById('btn-back-lobby').onclick = () => {
-      if (confirm('确定退出对局？')) {
-        clearGameSession();
-        showScreen('menu');
-        roomManager.leaveRoom();
-        refreshMenuProfile();
-      }
-    };
-
-    document.getElementById('overlay').addEventListener('click', (e) => {
-      if (e.target.id === 'btn-restart') {
-        showScreen('menu');
-        roomManager.leaveRoom();
-        refreshMenuProfile();
-      }
-    });
+    initAuth(enterMainMenu);
   } catch (err) {
     console.error(err);
     if (window.__showBootError) window.__showBootError(err.message || String(err));

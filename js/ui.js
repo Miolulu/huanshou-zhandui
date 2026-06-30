@@ -13,6 +13,7 @@ import { formatSkillList } from './skills.js';
 import { elementBadgeHtml, classBadgeHtml } from './appShell.js';
 import { summarizeActiveElementBonds } from './elements.js';
 import { summarizeActiveClassBonds, CLASS_NAMES } from './classes.js';
+import { renderBondGuideHTML, renderActiveBondsBattle } from './bondGuide.js';
 
 const RARITY_CLASS = { common: 'r-common', rare: 'r-rare', epic: 'r-epic', legendary: 'r-legendary' };
 
@@ -21,6 +22,7 @@ export class UI {
     this.game = game;
     this.selectedTeamPos = null;
     this.endRewards = null;
+    this.bondGuideOpen = false;
     this.bindElements();
     this.bindActions();
   }
@@ -54,6 +56,8 @@ export class UI {
       overlay: document.getElementById('overlay'),
       overlayTitle: document.getElementById('overlay-title'),
       overlayBody: document.getElementById('overlay-body'),
+      battleActiveBonds: document.getElementById('battle-active-bonds'),
+      bondGuidePanel: document.getElementById('bond-guide-panel'),
     };
   }
 
@@ -86,6 +90,18 @@ export class UI {
       }
     };
     document.getElementById('btn-skip-battle').onclick = () => this.game.skipBattle();
+    document.getElementById('btn-toggle-bond-guide').onclick = () => this.toggleBondGuide();
+    if (this.el.bondGuidePanel && !this.el.bondGuidePanel.dataset.ready) {
+      this.el.bondGuidePanel.innerHTML = renderBondGuideHTML();
+      this.el.bondGuidePanel.dataset.ready = '1';
+    }
+  }
+
+  toggleBondGuide() {
+    this.bondGuideOpen = !this.bondGuideOpen;
+    this.el.bondGuidePanel?.classList.toggle('hidden', !this.bondGuideOpen);
+    const btn = document.getElementById('btn-toggle-bond-guide');
+    if (btn) btn.textContent = this.bondGuideOpen ? '收起说明' : '羁绊说明';
   }
 
   render(state) {
@@ -105,6 +121,7 @@ export class UI {
     this.renderOpponent(state);
     this.renderButtonStates(state, human);
     this.renderBattleField(state);
+    this.renderBattleBonds(human, state.phase);
 
     if (state.phase === 'ENDED') {
       this.showOverlay('游戏结束', this.buildEndSummary(state));
@@ -241,6 +258,16 @@ export class UI {
     const btnUp = document.getElementById('btn-upgrade-card');
     btnUp.disabled = !canUp || human.gold < upCost;
     document.getElementById('btn-sell-card').textContent = `卖出 (+${card.upgradeTier}金)`;
+  }
+
+  renderBattleBonds(human, phase) {
+    const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
+    if (this.el.battleActiveBonds) {
+      const showActive = ['PREPARE', 'BATTLE', 'SETTLE', 'MATCH'].includes(phase);
+      this.el.battleActiveBonds.innerHTML = showActive
+        ? `<h3 class="bond-active-title">当前激活羁绊</h3>${renderActiveBondsBattle(cards)}`
+        : '';
+    }
   }
 
   renderTeamBonds(human) {

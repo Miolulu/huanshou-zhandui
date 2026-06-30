@@ -1,7 +1,8 @@
 import { peekRoom } from './roomManager.js';
-import { showScreen, getNickname, setMenuError, renderElementChart, showToast, syncNicknameInput } from './appShell.js';
+import { showScreen, getNickname, setMenuError, showToast } from './appShell.js';
 import { MODE_LIST, getGameMode, isModeUnlocked, buildPlayerConfigsForMode } from './gameModes.js';
-import { loadProfile, saveProfile, setNickname, checkDailyLogin, claimLoginReward, DAILY_TASKS, expForLevel } from './playerProfile.js';
+import { loadProfile, saveProfile, checkDailyLogin, claimLoginReward, DAILY_TASKS, expForLevel, signOut } from './playerProfile.js';
+import { getCurrentUsername } from './auth.js';
 import { formatRank } from './rank.js';
 import { startTutorial, shouldAutoStartTutorial } from './tutorial.js';
 import { hasRecoverableSession } from './session.js';
@@ -11,23 +12,19 @@ let callbacks = {};
 
 export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSession) {
   callbacks = { onCreateRoom, onJoinRoom, onQuickStart, onRecoverSession };
-  renderElementChart(document.getElementById('menu-element-chart'));
   renderProfilePanel();
   renderModeGrid();
   bindProfileEvents();
   bindModeEvents();
 
-  const profile = checkDailyLogin(loadProfile()).profile;
-  syncNicknameInput(profile.nickname);
+  checkDailyLogin(loadProfile());
 
   document.getElementById('btn-create-room').onclick = () => {
     setMenuError('');
-    const mode = getGameMode(selectedModeId);
     if (selectedModeId === 'ai_battle') {
       setMenuError('人机对战请使用「立即开始」');
       return;
     }
-    setNickname(getNickname());
     try {
       onCreateRoom(getNickname(), {
         modeId: selectedModeId,
@@ -46,7 +43,6 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
     setMenuError('');
     const code = document.getElementById('input-room-code').value.trim();
     if (!code) { setMenuError('请输入房间号'); return; }
-    setNickname(getNickname());
     try {
       onJoinRoom(code, getNickname());
     } catch (e) {
@@ -56,7 +52,6 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
 
   document.getElementById('btn-quick-start').onclick = () => {
     setMenuError('');
-    setNickname(getNickname());
     const diff = document.getElementById('select-ai-difficulty').value;
     const configs = buildPlayerConfigsForMode(selectedModeId, getNickname(), diff);
     const mode = getGameMode(selectedModeId);
@@ -69,18 +64,13 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
     });
   };
 
-  document.getElementById('input-nickname').addEventListener('change', () => {
-    setNickname(getNickname());
-    renderProfilePanel();
-  });
-
   const params = new URLSearchParams(location.search);
   const roomCode = params.get('room');
   if (roomCode) {
     document.getElementById('join-panel').classList.remove('hidden');
     document.getElementById('input-room-code').value = roomCode;
     if (peekRoom(roomCode)) {
-      showToast(`检测到房间 ${roomCode.toUpperCase()}，输入昵称后点击加入`);
+      showToast(`检测到房间 ${roomCode.toUpperCase()}，点击加入`);
     }
   }
 
@@ -100,10 +90,15 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
 
 export function refreshMenuProfile() {
   renderProfilePanel();
+  renderModeGrid();
 }
 
 function renderProfilePanel() {
   const p = loadProfile();
+  const usernameEl = document.getElementById('profile-username');
+  const nicknameEl = document.getElementById('profile-nickname');
+  if (usernameEl) usernameEl.textContent = getCurrentUsername() || '-';
+  if (nicknameEl) nicknameEl.textContent = p.nickname || '-';
   document.getElementById('profile-rank').textContent = formatRank(p.rank);
   document.getElementById('profile-level').textContent = p.level;
   document.getElementById('profile-wins').textContent = p.stats?.wins || 0;
@@ -177,6 +172,13 @@ function bindProfileEvents() {
   };
 
   document.getElementById('btn-tutorial').onclick = () => startTutorial(true);
+
+  document.getElementById('btn-logout').onclick = () => {
+    if (confirm('确定退出登录？成长数据已保存在本账号下。')) {
+      signOut();
+      location.reload();
+    }
+  };
 }
 
 export function getSelectedModeId() {

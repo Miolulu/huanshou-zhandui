@@ -7,11 +7,48 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- ===== 登录 / 注册 ===== -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-container">
+      <div class="auth-logo">
+        <h1>幻兽战队</h1>
+        <p>注册账号以保存段位、等级与成长进度</p>
+      </div>
+      <div class="auth-tabs">
+        <button type="button" id="tab-login" class="active">登录</button>
+        <button type="button" id="tab-register">注册</button>
+      </div>
+      <form id="form-login" class="auth-form">
+        <label>账号</label>
+        <input id="auth-login-username" type="text" maxlength="16" placeholder="3-16 位字符" required>
+        <label>密码</label>
+        <input id="auth-login-password" type="password" maxlength="32" placeholder="至少 6 位" required>
+        <p id="auth-login-error" class="error-msg"></p>
+        <button type="submit" class="btn-accent btn-lg">登录</button>
+      </form>
+      <form id="form-register" class="auth-form hidden">
+        <label>账号</label>
+        <input id="auth-reg-username" type="text" maxlength="16" placeholder="用于登录，不可重复" required>
+        <label>昵称</label>
+        <input id="auth-reg-nickname" type="text" maxlength="12" placeholder="游戏中显示的名称" required>
+        <label>密码</label>
+        <input id="auth-reg-password" type="password" maxlength="32" placeholder="至少 6 位" required>
+        <label>确认密码</label>
+        <input id="auth-reg-password2" type="password" maxlength="32" placeholder="再次输入密码" required>
+        <p id="auth-register-error" class="error-msg"></p>
+        <button type="submit" class="btn-accent btn-lg">注册并进入</button>
+      </form>
+      <p class="auth-hint">数据保存在本浏览器本地。换设备需重新注册。</p>
+    </div>
+  </div>
+
   <!-- ===== 主界面 ===== -->
-  <div id="screen-menu" class="screen active">
+  <div id="screen-menu" class="screen">
     <div class="menu-layout">
       <aside class="profile-panel">
         <h3>训练师档案</h3>
+        <p class="profile-account">账号 <strong id="profile-username">-</strong></p>
+        <p class="profile-account">昵称 <strong id="profile-nickname">-</strong></p>
         <div id="profile-rank" class="rank-badge">黑铁 III ★0</div>
         <div class="profile-stats">
           <span>Lv.<strong id="profile-level">1</strong></span>
@@ -26,6 +63,7 @@
         <button id="btn-daily-login" class="btn-gold btn-small">每日签到</button>
         <button id="btn-show-tasks" class="btn-muted btn-small">每日任务</button>
         <button id="btn-tutorial" class="btn-muted btn-small">新手教程</button>
+        <button id="btn-logout" class="btn-danger btn-small">退出登录</button>
         <div id="tasks-panel" class="tasks-panel hidden"></div>
       </aside>
       <div class="menu-container">
@@ -34,8 +72,6 @@
           <p>8人策略卡牌 · 酒馆自走棋 · 元素克制 · 自动战斗</p>
         </div>
         <div class="menu-form">
-          <label>昵称</label>
-          <input id="input-nickname" type="text" maxlength="12" placeholder="输入你的昵称" value="训练师">
           <h3 class="section-label">选择模式</h3>
           <div id="mode-grid" class="mode-grid"></div>
           <div id="ai-difficulty-row" class="ai-difficulty-row hidden">
@@ -58,11 +94,6 @@
           </div>
           <p id="menu-error" class="error-msg"></p>
           <p id="session-recover-hint" class="hint hidden"></p>
-        </div>
-        <div class="element-preview">
-          <h3>属性克制</h3>
-          <div id="menu-element-chart" class="element-chart"></div>
-          <p class="hint">克制 ×1.5 · 被克 ×0.7 · 同元素 3/5/7 只触发羁绊加成</p>
         </div>
       </div>
     </div>
@@ -129,8 +160,6 @@
       <aside class="panel sidebar-left">
         <h2>对局排名</h2>
         <div id="players-list" class="players-list"></div>
-        <h2>属性克制</h2>
-        <div id="element-chart" class="element-chart compact"></div>
         <h2>下轮对手</h2>
         <div id="opponent-info" class="opponent-box"></div>
       </aside>
@@ -183,7 +212,12 @@
         </section>
 
         <section class="battle-section">
-          <h2>战斗场面</h2>
+          <div class="battle-section-head">
+            <h2>战斗场面</h2>
+            <button type="button" id="btn-toggle-bond-guide" class="btn-small btn-gold">羁绊说明</button>
+          </div>
+          <div id="battle-active-bonds" class="battle-active-bonds"></div>
+          <div id="bond-guide-panel" class="bond-guide-panel hidden"></div>
           <div id="battle-field" class="battle-field"></div>
         </section>
       </main>

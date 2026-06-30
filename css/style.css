@@ -852,3 +852,118 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 .end-rewards p { margin: 4px 0; color: #3fb950; }
 
+/* ===== 登录 / 注册 ===== */
+.auth-container {
+  max-width: 400px;
+  margin: 60px auto;
+  padding: 28px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.auth-logo h1 { color: #f0883e; margin-bottom: 8px; }
+.auth-logo p { color: #8b949e; font-size: 0.9rem; margin-bottom: 20px; }
+
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.auth-tabs button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  background: #0d1117;
+  color: #8b949e;
+  cursor: pointer;
+}
+
+.auth-tabs button.active {
+  border-color: #f0883e;
+  color: #f0883e;
+  background: #21262d;
+}
+
+.auth-form {
+  text-align: left;
+}
+
+.auth-form.hidden { display: none; }
+.auth-form label { display: block; font-size: 0.85rem; color: #8b949e; margin: 10px 0 4px; }
+.auth-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  background: #0d1117;
+  color: #e6edf3;
+  margin-bottom: 4px;
+}
+
+.auth-form .btn-lg { width: 100%; margin-top: 16px; }
+.auth-hint { font-size: 0.75rem; color: #6e7681; margin-top: 16px; }
+
+.profile-account { font-size: 0.8rem; color: #8b949e; margin-bottom: 4px; }
+.profile-account strong { color: #e6edf3; }
+
+/* ===== 战斗羁绊说明 ===== */
+.battle-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.battle-active-bonds { margin-bottom: 10px; }
+.bond-active-title { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
+
+.active-bonds-list { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.active-bond-card {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  max-width: 280px;
+}
+
+.active-bond-card.bond-el { border-color: #388bfd44; }
+.active-bond-card.bond-class { border-color: #a371f744; }
+.active-bond-card .bond-effect {
+  display: block;
+  color: #8b949e;
+  font-size: 0.72rem;
+  margin-top: 4px;
+}
+
+.bond-guide-panel {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.bond-guide-panel.hidden { display: none; }
+.bond-guide-section { margin-bottom: 16px; }
+.bond-guide-section h3 { color: #f0883e; font-size: 0.9rem; margin-bottom: 8px; }
+.bond-guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.bond-guide-block {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.78rem;
+}
+.bond-guide-block h4 { margin-bottom: 6px; font-size: 0.82rem; }
+.bond-tier-list { list-style: none; padding: 0; }
+.bond-tier-list li { padding: 2px 0; color: #8b949e; }
+.el-mul { font-size: 0.7rem; color: #6e7681; margin-left: 4px; }
+

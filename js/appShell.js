@@ -1,5 +1,7 @@
+/** 共享 UI 工具 */
 import { ELEMENT_CHART } from './elements.js';
 import { ELEMENT_NAMES } from './config.js';
+import { getNickname as profileNickname } from './playerProfile.js';
 
 export function renderElementChart(container, compact = false) {
   if (!container) return;
@@ -42,14 +44,10 @@ export function showScreen(name) {
 }
 
 export function getNickname() {
-  const el = document.getElementById('input-nickname');
-  return el?.value.trim() || '训练师';
+  return profileNickname();
 }
 
-export function syncNicknameInput(name) {
-  const el = document.getElementById('input-nickname');
-  if (el && name) el.value = name;
-}
+export function syncNicknameInput() { /* 已改用账号昵称 */ }
 
 export function setMenuError(msg) {
   const el = document.getElementById('menu-error');

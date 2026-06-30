@@ -1,11 +1,18 @@
-/** 玩家档案：等级、任务、签到、持久化 */
+/** 玩家档案：等级、任务、签到、按账号持久化 */
 import { createDefaultRank, applyRankChange } from './rank.js';
+import { getCurrentAccountId, getSession, updateAccountNickname, logout } from './auth.js';
 
-const KEY = 'hszd_player_profile_v1';
+const LEGACY_KEY = 'hszd_player_profile_v1';
+
+function profileKey() {
+  const id = getCurrentAccountId();
+  return id ? `hszd_player_profile_${id}` : null;
+}
 
 function defaultProfile() {
+  const session = getSession();
   return {
-    nickname: '训练师',
+    nickname: session?.nickname || '训练师',
     level: 1,
     exp: 0,
     totalExp: 0,
@@ -23,8 +30,10 @@ function defaultProfile() {
 }
 
 export function loadProfile() {
+  const key = profileKey();
+  if (!key) return defaultProfile();
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return defaultProfile();
     return { ...defaultProfile(), ...JSON.parse(raw) };
   } catch {
@@ -33,17 +42,42 @@ export function loadProfile() {
 }
 
 export function saveProfile(profile) {
-  localStorage.setItem(KEY, JSON.stringify(profile));
+  const key = profileKey();
+  if (!key) return;
+  localStorage.setItem(key, JSON.stringify(profile));
+}
+
+/** 登录/注册后初始化该账号档案 */
+export function ensureProfileForAccount() {
+  const key = profileKey();
+  if (!key) return null;
+  const existing = localStorage.getItem(key);
+  if (!existing) {
+    const profile = defaultProfile();
+    saveProfile(profile);
+    return profile;
+  }
+  const profile = loadProfile();
+  const session = getSession();
+  if (session && profile.nickname !== session.nickname) {
+    profile.nickname = session.nickname;
+    saveProfile(profile);
+  }
+  return profile;
 }
 
 export function getNickname() {
-  return loadProfile().nickname || '训练师';
+  return loadProfile().nickname || getSession()?.nickname || '训练师';
 }
 
-export function setNickname(name) {
+export async function setNickname(name) {
   const p = loadProfile();
-  p.nickname = (name || '训练师').trim().slice(0, 12);
+  const nickname = (name || '训练师').trim().slice(0, 12);
+  p.nickname = nickname;
   saveProfile(p);
+  try {
+    await updateAccountNickname(nickname);
+  } catch { /* guest */ }
   return p;
 }
 
@@ -134,4 +168,8 @@ export function completeTutorial(profile) {
   addExp(profile, 100);
   saveProfile(profile);
   return profile;
+}
+
+export function signOut() {
+  logout();
 }

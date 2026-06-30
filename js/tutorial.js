@@ -6,7 +6,7 @@ const STEPS = [
   { title: '欢迎来到幻兽战队', text: '这是一款8人策略卡牌自走棋。每回合在酒馆购买幻兽、组建战队，然后自动战斗。', target: null },
   { title: '选择游戏模式', text: '主界面可选择排位、休闲、人机对战等模式。人机模式可单独练习。', target: '.mode-grid' },
   { title: '创建或加入房间', text: '多人对战可创建房间邀请好友，或输入6位房间号加入。', target: '.menu-actions' },
-  { title: '元素羁绊', text: '同元素幻兽达到2/3/5/7只触发羁绊加成。注意左侧属性克制关系。', target: '.element-preview' },
+  { title: '羁绊与克制', text: '对局中点击战斗区「羁绊说明」查看元素/职业羁绊与属性克制。战斗中会显示当前激活的羁绊效果。', target: null },
   { title: '段位与成长', text: '排位赛会升降段位星数。完成任务和签到可获得金币经验。', target: '.profile-panel' },
   { title: '开始游戏', text: '点击模式卡片即可开始。人机对战无需房间，直接开局！', target: '.mode-grid' },
 ];
