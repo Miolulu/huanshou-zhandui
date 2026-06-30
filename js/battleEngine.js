@@ -5,16 +5,7 @@ import {
   getElementRelation,
   getSkillType,
 } from './elements.js';
-import {
-  countTeamClasses,
-  getClassBondTier,
-  getClassBondEffect,
-  CLASS_BOND_NAMES,
-} from './classes.js';
-import { countComboBonds, getComboBondTier, COMBO_BONDS } from './comboBonds.js';
-import { summarizeActiveOriginBonds, ORIGIN_BONDS, getOriginBondTier } from './originBonds.js';
 import { ELEMENT_NAMES } from './config.js';
-
 const NEGATIVE_STATUSES = new Set([
   'BURN', 'POISON', 'PARALYZE', 'STUN', 'FREEZE', 'SILENCE', 'DEBUFF', 'ENTANGLE', 'BLIND',
 ]);
@@ -79,143 +70,7 @@ export class BattleEngine {
   }
 
   applyBonds() {
-    for (const team of [this.teamA, this.teamB]) {
-      this.applyComboBonds(team);
-      this.applyOriginBonds(team);
-      this.applyClassBonds(team);
-    }
-  }
-
-  applyOriginBonds(team) {
-    const cards = team.cards.filter(Boolean);
-    const teamMods = {};
-
-    for (const bond of ORIGIN_BONDS) {
-      const count = cards.filter(c => bond.elements.includes(c.element)).length;
-      const tier = getOriginBondTier(bond, count);
-      if (!tier) continue;
-      const effect = bond.getEffect(tier);
-
-      this.emit({
-        type: 'SYNERGY_APPLIED',
-        teamName: team.playerName,
-        bondType: 'origin',
-        bondName: bond.name,
-        tier,
-        count,
-      });
-
-      for (const [key, val] of Object.entries(effect)) {
-        if (typeof val === 'number') teamMods[key] = (teamMods[key] || 0) + val;
-      }
-    }
-
-    for (const card of cards) {
-      card.bondMods = { ...(card.bondMods || {}), ...teamMods };
-      this.applyBondModsToCard(card, teamMods);
-    }
-  }
-
-  applyComboBonds(team) {
-    const cards = team.cards.filter(Boolean);
-    const counts = countComboBonds(cards);
-    const perCardMods = new Map();
-
-    for (const bond of COMBO_BONDS) {
-      const count = counts[bond.id] || 0;
-      const tier = getComboBondTier(count);
-      if (!tier) continue;
-      const effect = bond.getEffect(tier);
-
-      this.emit({
-        type: 'SYNERGY_APPLIED',
-        teamName: team.playerName,
-        bondType: 'combo',
-        bondName: bond.name,
-        tier,
-        count,
-      });
-
-      for (const card of cards) {
-        const cls = card.cardClass || card.class;
-        if (card.element !== bond.element || cls !== bond.class) continue;
-        const mods = perCardMods.get(card.id) || {};
-        for (const [key, val] of Object.entries(effect)) {
-          if (typeof val === 'number') mods[key] = (mods[key] || 0) + val;
-        }
-        perCardMods.set(card.id, mods);
-      }
-    }
-
-    for (const card of cards) {
-      const mods = perCardMods.get(card.id) || {};
-      card.bondMods = { ...(card.bondMods || {}), ...mods };
-      this.applyBondModsToCard(card, mods);
-    }
-  }
-
-  applyBondModsToCard(card, teamMods) {
-    if (teamMods.teamAtkPct) card.attack = Math.round(card.attack * (1 + teamMods.teamAtkPct));
-    if (teamMods.teamDefPct) card.defense = Math.round(card.defense * (1 + teamMods.teamDefPct));
-    if (teamMods.teamCrit) card.critRate += teamMods.teamCrit;
-
-    const cls = card.cardClass || card.class;
-    if (cls === 'assassin') {
-      if (teamMods.assassinCrit) card.critRate += teamMods.assassinCrit;
-      if (teamMods.assassinSpdPct) card.speed = Math.round(card.speed * (1 + teamMods.assassinSpdPct));
-      if (teamMods.assassinAtkPct) card.attack = Math.round(card.attack * (1 + teamMods.assassinAtkPct));
-    }
-    if (cls === 'archer' && teamMods.archerAtkPct) {
-      card.attack = Math.round(card.attack * (1 + teamMods.archerAtkPct));
-    }
-    if (cls === 'mage' && teamMods.mageCdReduce) {
-      for (const skill of card.skills) {
-        if (skill.cooldown > 0) skill.cooldown = Math.max(1, Math.round(skill.cooldown * (1 - teamMods.mageCdReduce)));
-      }
-    }
-    if (cls === 'tank' && teamMods.tankTauntChance && Math.random() < teamMods.tankTauntChance) {
-      this.addStatus(card, { type: 'TAUNT', value: 0, duration: 1, source: card.id });
-    }
-  }
-
-  applyElementBonds(_team) {
-    /* 元素仅保留克制关系，不再提供单一属性羁绊数值 */
-  }
-
-  applyClassBonds(team) {
-    const cards = team.cards.filter(Boolean);
-    const classCounts = countTeamClasses(cards);
-    const teamMods = {};
-
-    for (const [cls, count] of Object.entries(classCounts)) {
-      if (count < 4) continue;
-      const tier = count >= 6 ? 6 : 4;
-      const effect = getClassBondEffect(cls, tier);
-      if (!effect) continue;
-
-      this.emit({
-        type: 'SYNERGY_APPLIED',
-        teamName: team.playerName,
-        bondType: 'class',
-        bondName: CLASS_BOND_NAMES[cls],
-        tier,
-        count,
-      });
-
-      for (const [key, val] of Object.entries(effect)) {
-        if (typeof val === 'number') {
-          const scaled = val * 0.35;
-          teamMods[key] = (teamMods[key] || 0) + scaled;
-        } else {
-          teamMods[key] = Math.max(teamMods[key] || 0, val);
-        }
-      }
-    }
-
-    for (const card of cards) {
-      card.bondMods = { ...(card.bondMods || {}), ...teamMods };
-      this.applyBondModsToCard(card, teamMods);
-    }
+    /* 炉石酒馆模式：无羁绊加成，流派靠单卡技能联动 */
   }
 
   isSilenced(card) {
@@ -239,6 +94,9 @@ export class BattleEngine {
   }
 
   evaluateCondition(condition, caster, target) {
+    if (typeof condition === 'object' && condition?.tribe) {
+      return target?.tribe === condition.tribe;
+    }
     if (condition === 'lowHp50' && target) return target.hp < target.maxHp * 0.5;
     if (condition === 'lowHp40' && target) return target.hp < target.maxHp * 0.4;
     if (condition === 'chance50') return Math.random() < 0.5;
@@ -287,6 +145,12 @@ export class BattleEngine {
         return aliveEnemies.length ? [aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)]] : [];
       case 'RANDOM_ALLY':
         return aliveAllies.length ? [aliveAllies[Math.floor(Math.random() * aliveAllies.length)]] : [];
+      case 'RANDOM_TRIBE_ALLY': {
+        const tribe = hintTarget?.tribeFilter;
+        const pool = aliveAllies.filter((c) => c.id !== caster.id && (!tribe || c.tribe === tribe));
+        const pick = pool.length ? pool : aliveAllies.filter((c) => c.id !== caster.id);
+        return pick.length ? [pick[Math.floor(Math.random() * pick.length)]] : [];
+      }
       case 'FRONT_ENEMY': {
         const sorted = [...aliveEnemies].sort((a, b) => a.position - b.position);
         return sorted.length ? [sorted[0]] : [];
@@ -333,14 +197,16 @@ export class BattleEngine {
       if (skill.oncePerBattle && skill.usedThisBattle) continue;
 
       const targets = this.resolveTargets(skill.target, card, source);
-      if (skill.condition && targets.length) {
-        if (!this.evaluateCondition(skill.condition, card, targets[0])) continue;
+      if (skill.condition) {
+        const condTarget = skill.trigger === 'ON_ALLY_DEATH' ? source : (targets[0] || card);
+        if (!this.evaluateCondition(skill.condition, card, condTarget)) continue;
       }
 
       this.emit({ type: 'SKILL_TRIGGER', cardId: card.id, cardName: card.name, skillName: skill.name, skillId: skill.id });
 
       for (const effect of skill.effects) {
-        const effectTargets = this.resolveTargets(effect.target, card, source);
+        const tribeFilter = effect.tribe || null;
+        const effectTargets = this.resolveTargets(effect.target, card, { ...source, tribeFilter });
         for (const t of effectTargets) {
           this.executeEffect(effect, card, t);
         }
@@ -407,6 +273,36 @@ export class BattleEngine {
           this.onCardDeath(target, caster);
         }
         break;
+      case 'STAT_BUFF':
+        this.applyDirectStatBuff(target, effect.attack || 0, effect.defense || 0, caster);
+        break;
+      case 'BUFF_TRIBE':
+        if (!effect.tribe || target.tribe === effect.tribe) {
+          this.applyDirectStatBuff(target, effect.attack || 0, effect.defense || 0, caster);
+        }
+        break;
+      case 'LEAPFROG_DR':
+        this.applyLeapfrogDeathrattle(caster, target, effect);
+        break;
+      case 'TRIGGER_ALLY_DEATHRATTLE':
+        this.triggerDeathrattleWithoutDeath(target, caster);
+        break;
+      case 'AURA_DOUBLE_DEATHRATTLE':
+        caster.deathrattleAura = true;
+        this.emit({ type: 'AURA_APPLIED', cardId: caster.id, cardName: caster.name, aura: '双倍亡语' });
+        break;
+      case 'REBORN':
+        if (!caster._rebornUsed) {
+          caster._rebornUsed = true;
+          caster.hp = effect.hp || 1;
+          caster.isAlive = true;
+          caster._deathHandled = false;
+          this.emit({ type: 'CARD_REVIVED', cardId: caster.id, cardName: caster.name, newHp: caster.hp, reason: 'REBORN' });
+        }
+        break;
+      case 'SUMMON_TOKEN':
+        this.summonTokens(caster, effect);
+        break;
       default:
         break;
     }
@@ -414,6 +310,93 @@ export class BattleEngine {
 
   addStatus(card, status) {
     card.statusEffects.push({ ...status, id: `${status.type}_${Date.now()}_${Math.random()}` });
+  }
+
+  getDeathrattleMultiplier(team) {
+    let mul = 1;
+    for (const c of this.getAliveCards(team)) {
+      if (c.deathrattleAura) mul *= 2;
+    }
+    return Math.min(mul, 8);
+  }
+
+  applyDirectStatBuff(card, atk, def, source) {
+    if (!card || !card.isAlive) return;
+    card.attack = Math.max(0, card.attack + (atk || 0));
+    card.defense = Math.max(0, card.defense + (def || 0));
+    card.maxHp = Math.max(card.maxHp, card.maxHp + (def || 0));
+    if (def) card.hp = Math.min(card.maxHp, card.hp + def);
+    this.emit({
+      type: 'STAT_BUFF', cardId: card.id, cardName: card.name,
+      attack: atk, defense: def, sourceName: source?.name,
+    });
+  }
+
+  applyLeapfrogDeathrattle(source, target, effect) {
+    if (!target || !target.isAlive) return;
+    const atk = effect.attack || 2;
+    const def = effect.defense || 2;
+    this.applyDirectStatBuff(target, atk, def, source);
+    const leapSkill = source.skills.find((s) => s.effects?.some((e) => e.type === 'LEAPFROG_DR'));
+    if (leapSkill && !target.skills.some((s) => s.id === leapSkill.id)) {
+      target.skills.push({
+        ...leapSkill,
+        effects: leapSkill.effects.map((e) => ({ ...e })),
+        currentCooldown: 0,
+        usedThisBattle: false,
+      });
+      this.emit({ type: 'LEAPFROG_SPREAD', cardId: target.id, cardName: target.name });
+    }
+  }
+
+  triggerDeathrattleWithoutDeath(card, source) {
+    if (!card) return;
+    for (const skill of card.skills) {
+      if (skill.trigger !== 'ON_DEATH') continue;
+      this.emit({ type: 'DEATHRATTLE_TRIGGER', cardId: card.id, cardName: card.name, skillName: skill.name });
+      for (const effect of skill.effects) {
+        const tribeFilter = effect.tribe || null;
+        const targets = this.resolveTargets(effect.target, card, { ...source, tribeFilter });
+        for (const t of targets) this.executeEffect(effect, card, t);
+      }
+    }
+  }
+
+  summonTokens(caster, effect) {
+    const team = this.getTeam(caster);
+    const count = effect.count || 1;
+    for (let n = 0; n < count; n++) {
+      let slot = team.cards.findIndex((c) => !c);
+      if (slot < 0) slot = team.cards.findIndex((c) => c && !c.isAlive);
+      if (slot < 0) break;
+      const token = {
+        id: `token_${Date.now()}_${Math.random()}`,
+        templateId: 'token',
+        name: effect.name || '衍生物',
+        tribe: effect.tribe || caster.tribe || 'beast',
+        element: caster.element,
+        cardClass: 'warrior',
+        rarity: 'common',
+        hp: effect.hp || 1,
+        maxHp: effect.hp || 1,
+        attack: effect.attack || 1,
+        defense: effect.defense || 1,
+        speed: 5,
+        critRate: 0.05,
+        critDamage: 2,
+        shield: 0,
+        star: 1,
+        skills: [],
+        statusEffects: [],
+        bondMods: {},
+        position: slot,
+        playerId: caster.playerId,
+        isAlive: true,
+        _isToken: true,
+      };
+      team.cards[slot] = token;
+      this.emit({ type: 'TOKEN_SUMMONED', cardId: token.id, cardName: token.name, position: slot });
+    }
   }
 
   applyVariance(damage) {
@@ -520,7 +503,12 @@ export class BattleEngine {
       killerId: killer?.id, killerName: killer?.name, position: card.position,
     });
 
-    this.triggerSkills(card, 'ON_DEATH', killer);
+    const team = this.getTeam(card);
+    const drMul = this.getDeathrattleMultiplier(team);
+    for (let i = 0; i < drMul; i++) {
+      this.triggerSkills(card, 'ON_DEATH', killer);
+      if (card.isAlive && card.hp > 0) break;
+    }
 
     if (card.isAlive && card.hp > 0) {
       card._deathHandled = false;

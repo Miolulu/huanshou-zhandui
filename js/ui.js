@@ -6,14 +6,12 @@ import {
   getCostBorderClass,
   getCardBuyCost,
   RARITY_NAMES,
-  ELEMENT_NAMES,
 } from './config.js';
 import { getTemplate } from './cards.js';
 import { formatSkillList } from './skills.js';
-import { elementBadgeHtml, classBadgeHtml, showToast } from './appShell.js';
-import { summarizeActiveComboBonds, summarizeBondProgress, formatComboEffect } from './comboBonds.js';
-import { CLASS_NAMES } from './classes.js';
-import { renderBondGuideHTML, renderActiveBondsBattle } from './bondGuide.js';
+import { elementBadgeHtml, showToast } from './appShell.js';
+import { getTribe, tribeBadgeHtml } from './tribes.js';
+import { renderTribeGuideHTML, renderTeamTribeSummary } from './tribeGuide.js';
 import { renderHeroCardRow } from './components/HeroCard.js';
 import { renderBattleTimeline, getTimelineOrder } from './components/BattleTimeline.js';
 import { BattleEffects, getBattleLogClass } from './components/BattleEffects.js';
@@ -78,7 +76,7 @@ export class UI {
       overlay: document.getElementById('overlay'),
       overlayTitle: document.getElementById('overlay-title'),
       overlayBody: document.getElementById('overlay-body'),
-      battleActiveBonds: document.getElementById('battle-active-bonds'),
+      battleActiveBonds: null,
       bondGuidePanel: document.getElementById('bond-guide-panel'),
       battleTimeline: document.getElementById('battle-timeline'),
     };
@@ -114,7 +112,7 @@ export class UI {
     }
     document.getElementById('btn-toggle-bond-guide').onclick = () => this.toggleBondGuide();
     if (this.el.bondGuidePanel) {
-      this.el.bondGuidePanel.innerHTML = `<div class="bond-guide-panel">${renderBondGuideHTML()}<button type="button" class="btn-muted bond-modal-close" style="margin-top:12px">关闭</button></div>`;
+      this.el.bondGuidePanel.innerHTML = `<div class="bg-guide-panel">${renderTribeGuideHTML()}<button type="button" class="btn-muted bond-modal-close" style="margin-top:12px">关闭</button></div>`;
       this.el.bondGuidePanel.onclick = (e) => {
         if (e.target === this.el.bondGuidePanel || e.target.classList.contains('bond-modal-close')) {
           this.bondGuideOpen = false;
@@ -148,12 +146,12 @@ export class UI {
     this.renderTavernControls(human, state);
     this.renderShop(human);
     this.renderTeam(human);
-    this.renderTeamBonds(human);
+    this.renderTeamTribes(human);
     this.renderCardPanel(human.team.cards[this.selectedTeamPos] ?? null, human);
     this.renderOpponent(state);
     this.renderButtonStates(state, human);
     this.renderBattleField(state);
-    this.renderBattleBonds(human, state.phase);
+    this.renderBattleTribeHud(human);
 
     if (state.phase === 'ENDED') {
       this.showOverlay('游戏结束', this.buildEndSummary(state));
@@ -242,7 +240,7 @@ export class UI {
     if (this.el.shopOdds) {
       const odds = getTavernCostOddsList(human.tavernTier);
       this.el.shopOdds.innerHTML = odds.map((o) =>
-        `<span class="tft-odds-item ${getCostBorderClass(o.cost)}">${o.cost}费 ${o.percent}%</span>`
+        `<span class="bg-odds-item ${getCostBorderClass(o.cost)}">${o.cost}费 ${o.percent}%</span>`
       ).join('');
     }
     document.getElementById('freeze-state').textContent = human.shop.frozen ? '开' : '关';
@@ -264,7 +262,7 @@ export class UI {
 
     if (!canShop) {
       this.el.shop.innerHTML = Array.from({ length: CONFIG.SHOP_SIZE }, () =>
-        `<div class="tft-shop-card sold-out disabled"><div class="tft-shop-portrait">—</div><div class="tft-shop-name">战斗中</div></div>`
+        `<div class="bg-shop-card sold-out disabled"><div class="bg-shop-portrait">—</div><div class="bg-shop-name">战斗中</div></div>`
       ).join('');
       return;
     }
@@ -273,23 +271,22 @@ export class UI {
 
     this.el.shop.innerHTML = slots.map((sc, i) => {
       if (sc.soldOut) {
-        return `<div class="tft-shop-card sold-out"><div class="tft-shop-portrait">空</div><div class="tft-shop-name">售罄</div></div>`;
+        return `<div class="bg-shop-card sold-out"><div class="bg-shop-portrait">空</div><div class="bg-shop-name">售罄</div></div>`;
       }
       const tpl = getTemplate(sc.cardTemplateId);
       const costCls = getCostBorderClass(sc.costTier ?? sc.cost);
       const canBuy = human.gold >= sc.cost && this.game.findEmptyTeamSlot(human) !== -1;
       const initial = (sc.name || '?').charAt(0);
-      const elName = ELEMENT_NAMES[sc.element] || sc.element;
-      const clsName = CLASS_NAMES[sc.cardClass || tpl?.class] || '';
+      const tribe = sc.tribe || tpl?.tribe || 'neutral';
+      const tribeInfo = getTribe(tribe);
       return `
-      <div class="tft-shop-card ${costCls} ${canBuy ? '' : 'disabled'}" data-shop-buy="${i}" title="${tpl?.description || ''}">
-        <div class="tft-shop-traits">
-          <span class="trait-chip el-${sc.element}">${elName}</span>
-          ${clsName ? `<span class="trait-chip">${clsName}</span>` : ''}
+      <div class="bg-shop-card ${costCls} ${canBuy ? '' : 'disabled'}" data-shop-buy="${i}" title="${tpl?.description || ''}">
+        <div class="bg-shop-traits">
+          <span class="tribe-chip tribe-${tribe}">${tribeInfo.icon} ${tribeInfo.name}</span>
         </div>
-        <div class="tft-shop-portrait el-${sc.element}">${initial}</div>
-        <div class="tft-shop-name">${sc.name}</div>
-        <div class="tft-shop-price">${sc.cost}</div>
+        <div class="bg-shop-portrait el-${sc.element}">${initial}</div>
+        <div class="bg-shop-name">${sc.name}</div>
+        <div class="bg-shop-price">${sc.cost}</div>
       </div>`;
     }).join('');
 
@@ -315,9 +312,9 @@ export class UI {
         <div class="slot filled ${RARITY_CLASS[card.rarity]} ${starCls} ${this.selectedTeamPos === i ? 'selected' : ''}" data-pos="${i}">
           <div class="card-head">
             <div class="card-name">${card.name}</div>
-            <div class="card-badges">${elementBadgeHtml(card.element)}${classBadgeHtml(card.cardClass)}</div>
+            <div class="card-badges">${tribeBadgeHtml(card.tribe || 'neutral')}${elementBadgeHtml(card.element)}</div>
           </div>
-          <div class="card-meta">${'★'.repeat(star)}${'☆'.repeat(3 - star)} · ${CLASS_NAMES[card.cardClass] || ''}</div>
+          <div class="card-meta">${'★'.repeat(star)}${'☆'.repeat(3 - star)} · ${getTribe(card.tribe).name}</div>
           <div class="card-stats">HP${card.maxHp} ATK${card.attack} SPD${card.speed}</div>
         </div>`;
     }).join('');
@@ -339,7 +336,7 @@ export class UI {
     this.el.selectedStats.textContent =
       `HP ${card.maxHp} · ATK ${card.attack} · DEF ${card.defense} · SPD ${card.speed}`;
     this.el.selectedElement.innerHTML =
-      `${elementBadgeHtml(card.element)} ${classBadgeHtml(card.cardClass)}`;
+      `${tribeBadgeHtml(card.tribe || 'neutral')} ${elementBadgeHtml(card.element)}`;
     if (this.el.selectedDesc) {
       this.el.selectedDesc.textContent = card.description || getTemplate(card.templateId)?.description || '';
     }
@@ -364,43 +361,25 @@ export class UI {
     ).length;
   }
 
-  renderBattleBonds(human, phase) {
+  renderBattleTribeHud(human) {
     const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
-    if (this.el.battleActiveBonds) {
-      const showActive = ['PREPARE', 'BATTLE', 'SETTLE', 'MATCH'].includes(phase);
-      this.el.battleActiveBonds.innerHTML = showActive
-        ? renderActiveBondsBattle(cards)
-        : '';
+    if (this.el.battleHudCombo) {
+      const counts = {};
+      for (const c of cards) {
+        const t = c.tribe || 'neutral';
+        if (t !== 'neutral') counts[t] = (counts[t] || 0) + 1;
+      }
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+      this.el.battleHudCombo.textContent = top
+        ? `${getTribe(top[0]).icon}×${top[1]}`
+        : '—';
     }
   }
 
-  renderTeamBonds(human) {
+  renderTeamTribes(human) {
     if (!this.el.teamBonds) return;
     const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
-    const combos = summarizeActiveComboBonds(cards);
-    const progress = summarizeBondProgress(cards);
-
-    const rows = [];
-    for (const b of combos) {
-      rows.push(`<div class="tft-trait-row active" title="${formatComboEffect(b.effect)}">
-        <span class="tft-trait-hex">${b.name.charAt(0)}</span>
-        <span>${b.name}</span>
-        <span class="tft-trait-count">${b.count}</span>
-      </div>`);
-    }
-    for (const p of progress.slice(0, 6)) {
-      if (p.tier && !p.next) continue;
-      const need = p.next ? `${p.count}/${p.next}` : `${p.count}`;
-      rows.push(`<div class="tft-trait-row">
-        <span class="tft-trait-hex">${p.bond.name.charAt(0)}</span>
-        <span>${p.bond.name}</span>
-        <span class="tft-trait-count">${need}</span>
-      </div>`);
-    }
-
-    this.el.teamBonds.innerHTML = rows.length
-      ? rows.join('')
-      : '<p class="hint" style="font-size:0.72rem">上阵幻兽后显示羁绊进度</p>';
+    this.el.teamBonds.innerHTML = renderTeamTribeSummary(cards);
   }
 
   handleTeamClick(pos) {
@@ -575,9 +554,11 @@ export class UI {
         return e.relation === 'strong'
           ? `⚡ ${e.attackerName}(${e.attackerElement}) 克制 ${e.defenderName}(${e.defenderElement}) ×${e.multiplier}`
           : `🛡 ${e.attackerName}(${e.attackerElement}) 被 ${e.defenderName}(${e.defenderElement}) 克制 ×${e.multiplier}`;
-      case 'BOND_ACTIVE':
-      case 'SYNERGY_APPLIED':
-        return `🔗 ${e.teamName} 激活【${e.bondName}】${e.count ? `×${e.count}` : ''}`;
+      case 'LEAPFROG_SPREAD': return `🐸 跳蛙传承 → ${e.cardName}`;
+      case 'STAT_BUFF': return `📈 ${e.cardName} +${e.attack || 0}攻 +${e.defense || 0}防`;
+      case 'TOKEN_SUMMONED': return `✨ 召唤 ${e.cardName}`;
+      case 'DEATHRATTLE_TRIGGER': return `💫 ${e.cardName}【${e.skillName}】亡语触发`;
+      case 'AURA_APPLIED': return `🌀 ${e.cardName} ${e.aura}`;
       case 'ACTION_SKIPPED':
         return `⏭ ${e.cardName} 跳过行动（${e.reason}）`;
       case 'TURN_END': return `—— 第 ${e.turn} 回合结束 ——`;

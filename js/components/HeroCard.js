@@ -1,11 +1,24 @@
 /** Hero Card — Vol.3 / Vol.6 语义化纯展示组件 */
+import { formatStatusTooltip } from '../statusDefs.js';
+import { getTribe } from '../tribes.js';
+
 const STATUS_ICONS = {
   BURN: '🔥', POISON: '☠', STUN: '💫', SILENCE: '🤐',
   TAUNT: '🛡', SHIELD: '🔰', FREEZE: '❄', REGEN: '💚',
-  BLIND: '🌀', INVINCIBLE: '✨', LIFESTEAL: '🩸',
+  BLIND: '🌀', INVINCIBLE: '✨', LIFESTEAL: '🩸', THORNS: '🌵',
+  PARALYZE: '⚡', ENTANGLE: '🌿', DODGE: '💨', STEALTH: '👁',
 };
 
-const DEBUFF_TYPES = new Set(['BURN', 'POISON', 'STUN', 'SILENCE', 'FREEZE', 'BLIND']);
+const DEBUFF_TYPES = new Set(['BURN', 'POISON', 'STUN', 'SILENCE', 'FREEZE', 'BLIND', 'PARALYZE', 'ENTANGLE']);
+
+function tooltipAttr(obj) {
+  return `data-tooltip="${JSON.stringify(obj).replace(/"/g, '&quot;')}"`;
+}
+
+function statusSpan(s, cls) {
+  const tip = formatStatusTooltip(s);
+  return `<span class="${cls}" ${tooltipAttr(tip)} tabindex="0">${STATUS_ICONS[s.type] || '✦'}</span>`;
+}
 
 /**
  * @param {object} card
@@ -24,13 +37,8 @@ export function renderHeroCard(card, side = 'player') {
   const buffs = statuses.filter((s) => !DEBUFF_TYPES.has(s.type));
   const debuffs = statuses.filter((s) => DEBUFF_TYPES.has(s.type));
 
-  const buffHtml = buffs.slice(0, 3).map((s) =>
-    `<span class="hero-card__buff" data-status="${s.type}">${STATUS_ICONS[s.type] || '✦'}</span>`
-  ).join('');
-
-  const debuffHtml = debuffs.slice(0, 3).map((s) =>
-    `<span class="hero-card__debuff" data-status="${s.type}">${STATUS_ICONS[s.type] || '✦'}</span>`
-  ).join('');
+  const buffHtml = buffs.slice(0, 3).map((s) => statusSpan(s, 'hero-card__buff')).join('');
+  const debuffHtml = debuffs.slice(0, 3).map((s) => statusSpan(s, 'hero-card__debuff')).join('');
 
   const skillPct = card.skills?.length
     ? Math.min(100, Math.round((card.skills.filter((sk) => sk.cooldown === 0).length / card.skills.length) * 100))
@@ -40,10 +48,18 @@ export function renderHeroCard(card, side = 'player') {
   const stateMod = alive ? '' : ' hero-card--dead';
   const selectedMod = card._uiSelected ? ' hero-card--selected' : '';
 
-  return `<article class="hero-card ${sideMod}${stateMod}${selectedMod}" data-card-id="${card.id}">
+  const tribeInfo = getTribe(card.tribe || 'neutral');
+
+  const cardTip = tooltipAttr({
+    title: card.name,
+    desc: `${tribeInfo.icon} ${tribeInfo.name} · ${card.description || ''}`,
+    stats: `HP ${card.hp}/${card.maxHp} · ATK ${card.attack} · DEF ${card.defense} · SPD ${card.speed}`,
+  });
+
+  return `<article class="hero-card ${sideMod}${stateMod}${selectedMod}" data-card-id="${card.id}" data-tribe="${card.tribe || 'neutral'}" ${cardTip}>
     <header class="hero-card__header">
       <div class="hero-card__debuffs">${debuffHtml}</div>
-      <div class="hero-card__element hero-card__element--${card.element}" aria-hidden="true"></div>
+      <div class="hero-card__tribe tribe-${card.tribe || 'neutral'}" title="${tribeInfo.name}" aria-hidden="true">${tribeInfo.icon}</div>
       <div class="hero-card__buffs">${buffHtml}</div>
     </header>
     <div class="hero-card__portrait el-${card.element}" aria-hidden="true">${initial}</div>

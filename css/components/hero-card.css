@@ -1,0 +1,198 @@
+/* Vol.3 Hero Card — 独立组件样式 */
+.hero-card {
+  position: relative;
+  width: 170px;
+  min-height: 250px;
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(22, 32, 60, 0.82);
+  backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: default;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-hero);
+  transition: transform var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover), border-color var(--dur-hover);
+}
+
+.hero-card--enemy { border-color: rgba(248, 113, 113, 0.35); }
+
+.hero-card--player:hover:not(.hero-card--dead) {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-hero), var(--shadow-glow);
+}
+
+.hero-card--selected {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow-gold);
+  animation: selectedBreath 2s ease-in-out infinite;
+}
+
+.hero-card--dead {
+  opacity: 0.35;
+  filter: grayscale(0.85);
+  transform: none;
+}
+
+.hero-card__header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 20px;
+  margin-bottom: var(--sp-1);
+}
+
+.hero-card__debuffs,
+.hero-card__buffs {
+  display: flex;
+  gap: 2px;
+  font-size: 0.65rem;
+}
+
+.hero-card__buff,
+.hero-card__debuff {
+  cursor: help;
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+
+.hero-card__debuff { background: rgba(248, 113, 113, 0.15); }
+.hero-card__buff { background: rgba(69, 224, 157, 0.12); }
+
+.hero-card__tribe {
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.hero-card__portrait {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: var(--sp-2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.hero-card__name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: var(--sp-2);
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero-card__bars { width: 100%; margin-bottom: var(--sp-1); }
+
+.hero-card .progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.hero-card .progress-bar__fill {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transition: transform var(--dur-hover) var(--ease-out);
+}
+
+.progress-bar__fill--hp {
+  background: linear-gradient(90deg, var(--success), #2db87a);
+}
+
+.progress-bar__fill--mana {
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+}
+
+.hero-card__hp-text {
+  font-size: var(--font-caption);
+  font-family: var(--font-mono);
+  color: var(--text2);
+  margin-bottom: var(--sp-1);
+}
+
+.hero-card__footer {
+  display: flex;
+  gap: var(--sp-2);
+  font-size: 0.68rem;
+  color: var(--text2);
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.hero-card__stars { color: var(--accent); margin-left: auto; }
+
+.hero-card-row {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.battle-area-label {
+  position: absolute;
+  left: var(--sp-3);
+  top: 0;
+  font-size: var(--font-caption);
+  letter-spacing: 0.08em;
+  color: var(--text2);
+  opacity: 0.75;
+}
+
+.enemy-area .battle-area-label { color: var(--danger); }
+.player-area .battle-area-label { color: var(--success); }
+
+.hero-card.hit-flash,
+.hero-card.skill-cast,
+.hero-card.hero-lunge,
+.hero-card.hero-targeted { /* see animation.css */ }
+
+.hero-card__portrait.el-fire,
+.hero-card .portrait.el-fire { background: linear-gradient(135deg, #5c1a1a, #ff6b4a); }
+.hero-card__portrait.el-water,
+.hero-card .portrait.el-water { background: linear-gradient(135deg, #0d3a6e, #4db8ff); }
+.hero-card__portrait.el-grass,
+.hero-card .portrait.el-grass { background: linear-gradient(135deg, #1a4d2e, #5fd97a); }
+.hero-card__portrait.el-electric,
+.hero-card .portrait.el-electric { background: linear-gradient(135deg, #3d2e00, #ffe066); color: #1a1200; }
+.hero-card__portrait.el-wind,
+.hero-card .portrait.el-wind { background: linear-gradient(135deg, #1a3d4d, #7ee8fa); }
+.hero-card__portrait.el-earth,
+.hero-card .portrait.el-earth { background: linear-gradient(135deg, #3d2e1a, #c9a66b); }
+.hero-card__portrait.el-light,
+.hero-card .portrait.el-light { background: linear-gradient(135deg, #4d4a1a, #fff5a0); color: #1a1200; }
+.hero-card__portrait.el-dark,
+.hero-card .portrait.el-dark { background: linear-gradient(135deg, #1a1a3d, #7b68ee); }
+
+.tft-arena .hero-card {
+  width: 140px;
+  min-height: 210px;
+  padding: var(--sp-2);
+}
+
+.tft-arena .hero-card__portrait {
+  width: 72px;
+  height: 72px;
+  font-size: 1.5rem;
+}

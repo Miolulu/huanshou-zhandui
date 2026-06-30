@@ -1,0 +1,454 @@
+/* ===== 炉石酒馆战棋式布局 ===== */
+.bg-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(80, 60, 30, 0.35), transparent),
+    linear-gradient(180deg, #1a1410 0%, #2a1f14 35%, #1e1610 70%, #12100c 100%);
+}
+
+.bg-hud-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: rgba(20, 14, 8, 0.95);
+  border-bottom: 2px solid rgba(180, 130, 60, 0.35);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.bg-hud-left, .bg-hud-center, .bg-hud-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bg-round { font-weight: 800; color: #e8c468; font-size: 1rem; }
+.bg-phase { font-size: 0.78rem; color: var(--text2); }
+.bg-streak { font-size: 0.72rem; color: var(--text2); opacity: 0.7; }
+.bg-hp { font-size: 1.1rem; font-weight: 700; color: #ff6b6b; }
+.bg-income-hint { font-size: 0.68rem; color: var(--secondary); max-width: 320px; }
+
+.bg-tavern-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: linear-gradient(180deg, #4a3820, #2a2010);
+  border: 2px solid #c9a227;
+  border-radius: 8px;
+}
+
+.bg-tavern-badge .shield-lv {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #ffd76a;
+}
+
+.bg-tavern-label {
+  font-size: 0.65rem;
+  color: #c9a227;
+  line-height: 1.1;
+}
+
+.bg-odds-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bg-odds-item {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text2);
+}
+
+.bg-odds-item.cost-1 { border-left: 3px solid #8b949e; }
+.bg-odds-item.cost-2 { border-left: 3px solid #3fb950; }
+.bg-odds-item.cost-3 { border-left: 3px solid #58a6ff; }
+.bg-odds-item.cost-4 { border-left: 3px solid #a371f7; }
+.bg-odds-item.cost-5 { border-left: 3px solid #ffd76a; }
+
+.bg-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 200px 1fr 220px;
+  grid-template-rows: 1fr auto;
+  gap: 8px;
+  padding: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bg-side-panel {
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.bg-side-panel h2, .bg-side-panel h3 {
+  font-size: 0.85rem;
+  margin: 0 0 6px;
+  color: #e8c468;
+}
+
+.bg-tribe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bg-tribe-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.bg-tribe-icon { font-size: 1rem; }
+.bg-tribe-count {
+  margin-left: auto;
+  color: #e8c468;
+  font-weight: 700;
+}
+
+.bg-board-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bg-arena-wrap {
+  flex: 1;
+  min-height: 180px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(180, 130, 60, 0.25);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.bg-bench-section {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  background: rgba(30, 22, 14, 0.85);
+  border: 2px solid rgba(180, 130, 60, 0.2);
+  border-radius: 10px;
+}
+
+.bg-bench-section .bench-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.bg-bench-section h2 {
+  font-size: 0.85rem;
+  color: #e8c468;
+  margin: 0;
+}
+
+.bg-bench {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bg-tavern-section {
+  grid-column: 2;
+  padding: 10px 14px 12px;
+  background:
+    linear-gradient(180deg, rgba(60, 42, 22, 0.95), rgba(35, 24, 12, 0.98));
+  border: 3px solid #8b6914;
+  border-radius: 14px 14px 8px 8px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4), inset 0 2px 0 rgba(255, 215, 106, 0.15);
+}
+
+.bg-tavern-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.bg-tavern-head h2 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #ffd76a;
+  letter-spacing: 0.05em;
+}
+
+.bg-tavern-head .hint { font-size: 0.68rem; }
+
+.bg-shop-slots {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  min-height: 120px;
+}
+
+.bg-shop-card {
+  width: 104px;
+  min-height: 116px;
+  border-radius: 10px;
+  border: 3px solid #8b949e;
+  background: linear-gradient(180deg, #2a2018 0%, #1a1410 100%);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.bg-shop-card:hover:not(.sold-out):not(.disabled) {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 12px rgba(255, 215, 106, 0.2);
+}
+
+.bg-shop-card.cost-1 { border-color: #8b949e; }
+.bg-shop-card.cost-2 { border-color: #3fb950; }
+.bg-shop-card.cost-3 { border-color: #58a6ff; }
+.bg-shop-card.cost-4 { border-color: #a371f7; }
+.bg-shop-card.cost-5 { border-color: #ffd76a; box-shadow: 0 0 12px rgba(255, 215, 106, 0.25); }
+
+.bg-shop-card.sold-out { opacity: 0.4; cursor: not-allowed; border-style: dashed; }
+.bg-shop-card.disabled { opacity: 0.55; cursor: not-allowed; }
+
+.bg-shop-traits {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  min-height: 18px;
+}
+
+.tribe-chip {
+  font-size: 0.58rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.tribe-chip.tribe-beast { color: #c4a35a; }
+.tribe-chip.tribe-murloc { color: #58a6ff; }
+.tribe-chip.tribe-pirate { color: #f0883e; }
+.tribe-chip.tribe-undead { color: #a371f7; }
+.tribe-chip.tribe-elemental { color: #79c0ff; }
+.tribe-chip.tribe-dragon { color: #ff7b72; }
+.tribe-chip.tribe-mech { color: #b1bac4; }
+.tribe-chip.tribe-quilboar { color: #e3b341; }
+.tribe-chip.tribe-demon { color: #da3633; }
+.tribe-chip.tribe-naga { color: #56d364; }
+
+.bg-shop-portrait {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  border-radius: 6px;
+  margin: 4px 0;
+}
+
+.bg-shop-name {
+  font-size: 0.72rem;
+  text-align: center;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.bg-shop-price {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffd76a;
+  margin-top: 2px;
+}
+
+.bg-log-panel {
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.bg-log-panel h2 {
+  font-size: 0.85rem;
+  color: #e8c468;
+  margin: 0 0 6px;
+}
+
+.bg-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(20, 14, 8, 0.98);
+  border-top: 2px solid rgba(180, 130, 60, 0.3);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.bg-action-left, .bg-action-center, .bg-action-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bg-round-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 2px solid rgba(180, 130, 60, 0.4);
+  background: linear-gradient(180deg, #3a2e1c, #2a2014);
+  color: var(--text);
+  cursor: pointer;
+  min-width: 72px;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.bg-round-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: #c9a227;
+}
+
+.bg-round-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.bg-round-btn .btn-label { font-size: 0.72rem; color: #e8c468; }
+.bg-round-btn .btn-cost { font-size: 0.8rem; font-weight: 800; color: #ffd76a; }
+
+.bg-gold-pile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, #4a3820, #2a2010);
+  border: 2px solid #c9a227;
+  border-radius: 20px;
+}
+
+.bg-gold-pile .gold-num {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #ffd76a;
+}
+
+.bg-speed-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(180, 130, 60, 0.4);
+  background: rgba(0, 0, 0, 0.3);
+  color: #e8c468;
+  cursor: pointer;
+}
+
+.bg-speed-btn.active { border-color: #ffd76a; color: #ffd76a; }
+
+.bg-bond-modal, .bg-guide-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  padding: 20px;
+}
+
+.bg-guide-panel {
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 20px 24px;
+  background: linear-gradient(180deg, #2a2018, #1a1410);
+  border: 2px solid #8b6914;
+  border-radius: 12px;
+}
+
+.tribe-guide-row {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tribe-guide-icon { font-size: 1.4rem; }
+
+.archetype-list {
+  display: grid;
+  gap: 10px;
+}
+
+.archetype-card {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid #c9a227;
+}
+
+.archetype-card h4 { margin: 0 0 6px; font-size: 0.88rem; color: #ffd76a; }
+.archetype-card p { margin: 0 0 4px; font-size: 0.78rem; line-height: 1.45; }
+
+.tribe-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* 复用 bench slot 样式 */
+.bg-bench .slot {
+  width: 100px;
+  min-height: 100px;
+  border-radius: 8px;
+  border: 2px dashed rgba(180, 130, 60, 0.3);
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.25);
+  transition: border-color 0.15s, transform 0.12s;
+}
+
+.bg-bench .slot.filled {
+  border-style: solid;
+  border-color: rgba(180, 130, 60, 0.5);
+}
+
+.bg-bench .slot.selected {
+  border-color: #ffd76a;
+  box-shadow: 0 0 12px rgba(255, 215, 106, 0.35);
+  transform: translateY(-3px);
+}
+
+.bg-bench .slot.locked { opacity: 0.35; cursor: not-allowed; }
+
+@media (max-width: 1100px) {
+  .bg-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+  }
+  .bg-side-panel, .bg-log-panel { grid-row: auto; max-height: 120px; }
+  .bg-tavern-section { grid-column: 1; }
+}

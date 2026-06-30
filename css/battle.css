@@ -270,6 +270,15 @@
   overflow: visible;
 }
 
+.timeline-portrait.el-fire { background: linear-gradient(135deg, #5c1a1a, #ff6b4a); }
+.timeline-portrait.el-water { background: linear-gradient(135deg, #0d3a6e, #4db8ff); }
+.timeline-portrait.el-grass { background: linear-gradient(135deg, #1a4d2e, #5fd97a); }
+.timeline-portrait.el-electric { background: linear-gradient(135deg, #3d2e00, #ffe066); color: #1a1200; }
+.timeline-portrait.el-wind { background: linear-gradient(135deg, #1a3d4d, #7ee8fa); }
+.timeline-portrait.el-earth { background: linear-gradient(135deg, #3d2e1a, #c9a66b); }
+.timeline-portrait.el-light { background: linear-gradient(135deg, #4d4a1a, #fff5a0); color: #1a1200; }
+.timeline-portrait.el-dark { background: linear-gradient(135deg, #1a1a3d, #7b68ee); }
+
 .battle-idle-msg {
   position: absolute;
   z-index: 3;

@@ -1,5 +1,6 @@
 import { CONFIG, getTavernUpgradeCost, getTeamSlotsForTavern, formatTavernShopOdds } from './config.js';
 import { getTemplate } from './cards.js';
+import { resolveCardTribe } from './tribeAssignment.js';
 
 export const AI_CONFIG = {
   easy: {
@@ -32,22 +33,15 @@ function getParams(difficulty) {
 }
 
 function analyzeTeam(player) {
-  const elementCount = {};
-  const classCount = {};
-  const comboCount = {};
+  const tribeCount = {};
   const cardCount = {};
   const cards = player.team.cards.filter(Boolean);
   for (const c of cards) {
-    elementCount[c.element] = (elementCount[c.element] || 0) + 1;
-    const cls = c.cardClass || c.class;
-    if (cls) {
-      classCount[cls] = (classCount[cls] || 0) + 1;
-      const key = `${c.element}_${cls}`;
-      comboCount[key] = (comboCount[key] || 0) + 1;
-    }
+    const tribe = c.tribe || 'neutral';
+    tribeCount[tribe] = (tribeCount[tribe] || 0) + 1;
     cardCount[c.templateId || c.cardTemplateId] = (cardCount[c.templateId || c.cardTemplateId] || 0) + 1;
   }
-  return { elementCount, classCount, comboCount, cardCount, size: cards.length };
+  return { tribeCount, cardCount, size: cards.length };
 }
 
 function evaluateCard(shopCard, analysis, params, playerGold) {
@@ -57,26 +51,15 @@ function evaluateCard(shopCard, analysis, params, playerGold) {
 
   score += ((tpl.costTier || 1) * 4 + (RARITY_WEIGHT[tpl.rarity] || 0)) * params.riskTolerance;
 
-  const elCount = analysis.elementCount[tpl.element] || 0;
-  if (elCount > 0) {
-    score += 15 * params.synergyFocus;
-    if (elCount >= 2) score += 10 * params.synergyFocus;
-    if (elCount >= 4) score += 15 * params.synergyFocus;
-  }
-
+  const tribe = shopCard.tribe || tpl.tribe || resolveCardTribe(tpl.id, tpl.element, tpl.class);
   const existing = analysis.cardCount[tpl.id] || 0;
   if (existing === 2) score += 50 * params.comboAwareness;
   if (existing === 1) score += 20 * params.comboAwareness;
-
-  const cls = tpl.cardClass || tpl.class;
-  const comboKey = cls ? `${tpl.element}_${cls}` : null;
-  const comboN = comboKey ? (analysis.comboCount[comboKey] || 0) : 0;
-  if (comboN > 0) {
-    score += 18 * params.synergyFocus * params.comboAwareness;
-    if (comboN >= 1) score += 12 * params.synergyFocus * params.comboAwareness;
-    if (comboN >= 3) score += 20 * params.synergyFocus * params.comboAwareness;
-  } else if (cls && (analysis.classCount[cls] || 0) > 0) {
-    score += 8 * params.synergyFocus;
+  const tribeN = analysis.tribeCount[tribe] || 0;
+  if (tribe !== 'neutral' && tribeN > 0) {
+    score += 20 * params.synergyFocus * params.comboAwareness;
+    if (tribeN >= 2) score += 15 * params.synergyFocus * params.comboAwareness;
+    if (tribeN >= 4) score += 20 * params.synergyFocus * params.comboAwareness;
   }
 
   if (playerGold - shopCard.cost < 3) score -= 15 * (1 - params.economyAggressiveness);
@@ -121,8 +104,9 @@ function maybeSellWeak(player, game, params, analysis) {
     if (star >= 3) continue;
     const tpl = getTemplate(card.templateId || card.cardTemplateId);
     if (!tpl) continue;
-    const elCount = analysis.elementCount[tpl.element] || 0;
-    if (elCount === 1 && params.synergyFocus > 0.5 && player.team.cards.filter(Boolean).length >= 4) {
+    const tribe = card.tribe || 'neutral';
+    const tribeN = analysis.tribeCount[tribe] || 0;
+    if (tribeN === 1 && tribe !== 'neutral' && params.synergyFocus > 0.5 && player.team.cards.filter(Boolean).length >= 4) {
       game.sellCard(player, i);
       break;
     }

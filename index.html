@@ -10,12 +10,15 @@
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/pages/menu-lobby.css">
+  <link rel="stylesheet" href="css/components/hero-card.css">
+  <link rel="stylesheet" href="css/components/tooltip.css">
+  <link rel="stylesheet" href="css/components/result-screen.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/panel.css">
   <link rel="stylesheet" href="css/button.css">
   <link rel="stylesheet" href="css/battle.css">
   <link rel="stylesheet" href="css/animation.css">
-  <link rel="stylesheet" href="css/tft-layout.css">
+  <link rel="stylesheet" href="css/bg-layout.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
@@ -88,7 +91,7 @@
       <div class="menu-container">
         <div class="menu-logo">
           <h1>幻兽战队</h1>
-          <p>8人策略卡牌 · 酒馆自走棋 · 元素克制 · 自动战斗</p>
+          <p>8人策略卡牌 · 炉石酒馆战棋 · 种族技能联动 · 自动战斗</p>
         </div>
         <div class="menu-form">
           <h3 class="section-label">选择模式</h3>
@@ -143,52 +146,44 @@
     </div>
   </div>
 
-  <!-- ===== 游戏界面（金铲铲式布局） ===== -->
-  <div id="screen-game" class="screen tft-screen">
-    <header class="tft-hud-bar">
-      <div class="tft-hud-left">
+  <!-- ===== 游戏界面（炉石酒馆战棋布局） ===== -->
+  <div id="screen-game" class="screen bg-screen">
+    <header class="bg-hud-bar">
+      <div class="bg-hud-left">
         <button id="btn-back-lobby" class="btn-muted btn-small">退出</button>
-        <span id="turn-info" class="tft-round">R1</span>
-        <span id="phase-info" class="tft-phase">准备</span>
-        <span id="streak-info" class="tft-streak"></span>
+        <span id="turn-info" class="bg-round">R1</span>
+        <span id="phase-info" class="bg-phase">准备</span>
+        <span id="streak-info" class="bg-streak"></span>
       </div>
-      <div class="tft-hud-center">
-        <span id="hp-info" class="tft-hp">100</span>
-        <span id="gold-income" class="tft-income-hint"></span>
+      <div class="bg-hud-center">
+        <span id="hp-info" class="bg-hp">100</span>
+        <span id="gold-income" class="bg-income-hint"></span>
       </div>
-      <div class="tft-hud-right">
-        <div class="tft-level-shield">
+      <div class="bg-hud-right">
+        <div class="bg-tavern-badge">
           <span class="shield-lv" id="tavern-tier">1</span>
+          <span class="bg-tavern-label">酒馆<br>等级</span>
         </div>
-        <div id="shop-odds-list" class="tft-odds-list"></div>
+        <div id="shop-odds-list" class="bg-odds-list"></div>
       </div>
     </header>
 
-    <!-- 顶部商店（5 卡槽） -->
-    <section class="tft-shop-bar">
-      <div id="shop-tier-hint" class="tft-shop-hint hidden"></div>
-      <div id="shop-cards" class="tft-shop-slots"></div>
-    </section>
-
-    <div class="tft-body">
-      <!-- 左侧羁绊追踪 -->
-      <aside class="tft-trait-panel panel panel-glass">
+    <div class="bg-body">
+      <aside class="bg-side-panel panel panel-glass">
         <div class="trait-head">
-          <h2>羁绊</h2>
+          <h2>种族构成</h2>
           <button type="button" id="btn-toggle-bond-guide" class="btn-small btn-gold">图鉴</button>
         </div>
-        <div id="team-bonds" class="tft-trait-list"></div>
-        <div id="battle-active-bonds" class="tft-trait-active"></div>
+        <div id="team-bonds" class="bg-tribe-list"></div>
         <h3 class="trait-sub">排名</h3>
         <div id="players-list" class="players-list"></div>
         <h3 class="trait-sub">下轮对手</h3>
         <div id="opponent-info" class="opponent-box"></div>
       </aside>
 
-      <!-- 中央战场 + 备战席 -->
-      <main class="tft-board-area">
-        <section class="battle-section">
-          <div id="battle" class="tft-arena battle-app" role="application" aria-label="战斗场景">
+      <main class="bg-board-area">
+        <section class="bg-arena-wrap battle-section">
+          <div id="battle" class="bg-arena battle-app" role="application" aria-label="战斗场景">
             <div class="battle-bg battle-background-layer z-bg" aria-hidden="true"></div>
             <div class="battle-stars z-bg" aria-hidden="true"></div>
 
@@ -211,8 +206,8 @@
               </div>
               <div class="hud-right">
                 <div class="combo-box">
-                  <span class="label">羁绊</span>
-                  <strong id="battle-hud-combo">×0</strong>
+                  <span class="label">种族</span>
+                  <strong id="battle-hud-combo">—</strong>
                 </div>
               </div>
             </header>
@@ -225,19 +220,19 @@
               <div class="magic-circle" aria-hidden="true"></div>
               <div class="effect-layer battle-effect-layer z-effects" id="battle-effect-layer"></div>
               <div class="floating-text-layer z-effects" id="floating-text-layer"></div>
-              <div id="battle-idle-msg" class="battle-idle-msg">准备完成后自动开战</div>
+              <div id="battle-idle-msg" class="battle-idle-msg">从左至右自动攻击 · 研究技能搭配</div>
             </section>
 
             <section class="player-area battle-player-area z-gameplay" id="battle-player-area" aria-label="我方区域"></section>
           </div>
         </section>
 
-        <section class="tft-bench-section">
+        <section class="bg-bench-section">
           <div class="bench-head">
-            <h2>出战席</h2>
-            <span class="hint">单击选中 · 3张同名同星自动合成</span>
+            <h2>战队栏位</h2>
+            <span class="hint">单击选中 · 3张同名同星自动合成升星</span>
           </div>
-          <div id="team-slots" class="tft-bench"></div>
+          <div id="team-slots" class="bg-bench"></div>
         </section>
 
         <section id="card-action-panel" class="card-action-panel hidden">
@@ -254,26 +249,34 @@
         </section>
       </main>
 
-      <aside class="tft-log-panel panel panel-glass" aria-label="战斗日志">
+      <aside class="bg-log-panel panel panel-glass" aria-label="战斗日志">
         <h2>战斗日志</h2>
         <div id="battle-log" class="battle-log"></div>
       </aside>
+
+      <section class="bg-tavern-section">
+        <div class="bg-tavern-head">
+          <h2>🍺 鲍勃的酒馆</h2>
+          <span class="hint">点击购买 · 三连自动发现高费随从</span>
+        </div>
+        <div id="shop-tier-hint" class="hidden"></div>
+        <div id="shop-cards" class="bg-shop-slots"></div>
+      </section>
     </div>
 
-    <!-- 底部操作栏 -->
-    <footer class="tft-action-bar">
-      <div class="tft-action-left">
-        <button id="btn-upgrade-tavern" class="tft-round-btn tft-buy-xp">
+    <footer class="bg-action-bar">
+      <div class="bg-action-left">
+        <button id="btn-upgrade-tavern" class="bg-round-btn bg-buy-xp">
           <span class="btn-icon">⬆</span>
-          <span class="btn-label">购买经验</span>
+          <span class="btn-label">升级酒馆</span>
           <span id="tavern-cost" class="btn-cost"></span>
         </button>
-        <button id="btn-freeze" class="tft-round-btn tft-freeze">
+        <button id="btn-freeze" class="bg-round-btn bg-freeze">
           <span class="btn-label">冻结</span>
           <span id="freeze-state">关</span>
         </button>
       </div>
-      <div class="tft-action-center">
+      <div class="bg-action-center">
         <div class="prepare-timer-panel" id="prepare-timer-panel">
           <div class="prepare-timer-head">
             <span>准备</span>
@@ -285,14 +288,14 @@
         <span id="prepare-timer" class="hidden"></span>
         <span id="prepare-timer-box" class="hidden"></span>
       </div>
-      <div class="tft-action-right">
-        <button id="btn-battle-speed" class="tft-speed-btn" title="战斗倍速">1×</button>
-        <button id="btn-refresh" class="tft-round-btn tft-refresh">
+      <div class="bg-action-right">
+        <button id="btn-battle-speed" class="bg-speed-btn" title="战斗倍速">1×</button>
+        <button id="btn-refresh" class="bg-round-btn bg-refresh">
           <span class="btn-icon">↻</span>
           <span class="btn-label">刷新</span>
           <span class="btn-cost">2</span>
         </button>
-        <div class="tft-gold-pile">
+        <div class="bg-gold-pile">
           <span class="gold-icon">💰</span>
           <span id="gold-amount" class="gold-num">0</span>
         </div>
@@ -301,7 +304,8 @@
   </div>
 
   <div id="dialog-root" class="dialog-root" aria-live="polite">
-    <div id="bond-guide-panel" class="tft-bond-modal hidden" role="dialog" aria-modal="true" aria-label="羁绊图鉴"></div>
+    <div id="tooltip-root" class="tooltip-root"></div>
+    <div id="bond-guide-panel" class="bg-guide-modal hidden" role="dialog" aria-modal="true" aria-label="种族图鉴"></div>
     <div id="overlay" class="overlay" style="display:none" role="dialog" aria-modal="true">
       <div class="overlay-box">
         <h2 id="overlay-title"></h2>

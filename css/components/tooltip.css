@@ -1,0 +1,56 @@
+/* Vol.3 Tooltip */
+.tooltip-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: calc(var(--z-dialog) + 10);
+}
+
+.tooltip {
+  position: fixed;
+  max-width: 260px;
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04)),
+    rgba(17, 23, 43, 0.95);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-float);
+  font-size: var(--font-caption);
+  color: var(--text);
+  opacity: 0;
+  transform: scale(0.92) translateY(4px);
+  transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
+  pointer-events: none;
+}
+
+.tooltip--visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.tooltip__title {
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: var(--sp-1);
+  font-size: 0.82rem;
+}
+
+.tooltip__desc {
+  color: var(--text2);
+  line-height: 1.45;
+  margin-bottom: var(--sp-1);
+}
+
+.tooltip__stats,
+.tooltip__meta {
+  color: var(--secondary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+[data-tooltip] { cursor: help; }
+
+.tft-shop-card[data-tooltip] { cursor: pointer; }
+
+.tft-trait-row[data-tooltip] { cursor: help; }

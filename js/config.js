@@ -41,10 +41,10 @@ export const CONFIG = {
   BASE_CRIT_RATE: 0.05,
   BASE_CRIT_DAMAGE: 2.0,
   MAX_CARD_LEVEL: 5,
-  MAX_TAVERN_TIER: 7,
+  MAX_TAVERN_TIER: 6,
   INITIAL_TAVERN_TIER: 1,
-  /** 酒馆等级 → 出战栏位（金铲铲：升人口随等级解锁） */
-  TAVERN_TEAM_SLOTS: [3, 4, 5, 6, 7, 7, 7],
+  /** 酒馆等级 → 出战栏位（炉石酒馆：最高7人） */
+  TAVERN_TEAM_SLOTS: [3, 4, 5, 6, 7, 7],
   /** 酒馆等级 → 商店稀有度权重（兼容展示） */
   TAVERN_RARITY_WEIGHTS: {
     1: { common: 100 },
@@ -53,7 +53,6 @@ export const CONFIG = {
     4: { common: 42, rare: 36, epic: 18, legendary: 4 },
     5: { common: 32, rare: 34, epic: 26, legendary: 8 },
     6: { common: 22, rare: 30, epic: 32, legendary: 16 },
-    7: { common: 15, rare: 25, epic: 35, legendary: 25 },
   },
   /** 酒馆等级 → 费用档刷新权重（金铲铲：3费/4费史诗分池） */
   TAVERN_COST_WEIGHTS: {
@@ -62,13 +61,12 @@ export const CONFIG = {
     3: { 1: 55, 2: 35, 3: 10 },
     4: { 1: 42, 2: 36, 3: 18, 4: 4 },
     5: { 1: 32, 2: 34, 3: 26, 4: 8 },
-    6: { 1: 22, 2: 30, 3: 32, 4: 16 },
-    7: { 1: 15, 2: 25, 3: 30, 4: 22, 5: 8 },
+    6: { 1: 15, 2: 25, 3: 30, 4: 22, 5: 8 },
   },
   /** 每回合固定基础金币（炉石酒馆规则） */
   BASE_GOLD: 10,
-  /** 升级酒馆费用（当前等级 → 下一级） */
-  TAVERN_UPGRADE_COST: [0, 5, 7, 8, 9, 11, 13],
+  /** 升级酒馆费用（当前等级 → 下一级，炉石6级酒馆） */
+  TAVERN_UPGRADE_COST: [0, 5, 7, 8, 9, 11],
   /** 卡牌升级费用：当前等级 × 此系数 */
   CARD_UPGRADE_GOLD_PER_LEVEL: 2,
 };

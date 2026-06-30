@@ -1,6 +1,8 @@
 import { CONFIG, getStarMultiplier } from './config.js';
 import { CARD_TEMPLATES as BASE_TEMPLATES } from './cardData.js';
 import { CARD_DATA_EXTRA } from './cardDataExtra.js';
+import { resolveCardTribe } from './tribeAssignment.js';
+import { applyTribeSkillPatch } from './tribeSkills.js';
 
 function resolveCostTier(tpl) {
   if (tpl.costTier) return tpl.costTier;
@@ -151,9 +153,10 @@ function applyUpgradeEvolution(skills, evo) {
   return list;
 }
 
-/** 按星级构建技能：1星基础 · 2星强化 · 3星究极进化 */
+/** 按星级构建技能：1星基础 · 2星强化 · 3星究极进化 · 流派技能补丁 */
 function buildSkills(tpl, star) {
-  const base = tpl.skills.map(cloneSkill);
+  let base = tpl.skills.map(cloneSkill);
+  base = applyTribeSkillPatch(tpl.id, base);
   if (star >= 3) return applyUpgradeEvolution(base, tpl.upgradeEvolution);
   if (star >= 2) return applyStar2Enhancement(base, tpl);
   return base;
@@ -171,12 +174,15 @@ export function createCard(templateId, star = 1, playerId = '', position = 0) {
   const speed = Math.round(tpl.baseSpeed * tierMul);
   const defense = Math.round(tpl.baseDefense * tierMul);
 
+  const tribe = tpl.tribe || resolveCardTribe(tpl.id, tpl.element, tpl.class);
+
   return {
     id: `card_${++cardIdCounter}`,
     templateId: tpl.id,
     name: tpl.name,
     rarity: tpl.rarity,
     element: tpl.element,
+    tribe,
     cardClass: tpl.class,
     description: tpl.description || '',
     hp: maxHp,

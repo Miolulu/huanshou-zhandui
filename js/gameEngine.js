@@ -11,6 +11,7 @@ import {
   getStageDamage,
 } from './config.js';
 import { CARD_TEMPLATES, createCard, recalculateCardStats, getTemplate, getTemplateCostTier } from './cards.js';
+import { resolveCardTribe } from './tribeAssignment.js';
 import { BattleEngine } from './battleEngine.js';
 import { runAIDecisions } from './ai.js';
 
@@ -262,6 +263,7 @@ export class GameEngine {
         rarity: tpl.rarity,
         element: tpl.element,
         cardClass: tpl.class,
+        tribe: tpl.tribe || resolveCardTribe(tpl.id, tpl.element, tpl.class),
         cost: getCardBuyCost(tpl.rarity, tpl.costTier),
         costTier: tpl.costTier,
         star: 1,
