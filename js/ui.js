@@ -84,9 +84,8 @@ export class UI {
     };
     document.getElementById('btn-skip-battle').onclick = () => this.game.skipBattle();
     document.getElementById('btn-toggle-bond-guide').onclick = () => this.toggleBondGuide();
-    if (this.el.bondGuidePanel && !this.el.bondGuidePanel.dataset.ready) {
+    if (this.el.bondGuidePanel) {
       this.el.bondGuidePanel.innerHTML = renderBondGuideHTML();
-      this.el.bondGuidePanel.dataset.ready = '1';
     }
   }
 
