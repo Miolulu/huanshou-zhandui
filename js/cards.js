@@ -208,6 +208,16 @@ export function createCard(templateId, star = 1, playerId = '', position = 0) {
 export function cloneCardForBattle(card, playerId) {
   const c = createCard(card.templateId, card.star ?? card.upgradeTier, playerId, card.position);
   c.id = card.id + '_battle';
+  if (card.trainerRally?.attack) {
+    c.attack += card.trainerRally.attack;
+    c._trainerRallyApplied = card.trainerRally.attack;
+  }
+  if (card.encounterBoost) {
+    c.attack += card.encounterBoost.attack || 0;
+    c.defense += card.encounterBoost.defense || 0;
+    c.maxHp += card.encounterBoost.defense || 0;
+    c.hp = Math.min(c.maxHp, c.hp + (card.encounterBoost.defense || 0));
+  }
   return c;
 }
 
@@ -236,4 +246,29 @@ export function recalculateCardStats(card, fullHeal = true) {
 
 export function getStarLabel(star) {
   return `★${star}`;
+}
+
+/** 野性邂逅「潜能激发」分支：强化已有幻兽 */
+export function applyEncounterBoost(card) {
+  if (!card) return false;
+  card.encounterBoost = {
+    attack: 3,
+    defense: 2,
+    skillMul: 1.2,
+  };
+  card.attack += 3;
+  card.defense += 2;
+  card.maxHp += 2;
+  card.hp = Math.min(card.maxHp, card.hp + 2);
+
+  if (card.skills?.[0]) {
+    const primary = card.skills[0];
+    for (const e of primary.effects || []) {
+      if (e.type === 'DEAL_DAMAGE') e.amount = Math.round((e.amount || 0) * 1.2);
+      if (e.type === 'HEAL') e.amount = Math.round((e.amount || 0) * 1.2);
+      if (e.type === 'SHIELD') e.amount = Math.round((e.amount || 0) * 1.2);
+    }
+    primary.description = `${primary.description || primary.name}（潜能激发）`;
+  }
+  return true;
 }

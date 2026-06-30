@@ -69,6 +69,20 @@ export const CONFIG = {
   TAVERN_UPGRADE_COST: [0, 5, 7, 8, 9, 11],
   /** 卡牌升级费用：当前等级 × 此系数 */
   CARD_UPGRADE_GOLD_PER_LEVEL: 2,
+  /** 搭档连携：相邻同属性/同族群加成（非羁绊条） */
+  PARTNER_SYNERGY: {
+    element: { attack: 2, defense: 1 },
+    tribe: { attack: 1, speed: 1 },
+  },
+  /** 足迹侦查等级上限 */
+  SCOUT_MAX_LEVEL: 3,
+  SCOUT_DEFAULT_LEVEL: 1,
+  /** 野性邂逅二选一触发概率（成体及以上融合） */
+  DISCOVER_BRANCH_CHANCE: 0.45,
+  /** 训练师指令 */
+  TRAINER_RALLY_ATK: 4,
+  TRAINER_INSPIRE_ATK: 8,
+  TRAINER_BATTLE_COMMAND_TIMEOUT_MS: 4500,
 };
 
 export const ELEMENT_NAMES = {

@@ -530,6 +530,105 @@
 
 .bg-bench .slot.locked { opacity: 0.35; cursor: not-allowed; }
 
+.bg-bench .slot.partner-linked {
+  border-color: rgba(100, 200, 255, 0.55);
+  box-shadow: inset 0 0 8px rgba(100, 200, 255, 0.15);
+}
+.bg-bench .slot.trainer-rally { border-color: #ff8c42; }
+.bg-bench .slot.encounter-boosted { border-color: #b388ff; }
+.trainer-tag {
+  font-size: 0.58rem;
+  color: #ff8c42;
+  background: rgba(255, 140, 66, 0.15);
+  padding: 1px 4px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.trainer-prepare-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 215, 106, 0.2);
+}
+.trainer-prepare-bar.targeting { border-color: #ff8c42; box-shadow: 0 0 8px rgba(255, 140, 66, 0.3); }
+.trainer-label { font-size: 0.65rem; color: #ffd76a; white-space: nowrap; }
+.trainer-cmd-btn {
+  font-size: 0.62rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 106, 0.35);
+  background: rgba(255, 215, 106, 0.08);
+  color: #e8d5a0;
+  cursor: pointer;
+}
+.trainer-cmd-btn:hover:not(:disabled) { background: rgba(255, 215, 106, 0.2); }
+.trainer-cmd-btn:disabled, .trainer-cmd-btn.used { opacity: 0.4; cursor: not-allowed; }
+
+.trainer-battle-panel {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(10, 20, 40, 0.92);
+  border: 1px solid rgba(255, 215, 106, 0.45);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  min-width: 280px;
+  text-align: center;
+}
+.trainer-battle-panel.hidden { display: none; }
+.trainer-battle-title { margin: 0 0 8px; font-size: 0.75rem; color: #ffd76a; }
+.trainer-battle-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.trainer-skip { opacity: 0.7; }
+
+.scout-box { margin-bottom: 8px; }
+.scout-level { font-size: 0.75rem; margin: 0 0 4px; }
+.scout-hint { font-size: 0.62rem; margin: 0; }
+.scout-silhouettes .scout-blur { filter: blur(0.5px); opacity: 0.85; }
+
+.partner-summary { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255, 215, 106, 0.2); }
+.partner-chip {
+  display: inline-block;
+  font-size: 0.62rem;
+  padding: 2px 6px;
+  margin: 2px;
+  border-radius: 4px;
+  background: rgba(100, 200, 255, 0.12);
+  border: 1px solid rgba(100, 200, 255, 0.3);
+  color: #a8d8ff;
+}
+
+.discover-branch-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.discover-branch-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 215, 106, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+  color: #e8d5a0;
+  cursor: pointer;
+  text-align: left;
+}
+.discover-branch-btn:hover:not(:disabled) { border-color: #ffd76a; background: rgba(255, 215, 106, 0.1); }
+.discover-branch-btn.branch-boost { border-color: rgba(255, 140, 66, 0.5); }
+.discover-branch-btn.branch-beast { border-color: rgba(100, 200, 120, 0.5); }
+.discover-branch-btn small { font-size: 0.65rem; opacity: 0.8; }
+
 @media (max-width: 1100px) {
   .bg-body {
     grid-template-columns: 1fr;

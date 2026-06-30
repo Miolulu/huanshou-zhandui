@@ -10,10 +10,16 @@ import {
   getCardBuyCost,
   getStageDamage,
 } from './config.js';
-import { CARD_TEMPLATES, createCard, recalculateCardStats, getTemplate, getTemplateCostTier } from './cards.js';
+import { CARD_TEMPLATES, createCard, recalculateCardStats, getTemplate, getTemplateCostTier, applyEncounterBoost } from './cards.js';
 import { resolveCardTribe } from './tribeAssignment.js';
 import { rollLobbyTribes, isTemplateInLobby } from './lobbyTribes.js';
 import { queueDiscover } from './discover.js';
+import { predictNextOpponent } from './scouting.js';
+import {
+  executePrepareFrontline,
+  executePrepareRally,
+  executePrepareScout,
+} from './trainerCommands.js';
 import { BattleEngine } from './battleEngine.js';
 import { runAIDecisions } from './ai.js';
 
@@ -46,6 +52,7 @@ function createPlayer(id, name, isHuman = false) {
     lastIncome: null,
     eliminated: false,
     rank: 0,
+    trainerCommandUsed: false,
   };
 }
 
@@ -75,6 +82,9 @@ export class GameEngine {
     this._endingPrepare = false;
     this.pendingDiscover = null;
     this.lobbyTribes = [];
+    this.scoutedOpponent = null;
+    this.scoutLevel = CONFIG.SCOUT_DEFAULT_LEVEL || 1;
+    this._trainerTargetMode = null;
     this.initPool();
   }
 
@@ -147,6 +157,9 @@ export class GameEngine {
     this.phase = 'PREPARE';
     this.pendingDiscover = null;
     this.lobbyTribes = rollLobbyTribes();
+    this.scoutLevel = CONFIG.SCOUT_DEFAULT_LEVEL || 1;
+    this.scoutedOpponent = null;
+    this._trainerTargetMode = null;
     this.initPool();
     for (const p of this.players) this.syncTeamSlots(p);
     this.beginPreparePhase();
@@ -181,6 +194,9 @@ export class GameEngine {
       battleSpeed: this.battleSpeed,
       lobbyTribes: this.lobbyTribes,
       pendingDiscover: this.pendingDiscover,
+      scoutedOpponent: this.scoutedOpponent,
+      scoutLevel: this.scoutLevel,
+      trainerTargetMode: this._trainerTargetMode,
     };
   }
 
@@ -284,6 +300,10 @@ export class GameEngine {
   beginPreparePhase() {
     this.phase = 'PREPARE';
     for (const player of this.getAlivePlayers()) {
+      player.trainerCommandUsed = false;
+      for (const c of player.team.cards) {
+        if (c) c.trainerRally = null;
+      }
       const income = this.calculateGoldIncome(player);
       player.lastIncome = income;
       // 每回合重置金币：未花费的不保留，仅发放本回合收入（利息按清零前持有量结算）
@@ -299,6 +319,13 @@ export class GameEngine {
         runAIDecisions(player, this);
       }
     }
+    const human = this.getHuman();
+    if (human && !human.eliminated) {
+      this.scoutLevel = CONFIG.SCOUT_DEFAULT_LEVEL || 1;
+      this.scoutedOpponent = predictNextOpponent(this, human);
+      this.opponentPreview = this.scoutedOpponent;
+    }
+    this._trainerTargetMode = null;
     this.startPrepareTimer();
     this.notify();
   }
@@ -395,17 +422,89 @@ export class GameEngine {
     return true;
   }
 
+  grantDiscoverBoost(player, position) {
+    const card = player.team.cards[position];
+    if (!card) return false;
+    applyEncounterBoost(card);
+    this.pendingDiscover = null;
+    this.notify();
+    return true;
+  }
+
   resolveDiscover(templateId) {
     if (!this.pendingDiscover) return false;
     const player = this.players.find((p) => p.id === this.pendingDiscover.playerId);
     if (!player) return false;
+    if (this.pendingDiscover.type === 'branch') return false;
     const ok = this.grantDiscoverCard(player, templateId);
     if (!ok) return false;
     return true;
   }
 
+  resolveDiscoverBranch(branchKind, payload = {}) {
+    if (!this.pendingDiscover || this.pendingDiscover.type !== 'branch') return false;
+    const player = this.players.find((p) => p.id === this.pendingDiscover.playerId);
+    if (!player) return false;
+
+    if (branchKind === 'boost') {
+      const pos = payload.position ?? this.pendingDiscover.branches?.find((b) => b.kind === 'boost')?.position;
+      if (pos == null || pos < 0) return false;
+      return this.grantDiscoverBoost(player, pos);
+    }
+    if (branchKind === 'beast') {
+      const templateId = payload.templateId;
+      if (!templateId) return false;
+      return this.grantDiscoverCard(player, templateId);
+    }
+    return false;
+  }
+
+  useTrainerPrepareCommand(cmd, targetPos = null) {
+    const human = this.getHuman();
+    if (!human || this.phase !== 'PREPARE' || human.trainerCommandUsed) return { ok: false, message: '本回合已用过训练师指令' };
+
+    let result;
+    if (cmd === 'frontline') {
+      result = executePrepareFrontline(human, this);
+    } else if (cmd === 'rally') {
+      if (targetPos == null) {
+        this._trainerTargetMode = 'rally';
+        this.notify();
+        return { ok: true, pendingTarget: true, message: '请点击一只幻兽作为鼓舞目标' };
+      }
+      result = executePrepareRally(human, targetPos);
+      this._trainerTargetMode = null;
+    } else if (cmd === 'scout') {
+      result = executePrepareScout(this);
+      if (result.ok) this.scoutedOpponent = predictNextOpponent(this, human);
+    } else {
+      return { ok: false, message: '未知指令' };
+    }
+
+    if (result.ok && !result.pendingTarget) {
+      human.trainerCommandUsed = true;
+      this._trainerTargetMode = null;
+      this.notify();
+    }
+    return result;
+  }
+
+  resolveTrainerBattleCommand(cmd, params = {}) {
+    const battle = this.currentBattle;
+    if (!battle || this.phase !== 'BATTLE') return { ok: false, message: '非战斗阶段' };
+    const result = battle.executeTrainerBattleCommand(cmd, params);
+    if (result.ok) this.notify();
+    return result;
+  }
+
+  skipTrainerBattleCommand() {
+    this.currentBattle?.skipTrainerCommand();
+  }
+
+  /** @deprecated use resolveDiscover */
   tryFulfillPendingDiscover(player) {
     if (!this.pendingDiscover || this.pendingDiscover.playerId !== player.id) return;
+    if (this.pendingDiscover.type === 'branch') return;
     if (this.findEmptyTeamSlot(player) === -1) return;
     if (this.pendingDiscover.options?.length === 1) {
       this.grantDiscoverCard(player, this.pendingDiscover.options[0]);
@@ -573,6 +672,10 @@ export class GameEngine {
       const isHumanBattle = pair.playerA.id === this.humanId || pair.playerB.id === this.humanId;
       const engine = new BattleEngine(pair.playerA, pair.playerB, (evt) => {
         if (isHumanBattle) this.onBattleEvent?.(evt, engine);
+      }, {
+        isHumanBattle,
+        humanPlayerId: this.humanId,
+        battleSpeed: this.battleSpeed,
       });
 
       if (isHumanBattle) this.currentBattle = engine;
@@ -698,6 +801,8 @@ export class GameEngine {
     this.poolRemaining = data.poolRemaining || {};
     this.lobbyTribes = data.lobbyTribes || rollLobbyTribes();
     this.pendingDiscover = data.pendingDiscover || null;
+    this.scoutLevel = data.scoutLevel ?? CONFIG.SCOUT_DEFAULT_LEVEL ?? 1;
+    this.scoutedOpponent = data.scoutedOpponent || null;
     this.prepareTimeTotal = data.prepareTimeTotal || this.getPrepareTimeSeconds();
     this.prepareTimeLeft = data.prepareTimeLeft ?? this.prepareTimeTotal;
     for (const p of this.players) {

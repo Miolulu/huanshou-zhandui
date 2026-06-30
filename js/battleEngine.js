@@ -6,6 +6,7 @@ import {
   getSkillType,
 } from './elements.js';
 import { ELEMENT_NAMES } from './config.js';
+import { getPartnerLinks, getLinksAtPosition, computePartnerBonus } from './partnerSynergy.js';
 const NEGATIVE_STATUSES = new Set([
   'BURN', 'POISON', 'PARALYZE', 'STUN', 'FREEZE', 'SILENCE', 'DEBUFF', 'ENTANGLE', 'BLIND',
 ]);
@@ -15,12 +16,18 @@ const SKIP_REASONS = {
 };
 
 export class BattleEngine {
-  constructor(playerA, playerB, onEvent) {
+  constructor(playerA, playerB, onEvent, options = {}) {
     this.playerA = playerA;
     this.playerB = playerB;
     this.onEvent = onEvent || (() => {});
+    this.options = options;
+    this.isHumanBattle = options.isHumanBattle === true;
+    this.humanPlayerId = options.humanPlayerId || null;
     this.turn = 0;
     this.eventLog = [];
+    this.trainerCommandUsedThisTurn = false;
+    this.insightRevealed = false;
+    this._trainerCommandResolver = null;
     this.teamA = this.cloneTeam(playerA);
     this.teamB = this.cloneTeam(playerB);
   }
@@ -70,7 +77,117 @@ export class BattleEngine {
   }
 
   applyBonds() {
-    /* 幻兽战队：无羁绊条，靠出战技/倒下技/站位搭配 */
+    this.applyPartnerSynergy(this.teamA, this.playerA);
+    this.applyPartnerSynergy(this.teamB, this.playerB);
+  }
+
+  applyPartnerSynergy(team, player) {
+    const maxSize = player.team?.maxSize ?? 7;
+    const links = getPartnerLinks(team, maxSize);
+    for (let pos = 0; pos < maxSize; pos++) {
+      const card = team.cards[pos];
+      if (!card) continue;
+      const atPos = getLinksAtPosition(links, pos);
+      if (!atPos.length) continue;
+      const bonus = computePartnerBonus(atPos);
+      if (!bonus.attack && !bonus.defense && !bonus.speed) continue;
+      card.partnerMods = bonus;
+      this.applyDirectStatBuff(card, bonus.attack, bonus.defense, null);
+      if (bonus.speed) card.speed = Math.max(1, card.speed + bonus.speed);
+    }
+    for (const link of links) {
+      this.emit({
+        type: 'PARTNER_LINK',
+        posA: link.posA,
+        posB: link.posB,
+        label: link.kinds.map((k) => (k === 'element' ? '属性共鸣' : '生态搭档')).join('·'),
+        teamId: team.playerId,
+      });
+    }
+  }
+
+  getHumanTeam() {
+    if (!this.humanPlayerId) return null;
+    return this.playerA.id === this.humanPlayerId ? this.teamA : this.teamB;
+  }
+
+  swapBattlePositions(team, posA, posB) {
+    if (posA === posB) return false;
+    const a = team.cards[posA];
+    const b = team.cards[posB];
+    if (!a?.isAlive || !b?.isAlive) return false;
+    team.cards[posA] = b;
+    team.cards[posB] = a;
+    a.position = posB;
+    b.position = posA;
+    return true;
+  }
+
+  executeTrainerBattleCommand(cmd, params = {}) {
+    if (this.trainerCommandUsedThisTurn) return { ok: false, message: '本回合已用过指令' };
+    const humanTeam = this.getHumanTeam();
+    if (!humanTeam) return { ok: false, message: '非玩家战斗' };
+
+    let result = { ok: false, message: '未知指令' };
+    if (cmd === 'swap') {
+      const { posA, posB } = params;
+      if (this.swapBattlePositions(humanTeam, posA, posB)) {
+        this.emit({ type: 'TRAINER_COMMAND', cmd, label: '急令换位', posA, posB });
+        result = { ok: true, message: '站位已调换' };
+      } else {
+        result = { ok: false, message: '请选择两只存活幻兽' };
+      }
+    } else if (cmd === 'inspire') {
+      const card = humanTeam.cards[params.position];
+      if (!card?.isAlive) {
+        result = { ok: false, message: '请选择存活友方' };
+      } else {
+        const atk = CONFIG.TRAINER_INSPIRE_ATK || 8;
+        this.applyDirectStatBuff(card, atk, 0, { name: '共鸣激励' });
+        this.emit({ type: 'TRAINER_COMMAND', cmd, label: '共鸣激励', cardId: card.id, cardName: card.name });
+        result = { ok: true, message: `${card.name} +${atk} 攻击` };
+      }
+    } else if (cmd === 'insight') {
+      this.insightRevealed = true;
+      this.emit({ type: 'TRAINER_COMMAND', cmd, label: '战术洞察' });
+      const enemyTeam = this.humanPlayerId === this.playerA.id ? this.teamB : this.teamA;
+      this.emit({ type: 'INSIGHT_REVEAL', enemyTeamId: enemyTeam.playerId });
+      result = { ok: true, message: '已洞察敌方阵容' };
+    }
+
+    if (result.ok) {
+      this.trainerCommandUsedThisTurn = true;
+      this._resolveTrainerPrompt();
+    }
+    return result;
+  }
+
+  skipTrainerCommand() {
+    this._resolveTrainerPrompt();
+  }
+
+  _resolveTrainerPrompt() {
+    if (this._trainerCommandResolver) {
+      const fn = this._trainerCommandResolver;
+      this._trainerCommandResolver = null;
+      fn();
+    }
+  }
+
+  async waitForTrainerCommand(paced, speed = 1) {
+    if (!this.isHumanBattle || this.trainerCommandUsedThisTurn) return;
+    const timeout = Math.max(800, (CONFIG.TRAINER_BATTLE_COMMAND_TIMEOUT_MS || 4500) / (speed || 1));
+    this.emit({ type: 'TRAINER_COMMAND_PROMPT', turn: this.turn, timeout });
+    await new Promise((resolve) => {
+      this._trainerCommandResolver = resolve;
+      setTimeout(() => {
+        if (this._trainerCommandResolver === resolve) {
+          this._trainerCommandResolver = null;
+          resolve();
+        }
+      }, timeout);
+    });
+    this.emit({ type: 'TRAINER_COMMAND_END', turn: this.turn });
   }
 
   isSilenced(card) {
@@ -757,8 +874,17 @@ export class BattleEngine {
       this.turn++;
       this.emit({ type: 'TURN_START', turn: this.turn });
       this.processTurnStartEffects();
+      this.trainerCommandUsedThisTurn = false;
 
       let result = this.checkBattleEnd();
+      if (result) {
+        this.emit({ type: 'BATTLE_END', ...result });
+        return result;
+      }
+
+      await this.waitForTrainerCommand(paced, this.options.battleSpeed || 1);
+
+      result = this.checkBattleEnd();
       if (result) {
         this.emit({ type: 'BATTLE_END', ...result });
         return result;

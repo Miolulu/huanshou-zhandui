@@ -6,6 +6,7 @@ import {
   getCostBorderClass,
   getCardBuyCost,
   RARITY_NAMES,
+  ELEMENT_NAMES,
 } from './config.js';
 import { getTemplate } from './cards.js';
 import { formatSkillList } from './skills.js';
@@ -15,6 +16,8 @@ import { renderTribeGuideHTML, renderTeamTribeSummary } from './tribeGuide.js';
 import { formatDiscoverOption } from './discover.js';
 import { formatLobbyTribes } from './lobbyTribes.js';
 import { TERMS, formatStarDisplay, starStageLabel } from './gameTerms.js';
+import { getPartnerLinks, summarizePartnerLinks } from './partnerSynergy.js';
+import { getScoutLevelLabel, SCOUT_LEVEL } from './scouting.js';
 import { renderHeroCardRow } from './components/HeroCard.js';
 import { renderBattleTimeline, getTimelineOrder } from './components/BattleTimeline.js';
 import { BattleEffects, getBattleLogClass } from './components/BattleEffects.js';
@@ -28,6 +31,9 @@ export class UI {
     this.endRewards = null;
     this.bondGuideOpen = false;
     this._dragFromPos = null;
+    this._trainerTargetMode = null;
+    this._battleTrainerMode = null;
+    this._battleTrainerTargets = [];
     this.bindElements();
     this.battleEffects = new BattleEffects(
       document.getElementById('battle-effect-layer'),
@@ -84,7 +90,12 @@ export class UI {
       bondGuidePanel: document.getElementById('bond-guide-panel'),
       discoverPanel: document.getElementById('discover-panel'),
       discoverHint: document.getElementById('discover-hint'),
+      discoverBranch: document.getElementById('discover-branch'),
       discoverOptions: document.getElementById('discover-options'),
+      scoutInfo: document.getElementById('scout-info'),
+      trainerPrepareBar: document.getElementById('trainer-prepare-bar'),
+      trainerBattlePanel: document.getElementById('trainer-battle-panel'),
+      trainerBattleHint: document.getElementById('trainer-battle-hint'),
       lobbyTribesHint: document.getElementById('lobby-tribes-hint'),
       battleTimeline: document.getElementById('battle-timeline'),
     };
@@ -119,6 +130,7 @@ export class UI {
       };
     }
     document.getElementById('btn-toggle-bond-guide').onclick = () => this.toggleBondGuide();
+    this.bindTrainerCommands();
     if (this.el.bondGuidePanel) {
       this.el.bondGuidePanel.innerHTML = `<div class="bg-guide-panel">${renderTribeGuideHTML()}<button type="button" class="btn-muted bond-modal-close" style="margin-top:12px">关闭</button></div>`;
       this.el.bondGuidePanel.onclick = (e) => {
@@ -135,6 +147,72 @@ export class UI {
     this.el.bondGuidePanel?.classList.toggle('hidden', !this.bondGuideOpen);
     const btn = document.getElementById('btn-toggle-bond-guide');
     if (btn) btn.textContent = this.bondGuideOpen ? '收起' : '图鉴';
+  }
+
+  bindTrainerCommands() {
+    this.el.trainerPrepareBar?.querySelectorAll('[data-trainer-cmd]').forEach((btn) => {
+      btn.onclick = () => {
+        const cmd = btn.dataset.trainerCmd;
+        const result = this.game.useTrainerPrepareCommand(cmd);
+        if (result.message) showToast(result.message);
+      };
+    });
+    this.el.trainerBattlePanel?.querySelectorAll('[data-battle-cmd]').forEach((btn) => {
+      btn.onclick = () => {
+        const cmd = btn.dataset.battleCmd;
+        if (cmd === 'skip') {
+          this.game.skipTrainerBattleCommand();
+          this.hideTrainerBattlePanel();
+          return;
+        }
+        if (cmd === 'insight') {
+          const r = this.game.resolveTrainerBattleCommand('insight');
+          if (r.message) showToast(r.message);
+          this.hideTrainerBattlePanel();
+          return;
+        }
+        this._battleTrainerMode = cmd;
+        this._battleTrainerTargets = [];
+        const hint = cmd === 'swap' ? '点击两只友方幻兽换位' : '点击一只友方幻兽激励';
+        if (this.el.trainerBattleHint) this.el.trainerBattleHint.textContent = hint;
+        showToast(hint);
+      };
+    });
+  }
+
+  showTrainerBattlePanel() {
+    this.el.trainerBattlePanel?.classList.remove('hidden');
+    if (this.el.trainerBattleHint) this.el.trainerBattleHint.textContent = '本回合可用一次';
+    this._battleTrainerMode = null;
+    this._battleTrainerTargets = [];
+  }
+
+  hideTrainerBattlePanel() {
+    this.el.trainerBattlePanel?.classList.add('hidden');
+    this._battleTrainerMode = null;
+    this._battleTrainerTargets = [];
+  }
+
+  handleBattleTrainerCardClick(position) {
+    if (!this._battleTrainerMode) return;
+    const mode = this._battleTrainerMode;
+    if (mode === 'inspire') {
+      const r = this.game.resolveTrainerBattleCommand('inspire', { position });
+      if (r.message) showToast(r.message);
+      this.hideTrainerBattlePanel();
+      return;
+    }
+    if (mode === 'swap') {
+      this._battleTrainerTargets.push(position);
+      if (this._battleTrainerTargets.length < 2) {
+        showToast('再选第二只幻兽');
+        return;
+      }
+      const [posA, posB] = this._battleTrainerTargets;
+      const r = this.game.resolveTrainerBattleCommand('swap', { posA, posB });
+      if (r.message) showToast(r.message);
+      this.hideTrainerBattlePanel();
+    }
   }
 
   render(state) {
@@ -157,6 +235,8 @@ export class UI {
     this.renderTeamTribes(human);
     this.renderCardPanel(human.team.cards[this.selectedTeamPos] ?? null, human);
     this.renderOpponent(state);
+    this.renderScoutInfo(state);
+    this.renderTrainerPrepareBar(state, human);
     this.renderButtonStates(state, human);
     this.renderBattleField(state);
     this.renderBattleTribeHud(human);
@@ -309,19 +389,31 @@ export class UI {
   }
 
   renderTeam(human) {
+    const links = getPartnerLinks(human.team, human.team.maxSize);
+    const linkedPositions = new Set();
+    for (const l of links) {
+      linkedPositions.add(l.posA);
+      linkedPositions.add(l.posB);
+    }
+
     this.el.team.innerHTML = Array.from({ length: CONFIG.MAX_TEAM_SIZE }, (_, i) => {
       const unlocked = i < human.team.maxSize;
       const card = human.team.cards[i];
+      const partnerCls = linkedPositions.has(i) ? 'partner-linked' : '';
+      const rallyCls = card?.trainerRally ? 'trainer-rally' : '';
+      const boostCls = card?.encounterBoost ? 'encounter-boosted' : '';
       if (!unlocked) return `<div class="slot locked">🔒</div>`;
       if (!card) {
-        return `<div class="slot empty" data-pos="${i}" data-drop="1"><span class="slot-pos">${i + 1}</span></div>`;
+        return `<div class="slot empty ${partnerCls}" data-pos="${i}" data-drop="1"><span class="slot-pos">${i + 1}</span></div>`;
       }
       const star = card.star ?? card.upgradeTier ?? 1;
       const starCls = star >= 3 ? 'star-3' : star >= 2 ? 'star-2' : 'star-1';
+      const rallyTag = card.trainerRally ? `<span class="trainer-tag">战意+${card.trainerRally.attack}</span>` : '';
       return `
-        <div class="slot filled ${RARITY_CLASS[card.rarity]} ${starCls} ${this.selectedTeamPos === i ? 'selected' : ''}"
+        <div class="slot filled ${RARITY_CLASS[card.rarity]} ${starCls} ${partnerCls} ${rallyCls} ${boostCls} ${this.selectedTeamPos === i ? 'selected' : ''}"
           data-pos="${i}" draggable="${this.game.phase === 'PREPARE' ? 'true' : 'false'}">
           <span class="slot-pos">${i + 1}</span>
+          ${rallyTag}
           <div class="card-head">
             <div class="card-name">${card.name}</div>
             <div class="card-badges">${tribeBadgeHtml(card.tribe || 'neutral')}${elementBadgeHtml(card.element)}</div>
@@ -335,6 +427,18 @@ export class UI {
       slot.onclick = () => this.handleTeamClick(parseInt(slot.dataset.pos, 10));
     });
     this.bindTeamDragDrop();
+  }
+
+  renderTeamTribes(human) {
+    if (!this.el.teamBonds) return;
+    const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
+    const summary = summarizePartnerLinks(human.team, human.team.maxSize);
+    const partnerHtml = summary.length
+      ? `<div class="partner-summary"><p class="hint">${TERMS.partnerLink}</p>${summary.map((s) =>
+          `<span class="partner-chip" title="+${s.bonus.attack}攻 +${s.bonus.defense}防">${s.label}</span>`
+        ).join('')}</div>`
+      : '';
+    this.el.teamBonds.innerHTML = renderTeamTribeSummary(cards) + partnerHtml;
   }
 
   bindTeamDragDrop() {
@@ -435,12 +539,6 @@ export class UI {
     }
   }
 
-  renderTeamTribes(human) {
-    if (!this.el.teamBonds) return;
-    const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
-    this.el.teamBonds.innerHTML = renderTeamTribeSummary(cards);
-  }
-
   renderLobbyTribes(state) {
     if (!this.el.lobbyTribesHint) return;
     const tribes = state.lobbyTribes || [];
@@ -459,14 +557,22 @@ export class UI {
       return;
     }
     panel.classList.remove('hidden');
+
+    if (d.type === 'branch') {
+      this.renderDiscoverBranch(d, human);
+      return;
+    }
+
     const canAdd = this.game.findEmptyTeamSlot(human) !== -1;
     if (this.el.discoverHint) {
       this.el.discoverHint.textContent = canAdd
         ? `${TERMS.encounter}：探索${d.discoverTier}阶稀有个体 · 融合觉醒奖励`
         : `${TERMS.encounter}：探索${d.discoverTier}阶 · 请先腾出空栏位`;
     }
+    if (this.el.discoverBranch) this.el.discoverBranch.classList.add('hidden');
     if (!this.el.discoverOptions) return;
-    this.el.discoverOptions.innerHTML = d.options.map((id) => {
+    this.el.discoverOptions.classList.remove('hidden');
+    this.el.discoverOptions.innerHTML = (d.options || []).map((id) => {
       const info = formatDiscoverOption(id);
       return `<button type="button" class="discover-opt cost-${info.costTier}" data-discover-id="${id}" ${canAdd ? '' : 'disabled'}>
         <span class="discover-opt-tribe">${info.tribeIcon} ${info.tribeLabel}</span>
@@ -485,9 +591,98 @@ export class UI {
     });
   }
 
+  renderDiscoverBranch(d, human) {
+    if (this.el.discoverHint) {
+      this.el.discoverHint.textContent = `${TERMS.encounterBranch}：选择潜能激发或新种邂逅`;
+    }
+    const boost = d.branches?.find((b) => b.kind === 'boost');
+    const beast = d.branches?.find((b) => b.kind === 'beast');
+    const canAdd = this.game.findEmptyTeamSlot(human) !== -1;
+
+    if (this.el.discoverBranch) {
+      this.el.discoverBranch.classList.remove('hidden');
+      this.el.discoverBranch.innerHTML = `
+        <div class="discover-branch-row">
+          <button type="button" class="discover-branch-btn branch-boost" data-branch="boost">
+            <strong>⚡ 潜能激发</strong>
+            <span>强化 ${boost?.cardName || '战队幻兽'}</span>
+            <small>${boost?.preview || '+3攻 +2防 · 主技能强化'}</small>
+          </button>
+          <button type="button" class="discover-branch-btn branch-beast" data-branch="beast" ${canAdd ? '' : 'disabled'}>
+            <strong>🌿 新种邂逅</strong>
+            <span>从野外收服稀有个体</span>
+            <small>探索${d.discoverTier}阶 · 三选一</small>
+          </button>
+        </div>`;
+      this.el.discoverBranch.querySelector('[data-branch="boost"]')?.addEventListener('click', () => {
+        if (this.game.resolveDiscoverBranch('boost', { position: boost?.position })) {
+          showToast(`潜能激发：${boost?.cardName || '幻兽'}获得强化！`);
+        }
+      });
+      this.el.discoverBranch.querySelector('[data-branch="beast"]')?.addEventListener('click', () => {
+        if (beast?.options?.length) this._showBeastSubOptions(beast.options, human);
+      });
+    }
+    if (this.el.discoverOptions) {
+      this.el.discoverOptions.innerHTML = '';
+      this.el.discoverOptions.classList.add('hidden');
+    }
+  }
+
+  _showBeastSubOptions(optionIds, human) {
+    const canAdd = this.game.findEmptyTeamSlot(human) !== -1;
+    if (!this.el.discoverOptions) return;
+    this.el.discoverOptions.classList.remove('hidden');
+    this.el.discoverOptions.innerHTML = optionIds.map((id) => {
+      const info = formatDiscoverOption(id);
+      return `<button type="button" class="discover-opt cost-${info.costTier}" data-discover-beast="${id}" ${canAdd ? '' : 'disabled'}>
+        <span class="discover-opt-tribe">${info.tribeIcon} ${info.tribeLabel}</span>
+        <strong class="discover-opt-name">${info.name}</strong>
+        <span class="discover-opt-tier">${info.costTier}费</span>
+      </button>`;
+    }).join('');
+    this.el.discoverOptions.querySelectorAll('[data-discover-beast]').forEach((btn) => {
+      btn.onclick = () => {
+        if (this.game.resolveDiscoverBranch('beast', { templateId: btn.dataset.discoverBeast })) {
+          showToast('新种邂逅成功！');
+        } else {
+          showToast('需要空栏位');
+        }
+      };
+    });
+  }
+
+  renderScoutInfo(state) {
+    if (!this.el.scoutInfo) return;
+    const level = state.scoutLevel ?? 1;
+    const label = getScoutLevelLabel(level);
+    this.el.scoutInfo.innerHTML = `
+      <p class="scout-level">情报：<strong>${label}</strong> (${level}/3)</p>
+      <p class="hint scout-hint">${TERMS.scoutHint}</p>`;
+  }
+
+  renderTrainerPrepareBar(state, human) {
+    const bar = this.el.trainerPrepareBar;
+    if (!bar) return;
+    const isPrepare = state.phase === 'PREPARE';
+    bar.style.display = isPrepare ? 'flex' : 'none';
+    const used = human.trainerCommandUsed;
+    bar.querySelectorAll('[data-trainer-cmd]').forEach((btn) => {
+      btn.disabled = used;
+      btn.classList.toggle('used', used);
+    });
+    bar.classList.toggle('targeting', state.trainerTargetMode === 'rally');
+  }
+
   handleTeamClick(pos) {
     const human = this.game.getHuman();
     if (this.game.phase !== 'PREPARE') return;
+
+    if (this.game._trainerTargetMode === 'rally') {
+      const result = this.game.useTrainerPrepareCommand('rally', pos);
+      if (result.message) showToast(result.message);
+      return;
+    }
 
     if (this.selectedTeamPos !== null && this.selectedTeamPos !== pos) {
       const moved = this.game.moveCard(human, this.selectedTeamPos, pos);
@@ -510,17 +705,37 @@ export class UI {
   }
 
   renderOpponent(state) {
-    const opp = state.opponentPreview;
+    const opp = state.scoutedOpponent || state.opponentPreview;
+    const level = state.scoutLevel ?? 1;
     if (!opp) {
-      this.el.opponent.innerHTML = '<p class="hint">匹配后显示</p>';
+      this.el.opponent.innerHTML = '<p class="hint">准备阶段可窥探足迹</p>';
       return;
     }
-    const cards = opp.team.cards.filter((c, i) => c && i < opp.team.maxSize);
+    const cards = opp.team.cards.filter((c, i) => c && i < (opp.team.maxSize ?? 7));
+
+    if (level <= SCOUT_LEVEL.FOOTPRINT) {
+      this.el.opponent.innerHTML = `
+        <h3>👣 ${opp.name}</h3>
+        <p class="hint">足迹：${opp.hp}HP · 探索${opp.tavernTier || 1}级 · ${cards.length}只幻兽</p>`;
+      return;
+    }
+
+    if (level <= SCOUT_LEVEL.SILHOUETTE) {
+      this.el.opponent.innerHTML = `
+        <h3>👣 ${opp.name} · ${opp.hp}HP</h3>
+        <div class="scout-silhouettes">${cards.map((c) =>
+          `<span class="tag scout-blur">${ELEMENT_NAMES[c.element] || '?'}系 · ${getTribe(c.tribe).icon}${'★'.repeat(c.star ?? 1)}</span>`
+        ).join(' ') || '未知阵容'}</div>
+        <p class="hint">轮廓情报：可见属性与星级，名称模糊</p>`;
+      return;
+    }
+
     this.el.opponent.innerHTML = `
       <h3>${opp.name} · ${opp.hp}HP · 探索${opp.tavernTier || 1}级</h3>
       <div>${cards.map(c =>
         `<span class="tag ${RARITY_CLASS[c.rarity]}">${c.name}${'★'.repeat(c.star ?? c.upgradeTier ?? 1)}</span>`
-      ).join(' ') || '无阵容'}</div>`;
+      ).join(' ') || '无阵容'}</div>
+      <p class="hint">全貌情报已解锁</p>`;
   }
 
   renderButtonStates(state, human) {
@@ -563,8 +778,12 @@ export class UI {
     }
 
     const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
-    const comboCount = summarizeActiveComboBonds(cards).length;
-    if (this.el.battleHudCombo) this.el.battleHudCombo.textContent = `×${comboCount}`;
+    const links = summarizePartnerLinks(human.team, human.team.maxSize);
+    if (this.el.battleHudCombo) {
+      this.el.battleHudCombo.textContent = links.length
+        ? `连携×${links.length}`
+        : '—';
+    }
 
     const engine = this.game.currentBattle;
     let energyPct = 0;
@@ -633,6 +852,13 @@ export class UI {
     }
     if (this.el.battlePlayerArea) {
       this.el.battlePlayerArea.innerHTML = renderHeroCardRow(playerCards, 'player', '我方战队');
+      this.el.battlePlayerArea.querySelectorAll('.hero-card--player').forEach((el) => {
+        el.style.cursor = this._battleTrainerMode ? 'pointer' : '';
+        el.onclick = () => {
+          const pos = parseInt(el.dataset.position, 10);
+          if (!Number.isNaN(pos) && this._battleTrainerMode) this.handleBattleTrainerCardClick(pos);
+        };
+      });
     }
   }
 
@@ -686,6 +912,10 @@ export class UI {
       case 'ATTACK_MISSED': return `🌀 ${e.cardName} 攻击未命中（${e.reason}）`;
       case 'SHIELD_GAINED': return `🛡 ${e.cardName} +${e.amount} 护盾`;
       case 'DODGE': return `💨 ${e.cardName} 闪避！`;
+      case 'PARTNER_LINK': return `🤝 搭档连携：${e.label || '相邻加成'}`;
+      case 'TRAINER_COMMAND': return `🎯 训练师【${e.label}】`;
+      case 'TRAINER_COMMAND_PROMPT': return `🎯 训练师指令可用（本回合）`;
+      case 'INSIGHT_REVEAL': return '👁 战术洞察：敌方阵容已暴露';
       case 'BATTLE_END': return '🏁 战斗结束';
       default: return null;
     }
@@ -730,6 +960,12 @@ export class UI {
   handleBattleEvent(event) {
     if (event.cardId) this._lastActionCardId = event.cardId;
     if (event.attackerId) this._lastActionCardId = event.attackerId;
+    if (event.type === 'TRAINER_COMMAND_PROMPT') {
+      this.showTrainerBattlePanel();
+    }
+    if (event.type === 'TRAINER_COMMAND_END') {
+      this.hideTrainerBattlePanel();
+    }
     if (this.battleEffects?.shouldPlay(event)) {
       this.battleEffects.play(event);
     }
@@ -744,6 +980,7 @@ export class UI {
 
   onBattleStart() {
     this.clearBattleLog();
+    this.hideTrainerBattlePanel();
     if (this.battleEffects?.layer) this.battleEffects.layer.innerHTML = '';
   }
 }

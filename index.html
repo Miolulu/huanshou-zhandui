@@ -178,6 +178,8 @@
         <div id="lobby-tribes-hint" class="lobby-tribes-hint"></div>
         <h3 class="trait-sub">排名</h3>
         <div id="players-list" class="players-list"></div>
+        <h3 class="trait-sub">足迹侦查</h3>
+        <div id="scout-info" class="scout-box"></div>
         <h3 class="trait-sub">下轮对手</h3>
         <div id="opponent-info" class="opponent-box"></div>
       </aside>
@@ -215,6 +217,16 @@
 
             <nav class="battle-timeline z-hud" id="battle-timeline" aria-label="行动顺序"></nav>
 
+            <div id="trainer-battle-panel" class="trainer-battle-panel hidden" role="group" aria-label="战斗训练师指令">
+              <p class="trainer-battle-title">训练师指令 <span id="trainer-battle-hint">本回合可用一次</span></p>
+              <div class="trainer-battle-btns">
+                <button type="button" class="trainer-cmd-btn" data-battle-cmd="swap">↔ 急令换位</button>
+                <button type="button" class="trainer-cmd-btn" data-battle-cmd="inspire">✨ 共鸣激励</button>
+                <button type="button" class="trainer-cmd-btn" data-battle-cmd="insight">👁 战术洞察</button>
+                <button type="button" class="trainer-cmd-btn trainer-skip" data-battle-cmd="skip">跳过</button>
+              </div>
+            </div>
+
             <section class="enemy-area battle-enemy-area z-gameplay" id="battle-enemy-area" aria-label="敌方区域"></section>
 
             <section class="battle-center battle-field z-gameplay">
@@ -231,7 +243,7 @@
         <section class="bg-bench-section">
           <div class="bench-head">
             <h2>战队栏位</h2>
-            <span class="hint">单击交换站位 · 拖拽调整顺序 · 3只同名同阶融合觉醒</span>
+            <span class="hint">单击交换站位 · 拖拽调整顺序 · 相邻同属性/族群有搭档连携</span>
           </div>
           <div id="team-slots" class="bg-bench"></div>
         </section>
@@ -267,6 +279,12 @@
 
     <footer class="bg-action-bar">
       <div class="bg-action-left">
+        <div id="trainer-prepare-bar" class="trainer-prepare-bar" aria-label="训练师指令">
+          <span class="trainer-label">🎯 训练师</span>
+          <button type="button" class="trainer-cmd-btn" data-trainer-cmd="frontline" title="将最高攻击调到最前排">前锋调配</button>
+          <button type="button" class="trainer-cmd-btn" data-trainer-cmd="rally" title="指定幻兽下战 +4攻">战意鼓舞</button>
+          <button type="button" class="trainer-cmd-btn" data-trainer-cmd="scout" title="提升对手情报等级">足迹延伸</button>
+        </div>
         <button id="btn-upgrade-tavern" class="bg-round-btn bg-buy-xp">
           <span class="btn-icon">⬆</span>
           <span class="btn-label">提升探索</span>
@@ -311,6 +329,7 @@
       <div class="bg-discover-box panel panel-glass">
         <h2>✨ 野性邂逅</h2>
         <p id="discover-hint" class="hint">融合觉醒后，选择一只野外稀有个体加入战队</p>
+        <div id="discover-branch" class="discover-branch hidden"></div>
         <div id="discover-options" class="discover-options"></div>
         <p class="hint discover-slot-hint">需要战队有空栏位；可先放生或调整站位</p>
       </div>

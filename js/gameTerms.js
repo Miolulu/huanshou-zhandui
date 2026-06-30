@@ -37,6 +37,15 @@ export const TERMS = {
   elementCounter: '属性克制',
   elementCounterHint: '火克草、水克火等，克制×1.5 · 被克×0.7',
   noSynergyBar: '无羁绊条，靠出战技/倒下技/站位自行研究搭配',
+  /** 新机制 */
+  trainerCommand: '训练师指令',
+  trainerCommandHint: '每回合一次：准备阶段调阵/鼓舞/侦查，战斗中换位/激励/洞察',
+  partnerLink: '搭档连携',
+  partnerLinkHint: '相邻同属性或同生态族群获得小幅加成',
+  scout: '足迹侦查',
+  scoutHint: '准备阶段可窥探下轮对手阵容轮廓',
+  encounterBranch: '邂逅抉择',
+  encounterBranchHint: '融合后有时在「潜能激发」与「新种邂逅」间二选一',
 };
 
 export function starStageLabel(star) {

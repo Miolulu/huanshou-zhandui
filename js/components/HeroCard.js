@@ -56,7 +56,7 @@ export function renderHeroCard(card, side = 'player') {
     stats: `HP ${card.hp}/${card.maxHp} · ATK ${card.attack} · DEF ${card.defense} · SPD ${card.speed}`,
   });
 
-  return `<article class="hero-card ${sideMod}${stateMod}${selectedMod}" data-card-id="${card.id}" data-tribe="${card.tribe || 'neutral'}" ${cardTip}>
+  return `<article class="hero-card ${sideMod}${stateMod}${selectedMod}" data-card-id="${card.id}" data-position="${card.position ?? 0}" data-tribe="${card.tribe || 'neutral'}" ${cardTip}>
     <header class="hero-card__header">
       <div class="hero-card__debuffs">${debuffHtml}</div>
       <div class="hero-card__tribe tribe-${card.tribe || 'neutral'}" title="${tribeInfo.name}" aria-hidden="true">${tribeInfo.icon}</div>

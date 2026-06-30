@@ -26,6 +26,8 @@ export function saveGameSession(engine, meta = {}) {
       poolRemaining: engine.poolRemaining,
       lobbyTribes: engine.lobbyTribes,
       pendingDiscover: engine.pendingDiscover,
+      scoutLevel: engine.scoutLevel,
+      scoutedOpponent: engine.scoutedOpponent,
       prepareTimeLeft: engine.prepareTimeLeft,
       prepareTimeTotal: engine.prepareTimeTotal,
     };
