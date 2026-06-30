@@ -142,6 +142,10 @@
           <span class="res-label">生命</span>
           <span id="hp-info" class="res-value">100</span>
         </div>
+        <div class="res-item res-prepare-timer" id="prepare-timer-box">
+          <span class="res-label">准备倒计时</span>
+          <span id="prepare-timer" class="res-value">--</span>
+        </div>
         <div class="res-item">
           <span class="res-label">回合</span>
           <span id="turn-info" class="res-value">-</span>
@@ -166,6 +170,14 @@
 
       <main class="tavern-stage">
         <div class="tavern-control-bar">
+          <div class="prepare-timer-panel" id="prepare-timer-panel">
+            <div class="prepare-timer-head">
+              <span>本回合准备</span>
+              <strong id="prepare-timer-large">30</strong><span>秒</span>
+            </div>
+            <div class="prepare-timer-bar"><div id="prepare-timer-fill" class="prepare-timer-fill"></div></div>
+            <p class="hint">时间到自动开战 · 可点击「提前开战」</p>
+          </div>
           <div class="tavern-badge">
             <span class="badge-label">酒馆等级</span>
             <span id="tavern-tier" class="badge-value">1</span>
@@ -175,7 +187,7 @@
             <button id="btn-upgrade-team" class="btn-gold">扩展栏位 <span id="team-cost"></span></button>
             <button id="btn-refresh">刷新 <span class="cost-tag">2</span></button>
             <button id="btn-freeze">冻结 <span id="freeze-state">关</span></button>
-            <button id="btn-end-prepare" class="btn-accent">结束准备 · 开战</button>
+            <button id="btn-end-prepare" class="btn-accent">提前开战</button>
             <button id="btn-skip-battle" class="btn-muted">跳过战斗</button>
           </div>
         </div>

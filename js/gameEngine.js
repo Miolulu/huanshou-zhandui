@@ -63,7 +63,46 @@ export class GameEngine {
     this.isRanked = false;
     this.gameOptions = {};
     this.onGameEnd = null;
+    this.prepareTimeLeft = 0;
+    this.prepareTimeTotal = 0;
+    this.prepareTimedOut = false;
+    this._prepareTimer = null;
+    this._endingPrepare = false;
     this.initPool();
+  }
+
+  getPrepareTimeSeconds() {
+    const t = this.gameOptions?.prepareTime;
+    if (typeof t === 'number' && t > 0) return t;
+    return CONFIG.PREPARE_TIME;
+  }
+
+  clearPrepareTimer() {
+    if (this._prepareTimer) {
+      clearInterval(this._prepareTimer);
+      this._prepareTimer = null;
+    }
+  }
+
+  startPrepareTimer() {
+    this.clearPrepareTimer();
+    this._endingPrepare = false;
+    this.prepareTimedOut = false;
+    this.prepareTimeTotal = this.getPrepareTimeSeconds();
+    this.prepareTimeLeft = this.prepareTimeTotal;
+
+    this._prepareTimer = setInterval(() => {
+      if (this.phase !== 'PREPARE') {
+        this.clearPrepareTimer();
+        return;
+      }
+      this.prepareTimeLeft = Math.max(0, this.prepareTimeLeft - 1);
+      this.notify();
+      if (this.prepareTimeLeft <= 0) {
+        this.clearPrepareTimer();
+        this.endPreparePhase(true);
+      }
+    }, 1000);
   }
 
   initPool() {
@@ -126,6 +165,9 @@ export class GameEngine {
       opponentPreview: this.opponentPreview,
       lastHumanResult: this.lastHumanResult,
       matchPairs: this.matchPairs,
+      prepareTimeLeft: this.prepareTimeLeft,
+      prepareTimeTotal: this.prepareTimeTotal,
+      prepareTimedOut: this.prepareTimedOut,
     };
   }
 
@@ -219,6 +261,7 @@ export class GameEngine {
         runAIDecisions(player, this);
       }
     }
+    this.startPrepareTimer();
     this.notify();
   }
 
@@ -433,7 +476,12 @@ export class GameEngine {
     }
   }
 
-  async endPreparePhase() {
+  async endPreparePhase(fromTimer = false) {
+    if (this.phase !== 'PREPARE' || this._endingPrepare) return;
+    this._endingPrepare = true;
+    this.clearPrepareTimer();
+    if (fromTimer) this.prepareTimedOut = true;
+
     this.phase = 'MATCH';
     this.notify();
 
@@ -542,6 +590,8 @@ export class GameEngine {
       maxHp: CONFIG.BASE_HP,
     }));
     this.poolRemaining = data.poolRemaining || {};
+    this.prepareTimeTotal = data.prepareTimeTotal || this.getPrepareTimeSeconds();
+    this.prepareTimeLeft = data.prepareTimeLeft ?? this.prepareTimeTotal;
     for (const p of this.players) {
       for (const c of p.team.cards) {
         if (!c) continue;
@@ -549,6 +599,11 @@ export class GameEngine {
         c.upgradeTier = c.star;
         recalculateCardStats(c, true);
       }
+    }
+    if (this.phase === 'PREPARE') {
+      this.startPrepareTimer();
+    } else {
+      this.clearPrepareTimer();
     }
     this.notify();
     return true;

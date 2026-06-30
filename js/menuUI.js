@@ -61,6 +61,7 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
       aiDifficulty: diff,
       economy: mode.economy,
       turnInterval: mode.turnInterval,
+      prepareTime: mode.prepareTime,
     });
   };
 

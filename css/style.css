@@ -411,7 +411,7 @@ body {
 
 .tavern-control-bar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 10px 14px;
   background: #161b22;
@@ -970,4 +970,26 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 .slot.filled.star-2 { box-shadow: 0 0 8px rgba(240, 136, 62, 0.35); }
 .slot.filled.star-3 { box-shadow: 0 0 12px rgba(63, 185, 80, 0.45); border-color: #3fb950 !important; }
 .merge-hint { color: #f0883e; margin-top: 8px; font-size: 0.8rem; }
+
+.res-prepare-timer .res-value.urgent { color: #f85149; animation: timerPulse 0.8s ease infinite; }
+.prepare-timer-panel {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  min-width: 200px;
+}
+.prepare-timer-panel.hidden { display: none; }
+.prepare-timer-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; font-size: 0.85rem; color: #8b949e; }
+.prepare-timer-head strong { font-size: 1.6rem; color: #f0883e; line-height: 1; }
+.prepare-timer-head strong.urgent { color: #f85149; animation: timerPulse 0.8s ease infinite; }
+.prepare-timer-bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+.prepare-timer-fill { height: 100%; background: #3fb950; transition: width 1s linear; }
+.prepare-timer-fill.urgent { background: #f85149; }
+.prepare-timer-panel .hint { font-size: 0.72rem; margin: 0; }
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
 

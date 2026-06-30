@@ -7,7 +7,7 @@ export const GAME_MODES = {
     minPlayers: 1, maxPlayers: 8, aiCount: 2, aiDifficulty: 'normal',
     isRanked: true, features: [],
     unlock: { type: 'none' },
-    prepareTime: 999, turnInterval: CONFIG.TURN_INTERVAL,
+    prepareTime: CONFIG.PREPARE_TIME, turnInterval: CONFIG.TURN_INTERVAL,
     economy: null,
   },
   casual: {
@@ -15,7 +15,7 @@ export const GAME_MODES = {
     minPlayers: 1, maxPlayers: 8, aiCount: 4, aiDifficulty: 'easy',
     isRanked: false, features: [],
     unlock: { type: 'none' },
-    prepareTime: 999, turnInterval: CONFIG.TURN_INTERVAL,
+    prepareTime: CONFIG.PREPARE_TIME, turnInterval: CONFIG.TURN_INTERVAL,
     economy: null,
   },
   ai_battle: {
@@ -23,7 +23,7 @@ export const GAME_MODES = {
     minPlayers: 1, maxPlayers: 1, aiCount: 7, aiDifficulty: 'selectable',
     isRanked: false, features: [],
     unlock: { type: 'none' },
-    prepareTime: 999, turnInterval: CONFIG.TURN_INTERVAL,
+    prepareTime: CONFIG.PREPARE_TIME, turnInterval: CONFIG.TURN_INTERVAL,
     economy: null,
   },
   quick: {
@@ -39,7 +39,7 @@ export const GAME_MODES = {
     minPlayers: 2, maxPlayers: 8, aiCount: 0, aiDifficulty: 'normal',
     isRanked: false, features: [],
     unlock: { type: 'none' },
-    prepareTime: 999, turnInterval: CONFIG.TURN_INTERVAL,
+    prepareTime: CONFIG.PREPARE_TIME, turnInterval: CONFIG.TURN_INTERVAL,
     economy: null,
   },
 };

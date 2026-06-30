@@ -8,7 +8,7 @@ import {
 } from './config.js';
 import { getTemplate } from './cards.js';
 import { formatSkillList } from './skills.js';
-import { elementBadgeHtml, classBadgeHtml } from './appShell.js';
+import { elementBadgeHtml, classBadgeHtml, showToast } from './appShell.js';
 import { summarizeActiveElementBonds } from './elements.js';
 import { summarizeActiveClassBonds, CLASS_NAMES } from './classes.js';
 import { renderBondGuideHTML, renderActiveBondsBattle } from './bondGuide.js';
@@ -33,6 +33,11 @@ export class UI {
       goldIncome: document.getElementById('gold-income'),
       hp: document.getElementById('hp-info'),
       streak: document.getElementById('streak-info'),
+      prepareTimer: document.getElementById('prepare-timer'),
+      prepareTimerBox: document.getElementById('prepare-timer-box'),
+      prepareTimerPanel: document.getElementById('prepare-timer-panel'),
+      prepareTimerLarge: document.getElementById('prepare-timer-large'),
+      prepareTimerFill: document.getElementById('prepare-timer-fill'),
       tavernTier: document.getElementById('tavern-tier'),
       tavernCost: document.getElementById('tavern-cost'),
       teamCost: document.getElementById('team-cost'),
@@ -104,6 +109,11 @@ export class UI {
     }
 
     this.renderHeader(state, human);
+    if (state.prepareTimedOut && state.phase === 'MATCH' && !this._shownTimeoutToast) {
+      this._shownTimeoutToast = true;
+      showToast('准备时间结束，自动开战！');
+    }
+    if (state.phase === 'PREPARE') this._shownTimeoutToast = false;
     this.renderPlayers(state);
     this.renderTavernControls(human, state);
     this.renderShop(human);
@@ -145,6 +155,36 @@ export class UI {
       this.el.goldIncome.textContent = `(本回合 +${inc.total}：${parts.join(' · ')})`;
     } else {
       this.el.goldIncome.textContent = '';
+    }
+
+    this.renderPrepareTimer(state);
+  }
+
+  renderPrepareTimer(state) {
+    const inPrepare = state.phase === 'PREPARE';
+    const left = state.prepareTimeLeft ?? 0;
+    const total = state.prepareTimeTotal || 1;
+    const pct = Math.max(0, Math.min(100, (left / total) * 100));
+
+    if (this.el.prepareTimerBox) {
+      this.el.prepareTimerBox.style.display = inPrepare ? '' : 'none';
+      if (inPrepare && this.el.prepareTimer) {
+        this.el.prepareTimer.textContent = `${left}s`;
+        this.el.prepareTimer.classList.toggle('urgent', left <= 5);
+      }
+    }
+    if (this.el.prepareTimerPanel) {
+      this.el.prepareTimerPanel.classList.toggle('hidden', !inPrepare);
+      if (inPrepare) {
+        if (this.el.prepareTimerLarge) {
+          this.el.prepareTimerLarge.textContent = String(left);
+          this.el.prepareTimerLarge.classList.toggle('urgent', left <= 5);
+        }
+        if (this.el.prepareTimerFill) {
+          this.el.prepareTimerFill.style.width = `${pct}%`;
+          this.el.prepareTimerFill.classList.toggle('urgent', left <= 5);
+        }
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 /** 幻兽战队 - 游戏配置常量 */
 export const CONFIG = {
-  PREPARE_TIME: 999,
+  PREPARE_TIME: 30,
   MAX_PLAYERS: 8,
   BASE_HP: 100,
   MAX_TEAM_SIZE: 7,

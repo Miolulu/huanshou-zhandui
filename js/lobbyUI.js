@@ -41,6 +41,7 @@ export class LobbyUI {
           aiDifficulty: room?.aiDifficulty,
           economy: mode.economy,
           turnInterval: mode.turnInterval,
+          prepareTime: mode.prepareTime,
         });
       } catch (e) {
         showToast(e.message);
@@ -58,7 +59,7 @@ export class LobbyUI {
     const mode = getGameMode(room.modeId || 'custom');
     const modeEl = document.getElementById('lobby-mode-info');
     if (modeEl) {
-      modeEl.textContent = `模式：${mode.name} · AI难度 ${getAIDifficultyLabel(room.aiDifficulty || 'normal')}`;
+      modeEl.textContent = `模式：${mode.name} · AI难度 ${getAIDifficultyLabel(room.aiDifficulty || 'normal')} · 准备 ${mode.prepareTime}秒/回合`;
     }
 
     const slotsEl = document.getElementById('lobby-slots');

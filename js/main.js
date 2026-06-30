@@ -25,6 +25,7 @@ function startGameFromRoom(playerConfigs, options = {}) {
     aiDifficulty: room?.aiDifficulty || options.aiDifficulty,
     economy: mode.economy,
     turnInterval: mode.turnInterval,
+    prepareTime: mode.prepareTime,
   };
   showScreen('game');
   game.startGame(playerConfigs, lastGameOptions);

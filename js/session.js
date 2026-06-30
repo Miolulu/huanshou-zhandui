@@ -24,6 +24,8 @@ export function saveGameSession(engine, meta = {}) {
         shop: { frozen: p.shop.frozen, cards: p.shop.cards },
       })),
       poolRemaining: engine.poolRemaining,
+      prepareTimeLeft: engine.prepareTimeLeft,
+      prepareTimeTotal: engine.prepareTimeTotal,
     };
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload));
   } catch { /* quota */ }
