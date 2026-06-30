@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>幻兽战队 - 策略卡牌自动战斗</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ===== 主界面 ===== -->
+  <div id="screen-menu" class="screen active">
+    <div class="menu-container">
+      <div class="menu-logo">
+        <h1>幻兽战队</h1>
+        <p>8人策略卡牌 · 酒馆自走棋 · 元素克制 · 自动战斗</p>
+      </div>
+      <div class="menu-form">
+        <label>昵称</label>
+        <input id="input-nickname" type="text" maxlength="12" placeholder="输入你的昵称" value="训练师">
+        <div class="menu-actions">
+          <button id="btn-create-room" class="btn-accent btn-lg">创建房间</button>
+          <button id="btn-show-join" class="btn-gold btn-lg">加入房间</button>
+        </div>
+        <div id="join-panel" class="join-panel hidden">
+          <input id="input-room-code" type="text" maxlength="6" placeholder="房间号 6 位">
+          <button id="btn-join-room" class="btn-accent">加入</button>
+        </div>
+        <p id="menu-error" class="error-msg"></p>
+      </div>
+      <div class="element-preview">
+        <h3>属性克制</h3>
+        <div id="menu-element-chart" class="element-chart"></div>
+        <p class="hint">克制 ×1.5 · 被克 ×0.7 · 同元素 3/5/7 只触发羁绊加成</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 房间大厅 ===== -->
+  <div id="screen-lobby" class="screen">
+    <div class="lobby-container">
+      <div class="lobby-header">
+        <button id="btn-leave-lobby" class="btn-muted">← 离开房间</button>
+        <div class="room-code-box">
+          <span>房间号</span>
+          <strong id="lobby-room-code">------</strong>
+          <button id="btn-copy-code" class="btn-small">复制</button>
+          <button id="btn-copy-link" class="btn-small">复制邀请链接</button>
+        </div>
+      </div>
+      <h2>等待匹配 <span id="lobby-player-count" class="count-badge">0/8</span></h2>
+      <p class="hint">房主可添加 AI 或分享房间号邀请真人（同网络下多标签页可加入）</p>
+      <div id="lobby-slots" class="lobby-slots"></div>
+      <div class="lobby-actions">
+        <button id="btn-fill-ai" class="btn-gold">一键填满 AI</button>
+        <button id="btn-toggle-ready" class="btn-accent">准备</button>
+        <button id="btn-start-match" class="btn-accent btn-lg">开始匹配</button>
+      </div>
+      <p id="lobby-status" class="lobby-status"></p>
+    </div>
+  </div>
+
+  <!-- ===== 游戏界面 ===== -->
+  <div id="screen-game" class="screen">
+    <header class="top-bar">
+      <div class="brand">
+        <h1>幻兽战队</h1>
+        <span class="subtitle">酒馆模式 · 8人自走棋</span>
+        <button id="btn-back-lobby" class="btn-muted btn-small">退出对局</button>
+      </div>
+      <div class="resource-bar">
+        <div class="res-item res-gold">
+          <span class="res-label">金币</span>
+          <span id="gold-amount" class="res-value">0</span>
+          <span id="gold-income" class="res-detail"></span>
+        </div>
+        <div class="res-item">
+          <span class="res-label">生命</span>
+          <span id="hp-info" class="res-value">100</span>
+        </div>
+        <div class="res-item">
+          <span class="res-label">回合</span>
+          <span id="turn-info" class="res-value">-</span>
+        </div>
+        <div class="res-item">
+          <span class="res-label">阶段</span>
+          <span id="phase-info" class="res-value">-</span>
+        </div>
+        <div class="res-item">
+          <span id="streak-info" class="res-value small"></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="game-layout">
+      <aside class="panel sidebar-left">
+        <h2>对局排名</h2>
+        <div id="players-list" class="players-list"></div>
+        <h2>属性克制</h2>
+        <div id="element-chart" class="element-chart compact"></div>
+        <h2>下轮对手</h2>
+        <div id="opponent-info" class="opponent-box"></div>
+      </aside>
+
+      <main class="tavern-stage">
+        <div class="tavern-control-bar">
+          <div class="tavern-badge">
+            <span class="badge-label">酒馆等级</span>
+            <span id="tavern-tier" class="badge-value">1</span>
+          </div>
+          <div class="control-buttons">
+            <button id="btn-upgrade-tavern" class="btn-gold">升级酒馆 <span id="tavern-cost"></span></button>
+            <button id="btn-upgrade-team" class="btn-gold">扩展栏位 <span id="team-cost"></span></button>
+            <button id="btn-refresh">刷新 <span class="cost-tag">2</span></button>
+            <button id="btn-freeze">冻结 <span id="freeze-state">关</span></button>
+            <button id="btn-end-prepare" class="btn-accent">结束准备 · 开战</button>
+            <button id="btn-skip-battle" class="btn-muted">跳过战斗</button>
+          </div>
+        </div>
+
+        <section class="board-section">
+          <div class="section-head">
+            <h2>出战战队</h2>
+            <span class="hint">点击选中 · 再点空位移动 · 3张同卡自动合成升星</span>
+          </div>
+          <div id="team-bonds" class="team-bonds"></div>
+          <div id="team-slots" class="team-board"></div>
+        </section>
+
+        <section id="card-action-panel" class="card-action-panel hidden">
+          <div class="card-detail-left">
+            <h3 id="selected-card-name">未选中</h3>
+            <div id="selected-card-stats" class="selected-stats"></div>
+            <div id="selected-card-element" class="element-badge"></div>
+            <p id="selected-card-desc" class="card-desc"></p>
+          </div>
+          <div id="selected-card-skills" class="card-skills-detail"></div>
+          <div class="card-action-btns">
+            <button id="btn-upgrade-card" class="btn-gold">升级卡牌 <span id="card-upgrade-cost"></span></button>
+            <button id="btn-sell-card" class="btn-danger">卖出</button>
+          </div>
+        </section>
+
+        <section class="shop-section">
+          <div class="section-head">
+            <h2>酒馆货架</h2>
+            <span id="shop-tier-hint" class="hint"></span>
+          </div>
+          <div id="shop-cards" class="shop-shelf"></div>
+        </section>
+
+        <section class="battle-section">
+          <h2>战斗场面</h2>
+          <div id="battle-field" class="battle-field"></div>
+        </section>
+      </main>
+
+      <aside class="panel sidebar-right">
+        <h2>战斗日志</h2>
+        <div id="battle-log" class="battle-log"></div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay" style="display:none">
+    <div class="overlay-box">
+      <h2 id="overlay-title"></h2>
+      <div id="overlay-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <div id="boot-error" class="boot-error hidden"></div>
+
+  <script>
+    (function () {
+      if (location.protocol === 'file:') {
+        var box = document.getElementById('boot-error');
+        box.classList.remove('hidden');
+        box.innerHTML =
+          '<h2>无法直接打开本地文件</h2>' +
+          '<p>本项目使用 ES Module，必须通过本地 HTTP 服务器访问，不能直接双击 <code>index.html</code>。</p>' +
+          '<p>请在项目目录运行：</p>' +
+          '<pre>python -m http.server 8888</pre>' +
+          '<p>然后浏览器访问：<a href="http://127.0.0.1:8888">http://127.0.0.1:8888</a></p>' +
+          '<p>或直接双击运行 <code>start.bat</code></p>';
+        document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('active'); });
+        return;
+      }
+      window.__showBootError = function (msg) {
+        var el = document.getElementById('boot-error');
+        el.classList.remove('hidden');
+        el.innerHTML = '<h2>页面加载失败</h2><p>' + msg + '</p><p>请按 F12 查看控制台详情，或重新运行 start.bat 启动服务。</p>';
+      };
+      window.addEventListener('error', function (e) {
+        if (window.__showBootError) window.__showBootError(e.message || '未知错误');
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        if (window.__showBootError) window.__showBootError(String(e.reason));
+      });
+    })();
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

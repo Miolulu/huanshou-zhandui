@@ -1,0 +1,694 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  min-height: 100vh;
+}
+
+/* ===== 屏幕切换 ===== */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ===== 主菜单 ===== */
+.menu-container {
+  max-width: 720px;
+  margin: 60px auto;
+  padding: 24px;
+  text-align: center;
+}
+
+.menu-logo h1 {
+  font-size: 2.5rem;
+  color: #f0883e;
+  margin-bottom: 8px;
+}
+
+.menu-logo p { color: #8b949e; margin-bottom: 32px; }
+
+.menu-form {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.menu-form label { display: block; text-align: left; font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
+
+.menu-form input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  background: #0d1117;
+  color: #e6edf3;
+  font-size: 1rem;
+  margin-bottom: 16px;
+}
+
+.menu-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+.btn-lg { padding: 12px 28px; font-size: 1rem; }
+
+.join-panel {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.join-panel.hidden { display: none; }
+.join-panel input { flex: 1; max-width: 200px; margin-bottom: 0; }
+
+.error-msg { color: #f85149; font-size: 0.85rem; margin-top: 12px; min-height: 1.2em; }
+
+.element-preview {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+}
+
+.element-preview h3 { color: #f0883e; font-size: 0.9rem; margin-bottom: 10px; }
+
+/* ===== 房间大厅 ===== */
+.lobby-container {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 20px;
+}
+
+.lobby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.room-code-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #161b22;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+}
+
+.room-code-box strong {
+  font-size: 1.5rem;
+  color: #ffd700;
+  letter-spacing: 4px;
+}
+
+.count-badge {
+  background: #f0883e;
+  color: #0d1117;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
+.lobby-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.lobby-slot {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-items: center;
+}
+
+.lobby-slot.human { border-color: #388bfd; }
+.lobby-slot.ai { border-color: #8b949e; }
+.lobby-slot.empty { border-style: dashed; opacity: 0.6; }
+.lobby-slot.is-me { box-shadow: 0 0 0 2px #ffd700; }
+
+.slot-num { font-weight: bold; color: #8b949e; grid-row: span 2; }
+.slot-name { font-weight: bold; }
+.slot-type { font-size: 0.75rem; color: #8b949e; }
+.slot-ready { font-size: 0.72rem; color: #3fb950; grid-column: 2; }
+
+.lobby-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.lobby-status { text-align: center; color: #8b949e; margin-top: 12px; font-size: 0.85rem; }
+
+.btn-small { padding: 4px 10px; font-size: 0.75rem; }
+
+.btn-toggle-ready.ready { background: #238636; border-color: #238636; color: #fff; }
+
+/* ===== 元素克制 ===== */
+.element-chart { font-size: 0.78rem; }
+
+.element-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.element-row.compact { padding: 2px 0; font-size: 0.7rem; }
+
+.el {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+.el-fire { background: #3d1214; color: #ff7b72; }
+.el-water { background: #0d2847; color: #58a6ff; }
+.el-grass { background: #0d2e1a; color: #3fb950; }
+.el-electric { background: #2d2a0d; color: #ffd700; }
+.el-earth { background: #2a2010; color: #d4a574; }
+.el-wind { background: #0d2a2e; color: #79c0ff; }
+.el-light { background: #2a2a0d; color: #ffffaa; }
+.el-dark { background: #1a0d2e; color: #bc8cff; }
+
+.el-badge { font-size: 0.68rem; padding: 1px 6px; }
+.el-arrow { color: #8b949e; font-size: 0.7rem; }
+
+.card-badges { display: flex; gap: 4px; align-items: center; }
+.class-badge {
+  font-size: 0.62rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #21262d;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+}
+.class-tank { color: #8b949e; }
+.class-warrior { color: #ff7b72; }
+.class-assassin { color: #bc8cff; }
+.class-mage { color: #58a6ff; }
+.class-archer { color: #3fb950; }
+.class-support { color: #ffd700; }
+
+.team-bonds { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 22px; }
+.bond-tag {
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #161b22;
+  border: 1px solid #30363d;
+}
+.bond-el { color: #ff7b72; }
+.bond-class { color: #58a6ff; }
+.card-desc { font-size: 0.72rem; color: #8b949e; margin: 4px 0; line-height: 1.35; }
+
+.card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+
+/* ===== 技能说明 ===== */
+.card-skills-mini, .card-skills-detail { font-size: 0.68rem; margin: 6px 0; }
+
+.shop-card { width: 160px; min-height: 180px; }
+
+.skill-item.skill-evolved { border-left: 2px solid #ffd700; padding-left: 6px; }
+.evo-tag { color: #ffd700; font-size: 0.65rem; }
+.skill-group { margin-bottom: 4px; }
+
+.boot-error {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d1117;
+  color: #c9d1d9;
+  padding: 24px;
+}
+.boot-error.hidden { display: none; }
+.boot-error h2 { color: #ff7b72; margin-bottom: 12px; }
+.boot-error pre {
+  background: #161b22;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  margin: 12px 0;
+}
+.boot-error a { color: #58a6ff; }
+.boot-error code { background: #21262d; padding: 2px 6px; border-radius: 4px; }
+
+.skill-tag {
+  display: inline-block;
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-bottom: 2px;
+}
+
+.active-tag { background: #3d1214; color: #ff7b72; }
+.passive-tag { background: #0d2847; color: #58a6ff; }
+
+.skill-item {
+  margin: 2px 0 4px;
+  padding-left: 4px;
+  border-left: 2px solid #30363d;
+}
+
+.skill-item strong { font-size: 0.7rem; }
+.skill-trigger { color: #8b949e; font-size: 0.62rem; }
+.skill-item p { color: #8b949e; font-size: 0.62rem; margin: 1px 0; line-height: 1.3; }
+
+.card-detail-left { min-width: 140px; }
+.card-skills-detail { flex: 1; max-width: 400px; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #21262d;
+  border: 1px solid #f0883e;
+  color: #e6edf3;
+  padding: 10px 20px;
+  border-radius: 8px;
+  z-index: 200;
+  font-size: 0.85rem;
+}
+
+.toast.hidden { display: none; }
+
+.hidden { display: none !important; }
+
+/* ===== 顶栏 ===== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+  border-bottom: 2px solid #30363d;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand h1 {
+  font-size: 1.4rem;
+  color: #f0883e;
+  display: inline;
+  margin-right: 8px;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: #8b949e;
+}
+
+.resource-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+}
+
+.res-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.res-label {
+  font-size: 0.7rem;
+  color: #8b949e;
+  text-transform: uppercase;
+}
+
+.res-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.res-value.small { font-size: 0.85rem; color: #8b949e; }
+
+.res-gold .res-value { color: #ffd700; }
+
+.res-detail {
+  font-size: 0.72rem;
+  color: #58a6ff;
+  white-space: nowrap;
+}
+
+/* ===== 三栏布局 ===== */
+.game-layout {
+  display: grid;
+  grid-template-columns: 180px 1fr 260px;
+  gap: 10px;
+  padding: 10px;
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: calc(100vh - 70px);
+}
+
+.panel {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.panel h2 {
+  font-size: 0.85rem;
+  color: #f0883e;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #30363d;
+}
+
+/* ===== 左侧排行榜 ===== */
+.players-list { font-size: 0.78rem; }
+
+.player-row {
+  padding: 4px 0;
+  border-bottom: 1px solid #21262d;
+  display: flex;
+  justify-content: space-between;
+}
+
+.player-row.human { color: #ffd700; font-weight: bold; }
+.player-row.eliminated { color: #484f58; text-decoration: line-through; }
+
+.opponent-box {
+  font-size: 0.78rem;
+  margin-top: 8px;
+}
+
+.opponent-box h3 {
+  font-size: 0.85rem;
+  color: #58a6ff;
+  margin-bottom: 6px;
+}
+
+/* ===== 中央酒馆 ===== */
+.tavern-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tavern-control-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.tavern-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #21262d;
+  border: 2px solid #f0883e;
+  border-radius: 8px;
+  padding: 6px 16px;
+  min-width: 80px;
+}
+
+.badge-label { font-size: 0.65rem; color: #8b949e; }
+.badge-value { font-size: 1.8rem; font-weight: bold; color: #f0883e; line-height: 1; }
+
+.control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.section-head h2 {
+  font-size: 0.9rem;
+  color: #f0883e;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.hint { font-size: 0.72rem; color: #8b949e; }
+
+.board-section,
+.shop-section,
+.battle-section {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+/* 战队棋盘 - 横向大格 */
+.team-board {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  min-height: 110px;
+  padding: 8px;
+  background: #0d1117;
+  border-radius: 6px;
+  border: 1px dashed #30363d;
+}
+
+.shop-shelf {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  min-height: 100px;
+  padding: 10px;
+  background: linear-gradient(180deg, #1c1410 0%, #0d1117 100%);
+  border-radius: 6px;
+  border: 2px solid #3d2a1a;
+}
+
+/* 卡牌/格子 */
+.slot, .card {
+  width: 130px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid #30363d;
+  background: #21262d;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.slot:hover, .card:hover { transform: translateY(-2px); }
+
+.slot.locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.slot.empty {
+  border-style: dashed;
+  color: #484f58;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot.selected {
+  border-color: #ffd700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+}
+
+.card-name { font-weight: bold; margin-bottom: 4px; font-size: 0.85rem; }
+.card-meta { color: #8b949e; font-size: 0.72rem; }
+.card-stats { color: #58a6ff; font-size: 0.72rem; margin: 4px 0; }
+.card-cost { color: #ffd700; font-weight: bold; margin-top: 4px; }
+
+.r-common { border-color: #8b949e; }
+.r-rare { border-color: #388bfd; }
+.r-epic { border-color: #a371f7; }
+.r-legendary { border-color: #ffd700; background: linear-gradient(135deg, #21262d, #2a2410); }
+
+/* 选中卡牌操作面板 */
+.card-action-panel {
+  background: #21262d;
+  border: 1px solid #388bfd;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.card-action-panel.hidden { display: none; }
+
+.card-action-panel h3 { color: #58a6ff; font-size: 0.95rem; min-width: 120px; }
+.selected-stats { font-size: 0.78rem; color: #8b949e; flex: 1; }
+.card-action-btns { display: flex; gap: 8px; }
+
+/* 按钮 */
+button {
+  padding: 7px 14px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  background: #21262d;
+  color: #e6edf3;
+  white-space: nowrap;
+}
+
+button:hover:not(:disabled) { background: #30363d; }
+button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-accent {
+  background: #f0883e;
+  border-color: #f0883e;
+  color: #0d1117;
+  font-weight: bold;
+}
+.btn-accent:hover:not(:disabled) { background: #e07a30; }
+
+.btn-gold {
+  background: #3d2a00;
+  border-color: #ffd700;
+  color: #ffd700;
+}
+.btn-gold:hover:not(:disabled) { background: #5c4200; }
+
+.btn-danger {
+  background: #3d1214;
+  border-color: #f85149;
+  color: #f85149;
+}
+.btn-danger:hover:not(:disabled) { background: #5c1a1d; }
+
+.btn-muted { color: #8b949e; }
+
+.cost-tag {
+  display: inline-block;
+  background: #ffd700;
+  color: #0d1117;
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.btn-buy {
+  width: 100%;
+  margin-top: 8px;
+  background: #238636;
+  border-color: #238636;
+  color: #fff;
+  font-size: 0.75rem;
+}
+.btn-buy:hover:not(:disabled) { background: #2ea043; }
+
+/* 战斗 */
+.battle-field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-height: 100px;
+  padding: 12px;
+  background: #0d1117;
+  border-radius: 6px;
+}
+
+.battle-side { text-align: center; }
+.battle-side h4 { color: #f0883e; margin-bottom: 8px; font-size: 0.85rem; }
+
+.battle-card {
+  display: inline-block;
+  padding: 6px 10px;
+  margin: 3px;
+  border-radius: 6px;
+  border: 2px solid #30363d;
+  font-size: 0.72rem;
+}
+.battle-card.dead { opacity: 0.3; text-decoration: line-through; }
+
+.vs { font-size: 1.4rem; color: #f85149; font-weight: bold; }
+
+/* 右侧日志 */
+.battle-log {
+  height: calc(100vh - 120px);
+  overflow-y: auto;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.log-line {
+  padding: 3px 0;
+  border-bottom: 1px solid #21262d;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 2px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  border: 1px solid #30363d;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.overlay-box {
+  background: #161b22;
+  padding: 28px;
+  border-radius: 12px;
+  border: 2px solid #f0883e;
+  max-width: 420px;
+  text-align: center;
+}
+
+.overlay-box h2 { color: #f0883e; margin-bottom: 12px; }
+.overlay-box ol { text-align: left; margin: 12px 24px; }
+
+@media (max-width: 1000px) {
+  .game-layout { grid-template-columns: 1fr; }
+  .battle-log { height: 220px; }
+  .sidebar-left { order: 3; }
+  .sidebar-right { order: 4; }
+}
