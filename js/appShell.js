@@ -42,7 +42,13 @@ export function showScreen(name) {
 }
 
 export function getNickname() {
-  return document.getElementById('input-nickname')?.value.trim() || '训练师';
+  const el = document.getElementById('input-nickname');
+  return el?.value.trim() || '训练师';
+}
+
+export function syncNicknameInput(name) {
+  const el = document.getElementById('input-nickname');
+  if (el && name) el.value = name;
 }
 
 export function setMenuError(msg) {

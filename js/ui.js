@@ -20,6 +20,7 @@ export class UI {
   constructor(game) {
     this.game = game;
     this.selectedTeamPos = null;
+    this.endRewards = null;
     this.bindElements();
     this.bindActions();
   }
@@ -386,9 +387,41 @@ export class UI {
 
   buildEndSummary(state) {
     const sorted = [...state.players].sort((a, b) => a.rank - b.rank || b.hp - a.hp);
-    return `<ol>${sorted.map(p =>
-      `<li>${p.name}: 第${p.rank || '?'}名 ${p.eliminated ? '淘汰' : '🏆冠军'}</li>`
-    ).join('')}</ol><button id="btn-restart" class="btn-accent">再来一局</button>`;
+    const human = sorted.find(p => p.isHuman);
+    let rewardHtml = '';
+    if (human && this.endRewards) {
+      const r = this.endRewards;
+      rewardHtml = `<div class="end-rewards"><p>获得经验 +${r.expGain || 0}</p>`;
+      if (r.isRanked && r.rankResult) {
+        const sc = r.rankResult.starsChange;
+        const sign = sc > 0 ? '+' : '';
+        rewardHtml += `<p>段位：${sign}${sc} 星`;
+        if (r.rankResult.promoted) rewardHtml += ' · 晋级！';
+        if (r.rankResult.demoted) rewardHtml += ' · 降级';
+        rewardHtml += '</p>';
+      }
+      rewardHtml += '</div>';
+    }
+    return `${rewardHtml}<ol>${sorted.map(p =>
+      `<li>${p.name}: 第${p.rank || '?'}名 ${p.eliminated && p.rank > 1 ? '淘汰' : (p.rank === 1 ? '🏆冠军' : '')}</li>`
+    ).join('')}</ol><button id="btn-restart" class="btn-accent">返回主菜单</button>`;
+  }
+
+  setEndRewards(data) {
+    this.endRewards = data;
+  }
+
+  flashBattleEvent(event) {
+    const field = this.el.battleField;
+    if (!field) return;
+    if (event.type === 'DAMAGE_TAKEN') {
+      field.classList.add('battle-shake');
+      setTimeout(() => field.classList.remove('battle-shake'), 300);
+    }
+    if (event.type === 'CARD_DEATH') {
+      field.classList.add('battle-flash-red');
+      setTimeout(() => field.classList.remove('battle-flash-red'), 400);
+    }
   }
 
   onBattleStart() { this.clearBattleLog(); }

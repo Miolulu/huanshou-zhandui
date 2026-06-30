@@ -9,28 +9,61 @@
 <body>
   <!-- ===== 主界面 ===== -->
   <div id="screen-menu" class="screen active">
-    <div class="menu-container">
-      <div class="menu-logo">
-        <h1>幻兽战队</h1>
-        <p>8人策略卡牌 · 酒馆自走棋 · 元素克制 · 自动战斗</p>
-      </div>
-      <div class="menu-form">
-        <label>昵称</label>
-        <input id="input-nickname" type="text" maxlength="12" placeholder="输入你的昵称" value="训练师">
-        <div class="menu-actions">
-          <button id="btn-create-room" class="btn-accent btn-lg">创建房间</button>
-          <button id="btn-show-join" class="btn-gold btn-lg">加入房间</button>
+    <div class="menu-layout">
+      <aside class="profile-panel">
+        <h3>训练师档案</h3>
+        <div id="profile-rank" class="rank-badge">黑铁 III ★0</div>
+        <div class="profile-stats">
+          <span>Lv.<strong id="profile-level">1</strong></span>
+          <span>胜场 <strong id="profile-wins">0</strong></span>
         </div>
-        <div id="join-panel" class="join-panel hidden">
-          <input id="input-room-code" type="text" maxlength="6" placeholder="房间号 6 位">
-          <button id="btn-join-room" class="btn-accent">加入</button>
+        <div class="profile-exp-bar"><div id="profile-exp-fill" class="exp-fill"></div></div>
+        <p class="profile-exp-text"><span id="profile-exp">0</span> / <span id="profile-exp-max">100</span> EXP</p>
+        <div class="profile-currency">
+          <span>💰 <strong id="profile-gold">500</strong></span>
+          <span>💎 <strong id="profile-gems">0</strong></span>
         </div>
-        <p id="menu-error" class="error-msg"></p>
-      </div>
-      <div class="element-preview">
-        <h3>属性克制</h3>
-        <div id="menu-element-chart" class="element-chart"></div>
-        <p class="hint">克制 ×1.5 · 被克 ×0.7 · 同元素 3/5/7 只触发羁绊加成</p>
+        <button id="btn-daily-login" class="btn-gold btn-small">每日签到</button>
+        <button id="btn-show-tasks" class="btn-muted btn-small">每日任务</button>
+        <button id="btn-tutorial" class="btn-muted btn-small">新手教程</button>
+        <div id="tasks-panel" class="tasks-panel hidden"></div>
+      </aside>
+      <div class="menu-container">
+        <div class="menu-logo">
+          <h1>幻兽战队</h1>
+          <p>8人策略卡牌 · 酒馆自走棋 · 元素克制 · 自动战斗</p>
+        </div>
+        <div class="menu-form">
+          <label>昵称</label>
+          <input id="input-nickname" type="text" maxlength="12" placeholder="输入你的昵称" value="训练师">
+          <h3 class="section-label">选择模式</h3>
+          <div id="mode-grid" class="mode-grid"></div>
+          <div id="ai-difficulty-row" class="ai-difficulty-row hidden">
+            <label>AI 难度</label>
+            <select id="select-ai-difficulty">
+              <option value="easy">简单</option>
+              <option value="normal" selected>普通</option>
+              <option value="hard">困难</option>
+              <option value="nightmare">噩梦</option>
+            </select>
+          </div>
+          <div class="menu-actions">
+            <button id="btn-quick-start" class="btn-accent btn-lg hidden">立即开始</button>
+            <button id="btn-create-room" class="btn-accent btn-lg">创建房间</button>
+            <button id="btn-show-join" class="btn-gold btn-lg">加入房间</button>
+          </div>
+          <div id="join-panel" class="join-panel hidden">
+            <input id="input-room-code" type="text" maxlength="6" placeholder="房间号 6 位">
+            <button id="btn-join-room" class="btn-accent">加入</button>
+          </div>
+          <p id="menu-error" class="error-msg"></p>
+          <p id="session-recover-hint" class="hint hidden"></p>
+        </div>
+        <div class="element-preview">
+          <h3>属性克制</h3>
+          <div id="menu-element-chart" class="element-chart"></div>
+          <p class="hint">克制 ×1.5 · 被克 ×0.7 · 同元素 3/5/7 只触发羁绊加成</p>
+        </div>
       </div>
     </div>
   </div>
@@ -48,6 +81,7 @@
         </div>
       </div>
       <h2>等待匹配 <span id="lobby-player-count" class="count-badge">0/8</span></h2>
+      <p id="lobby-mode-info" class="lobby-mode-info"></p>
       <p class="hint">房主可添加 AI 或分享房间号邀请真人（同网络下多标签页可加入）</p>
       <div id="lobby-slots" class="lobby-slots"></div>
       <div class="lobby-actions">

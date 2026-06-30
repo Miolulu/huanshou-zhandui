@@ -1,4 +1,5 @@
-import { showToast } from './appShell.js';
+import { getGameMode } from './gameModes.js';
+import { getAIDifficultyLabel } from './ai.js';
 
 export class LobbyUI {
   constructor(roomManager, onStartGame, onLeave) {
@@ -32,7 +33,15 @@ export class LobbyUI {
     document.getElementById('btn-start-match').onclick = () => {
       try {
         const configs = this.rm.startMatch();
-        this.onStartGame(configs);
+        const room = this.rm.currentRoom;
+        const mode = getGameMode(room?.modeId || 'custom');
+        this.onStartGame(configs, {
+          modeId: room?.modeId,
+          isRanked: mode.isRanked,
+          aiDifficulty: room?.aiDifficulty,
+          economy: mode.economy,
+          turnInterval: mode.turnInterval,
+        });
       } catch (e) {
         showToast(e.message);
       }
@@ -45,6 +54,12 @@ export class LobbyUI {
 
     document.getElementById('lobby-room-code').textContent = room.code;
     document.getElementById('lobby-player-count').textContent = `${occupiedCount}/8`;
+
+    const mode = getGameMode(room.modeId || 'custom');
+    const modeEl = document.getElementById('lobby-mode-info');
+    if (modeEl) {
+      modeEl.textContent = `模式：${mode.name} · AI难度 ${getAIDifficultyLabel(room.aiDifficulty || 'normal')}`;
+    }
 
     const slotsEl = document.getElementById('lobby-slots');
     slotsEl.innerHTML = room.slots.map((slot, i) => {

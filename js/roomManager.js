@@ -101,14 +101,18 @@ export class RoomManager {
     };
   }
 
-  createRoom(hostName) {
+  createRoom(hostName, options = {}) {
     const code = generateCode();
     const slots = Array(CONFIG.MAX_PLAYERS).fill(null).map((_, i) =>
       i === 0
         ? { id: this.playerId, name: hostName.trim() || '玩家', type: 'human', ready: true, isHost: true }
         : createEmptySlot()
     );
-    const room = { code, hostId: this.playerId, slots, status: 'waiting' };
+    const room = {
+      code, hostId: this.playerId, slots, status: 'waiting',
+      modeId: options.modeId || 'custom',
+      aiDifficulty: options.aiDifficulty || 'normal',
+    };
     this.currentRoom = room;
     this.mySlotIndex = 0;
     this.broadcast(room);
@@ -152,6 +156,7 @@ export class RoomManager {
       type: 'ai',
       ready: true,
       isHost: false,
+      aiDifficulty: room.aiDifficulty || 'normal',
     };
     this.currentRoom = room;
     this.broadcast(room);
@@ -167,7 +172,10 @@ export class RoomManager {
       if (room.slots[i].type !== 'empty') continue;
       const name = AI_NAMES.find(n => !usedNames.includes(n)) || `AI·${i}`;
       usedNames.push(name);
-      room.slots[i] = { id: `ai_${i}_${Date.now()}`, name, type: 'ai', ready: true, isHost: false };
+      room.slots[i] = {
+        id: `ai_${i}_${Date.now()}`, name, type: 'ai', ready: true, isHost: false,
+        aiDifficulty: room.aiDifficulty || 'normal',
+      };
     }
     this.currentRoom = room;
     this.broadcast(room);
@@ -217,7 +225,10 @@ export class RoomManager {
       if (room.slots[i].type !== 'empty') continue;
       const name = AI_NAMES.find(n => !usedNames.includes(n)) || `AI·${i}`;
       usedNames.push(name);
-      room.slots[i] = { id: `ai_${i}`, name, type: 'ai', ready: true, isHost: false };
+      room.slots[i] = {
+        id: `ai_${i}`, name, type: 'ai', ready: true, isHost: false,
+        aiDifficulty: room.aiDifficulty || 'normal',
+      };
     }
     room.status = 'playing';
     this.currentRoom = room;
@@ -228,9 +239,14 @@ export class RoomManager {
       isAI: s.type === 'ai' || (s.type === 'human' && s.id !== this.playerId),
       slotIndex: i,
       odPlayerId: s.id,
+      aiDifficulty: s.aiDifficulty || room.aiDifficulty || 'normal',
     }));
     this.broadcast(room);
-    this.channel?.postMessage({ type: 'GAME_START', code: room.code, room, playerConfigs, forPlayerId: this.playerId });
+    this.channel?.postMessage({
+      type: 'GAME_START', code: room.code, room, playerConfigs,
+      modeId: room.modeId, aiDifficulty: room.aiDifficulty,
+      forPlayerId: this.playerId,
+    });
     return playerConfigs;
   }
 
@@ -242,7 +258,17 @@ export class RoomManager {
       isHuman: s.type === 'human' && s.id === myPlayerId,
       isAI: s.type === 'ai' || (s.type === 'human' && s.id !== myPlayerId),
       slotIndex: i,
+      aiDifficulty: s.aiDifficulty || room.aiDifficulty || 'normal',
     }));
+  }
+
+  setRoomOptions(modeId, aiDifficulty) {
+    if (!this.isHost()) return false;
+    const room = { ...this.currentRoom, modeId, aiDifficulty };
+    this.currentRoom = room;
+    this.broadcast(room);
+    this.onRoomUpdate?.(this.getLobbyState());
+    return true;
   }
 
   leaveRoom() {

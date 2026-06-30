@@ -62,6 +62,10 @@ export class GameEngine {
     this.lastHumanResult = null;
     this.opponentPreview = null;
     this.skipBattleAnim = false;
+    this.gameModeId = 'ranked';
+    this.isRanked = false;
+    this.gameOptions = {};
+    this.onGameEnd = null;
     this.initPool();
   }
 
@@ -72,11 +76,15 @@ export class GameEngine {
     }
   }
 
-  startGame(playerConfigs) {
+  startGame(playerConfigs, options = {}) {
+    this.gameModeId = options.modeId || 'ranked';
+    this.isRanked = options.isRanked === true;
+    this.gameOptions = options;
     const configs = playerConfigs || [];
     this.players = configs.map((cfg, i) => {
       const p = createPlayer(cfg.id || `player_${i}`, cfg.name, cfg.isHuman === true);
       p.isAI = cfg.isAI === true;
+      p.aiDifficulty = cfg.aiDifficulty || options.aiDifficulty || 'normal';
       return p;
     });
     if (this.players.length === 0) {
@@ -493,6 +501,15 @@ export class GameEngine {
       this.phase = 'ENDED';
       const winner = this.getAlivePlayers()[0];
       if (winner) winner.rank = 1;
+      const human = this.players.find(p => p.isHuman);
+      if (human?.rank) {
+        this.onGameEnd?.({
+          finalRank: human.rank,
+          isRanked: this.isRanked,
+          modeId: this.gameModeId,
+          players: this.players,
+        });
+      }
       this.notify();
       return;
     }
@@ -506,6 +523,32 @@ export class GameEngine {
   }
 
   delay(ms) {
+    const interval = this.gameOptions?.turnInterval;
+    if (interval != null && ms === CONFIG.TURN_INTERVAL) return new Promise(r => setTimeout(r, interval));
     return new Promise(r => setTimeout(r, ms));
+  }
+
+  restoreFromSession(data) {
+    if (!data?.players?.length) return false;
+    this.turn = data.turn || 1;
+    this.phase = data.phase || 'PREPARE';
+    this.humanId = data.humanId || 'player_0';
+    this.gameModeId = data.gameModeId || 'ranked';
+    this.isRanked = data.isRanked === true;
+    this.gameOptions = data.meta || {};
+    this.players = data.players.map(p => ({
+      ...createPlayer(p.id, p.name, p.isHuman),
+      isAI: p.isAI,
+      aiDifficulty: p.aiDifficulty || 'normal',
+      hp: p.hp, gold: p.gold, tavernTier: p.tavernTier,
+      winStreak: p.winStreak, lossStreak: p.lossStreak,
+      eliminated: p.eliminated, rank: p.rank,
+      team: p.team, bench: p.bench || [],
+      shop: { ...p.shop, refreshCost: CONFIG.REFRESH_COST, frozen: p.shop?.frozen || false },
+      maxHp: CONFIG.BASE_HP,
+    }));
+    this.poolRemaining = data.poolRemaining || {};
+    this.notify();
+    return true;
   }
 }
