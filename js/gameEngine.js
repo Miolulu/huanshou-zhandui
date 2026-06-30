@@ -60,7 +60,7 @@ export class GameEngine {
     this.currentBattle = null;
     this.lastHumanResult = null;
     this.opponentPreview = null;
-    this.skipBattleAnim = false;
+    this.battleSpeed = 1;
     this.gameModeId = 'ranked';
     this.isRanked = false;
     this.gameOptions = {};
@@ -171,6 +171,7 @@ export class GameEngine {
       prepareTimeLeft: this.prepareTimeLeft,
       prepareTimeTotal: this.prepareTimeTotal,
       prepareTimedOut: this.prepareTimedOut,
+      battleSpeed: this.battleSpeed,
     };
   }
 
@@ -243,9 +244,16 @@ export class GameEngine {
     player.shop.cards = [];
 
     for (let i = 0; i < CONFIG.SHOP_SIZE; i++) {
-      const costTier = this.rollCostTier(player.tavernTier);
-      const tpl = this.pickShopTemplate(costTier);
-      if (!tpl) continue;
+      let tpl = null;
+      for (let attempt = 0; attempt < 8 && !tpl; attempt++) {
+        const costTier = this.rollCostTier(player.tavernTier);
+        tpl = this.pickShopTemplate(costTier);
+      }
+
+      if (!tpl) {
+        player.shop.cards.push({ shopIndex: i, soldOut: true });
+        continue;
+      }
 
       player.shop.cards.push({
         shopIndex: i,
@@ -286,7 +294,7 @@ export class GameEngine {
 
   buyCard(player, shopIndex) {
     const shopCard = player.shop.cards[shopIndex];
-    if (!shopCard || player.gold < shopCard.cost) return false;
+    if (!shopCard || shopCard.soldOut || player.gold < shopCard.cost) return false;
 
     const emptyPos = this.findEmptyTeamSlot(player);
     if (emptyPos === -1) return false;
@@ -525,13 +533,17 @@ export class GameEngine {
       });
 
       if (isHumanBattle) this.currentBattle = engine;
-      const delay = isHumanBattle && !this.skipBattleAnim ? CONFIG.TURN_INTERVAL : 0;
-      const result = await engine.runBattle(delay);
+      const pace = isHumanBattle ? {
+        turnDelay: Math.max(300, CONFIG.TURN_INTERVAL / (this.battleSpeed || 1)),
+        actionDelay: Math.max(200, CONFIG.ACTION_INTERVAL_MS / (this.battleSpeed || 1)),
+        lungeDelay: Math.max(180, CONFIG.ATTACK_LUNGE_MS / (this.battleSpeed || 1)),
+        startPause: Math.max(250, CONFIG.BATTLE_START_PAUSE_MS / (this.battleSpeed || 1)),
+      } : { turnDelay: 0, actionDelay: 0, lungeDelay: 0, startPause: 0 };
+      const result = await engine.runBattle(pace);
       this.battleResults.push({ pair, result });
 
       if (isHumanBattle) {
         this.lastHumanResult = result;
-        this.skipBattleAnim = false;
       }
     }
 
@@ -575,8 +587,12 @@ export class GameEngine {
     this.beginPreparePhase();
   }
 
-  skipBattle() {
-    this.skipBattleAnim = true;
+  cycleBattleSpeed() {
+    const opts = CONFIG.BATTLE_SPEED_OPTIONS || [1, 2, 3];
+    const idx = opts.indexOf(this.battleSpeed);
+    this.battleSpeed = opts[(idx + 1) % opts.length];
+    this.notify();
+    return this.battleSpeed;
   }
 
   /** 确保仅一名冠军，排名唯一 */

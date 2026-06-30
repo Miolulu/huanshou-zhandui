@@ -134,7 +134,7 @@ function init() {
           'DAMAGE_TAKEN', 'CARD_DEATH', 'TURN_START', 'TURN_END',
           'HEAL', 'CRIT', 'SKILL_TRIGGER', 'STATUS_APPLIED',
           'ELEMENT_EFFECT', 'CARD_REVIVED', 'TEAM_DEFEATED', 'ATTACK', 'DODGE', 'EXECUTE',
-          'CARD_ACTION_END', 'CARD_ACTION_START',
+          'CARD_ACTION_END', 'CARD_ACTION_START', 'ATTACK_WINDUP',
         ];
         if (renderEvents.includes(event.type)) {
           ui.render(game.getState());
@@ -142,7 +142,8 @@ function init() {
 
         const fxEvents = [
           'DAMAGE_TAKEN', 'HEAL', 'CRIT', 'SKILL_TRIGGER',
-          'STATUS_APPLIED', 'ATTACK', 'DODGE', 'EXECUTE', 'CARD_DEATH',
+          'STATUS_APPLIED', 'ATTACK', 'ATTACK_WINDUP', 'DODGE', 'EXECUTE', 'CARD_DEATH',
+          'CARD_ACTION_START',
         ];
         if (fxEvents.includes(event.type)) {
           ui.handleBattleEvent(event);

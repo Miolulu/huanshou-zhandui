@@ -744,14 +744,18 @@ export class BattleEngine {
     return { done: false, result: null };
   }
 
-  async runBattle(delayMs = CONFIG.TURN_INTERVAL) {
-    const actionDelay = delayMs > 0 ? (CONFIG.ACTION_INTERVAL_MS || 500) : 0;
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async runBattle(pace = {}) {
+    const turnDelay = pace.turnDelay ?? CONFIG.TURN_INTERVAL;
+    const actionDelay = pace.actionDelay ?? CONFIG.ACTION_INTERVAL_MS;
+    const lungeDelay = pace.lungeDelay ?? CONFIG.ATTACK_LUNGE_MS;
+    const startPause = pace.startPause ?? CONFIG.BATTLE_START_PAUSE_MS;
+    const paced = turnDelay > 0;
+    const sleep = (ms) => (ms > 0 ? new Promise((r) => setTimeout(r, ms)) : Promise.resolve());
 
     while (true) {
       if (this.turn === 0) {
         this.initBattle();
-        if (delayMs > 0) await sleep(CONFIG.BATTLE_START_PAUSE_MS || 600);
+        if (paced) await sleep(startPause);
       }
 
       this.turn++;
@@ -764,11 +768,10 @@ export class BattleEngine {
         return result;
       }
 
-      const sorted = this.sortBySpeed(this.getAllCards().filter(c => c.isAlive && c.hp > 0));
+      const sorted = this.sortBySpeed(this.getAllCards().filter((c) => c.isAlive && c.hp > 0));
       for (const card of sorted) {
         if (!card.isAlive) continue;
-        this.executeCardAction(card);
-        if (actionDelay > 0) await sleep(actionDelay);
+        await this.executeCardActionPaced(card, { actionDelay, lungeDelay, paced });
         result = this.checkBattleEnd();
         if (result) {
           this.emit({ type: 'BATTLE_END', ...result });
@@ -785,7 +788,52 @@ export class BattleEngine {
         return result;
       }
 
-      if (delayMs > 0) await sleep(delayMs);
+      if (paced) await sleep(turnDelay);
     }
+  }
+
+  async executeCardActionPaced(card, { actionDelay, lungeDelay, paced }) {
+    const sleep = (ms) => (ms > 0 ? new Promise((r) => setTimeout(r, ms)) : Promise.resolve());
+
+    if (!card.isAlive || card.hp <= 0) return;
+
+    const skipReason = this.getSkipReason(card);
+    if (skipReason) {
+      this.emit({ type: 'ACTION_SKIPPED', cardId: card.id, cardName: card.name, reason: skipReason });
+      return;
+    }
+
+    this.emit({ type: 'CARD_ACTION_START', cardId: card.id, cardName: card.name });
+    if (paced) await sleep(lungeDelay * 0.4);
+
+    this.triggerSkills(card, 'BEFORE_ATTACK');
+
+    if (card.isAlive && card.hp > 0) {
+      const target = this.selectTarget(card);
+      if (target) {
+        if (paced) {
+          this.emit({
+            type: 'ATTACK_WINDUP',
+            attackerId: card.id,
+            attackerName: card.name,
+            defenderId: target.id,
+            defenderName: target.name,
+          });
+          await sleep(lungeDelay);
+        }
+        this.performAttack(card, target);
+        if (paced) await sleep(actionDelay);
+      }
+    } else if (paced) {
+      await sleep(actionDelay * 0.5);
+    }
+
+    if (card.isAlive) this.triggerSkills(card, 'AFTER_ATTACK');
+
+    if (this.hasStatus(card, 'STEALTH')) {
+      card.statusEffects = card.statusEffects.filter((s) => s.type !== 'STEALTH');
+    }
+
+    this.emit({ type: 'CARD_ACTION_END', cardId: card.id, cardName: card.name });
   }
 }

@@ -81,6 +81,22 @@
   50% { opacity: 0.55; }
 }
 
+@keyframes heroLunge {
+  0% { transform: translate(0, 0) scale(1); }
+  45% { transform: translate(var(--lunge-x, 0), var(--lunge-y, 0)) scale(1.08); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.hero-card.hero-lunge {
+  z-index: 5;
+  animation: heroLunge 520ms ease-out;
+}
+
+.hero-card.hero-targeted {
+  box-shadow: 0 0 20px rgba(255, 106, 136, 0.7);
+  border-color: var(--danger) !important;
+}
+
 /* ===== 通用过渡 ===== */
 .card, .slot, .hero-card, .mode-card {
   transition: border-color var(--fast, 0.18s), transform var(--fast, 0.18s), box-shadow var(--fast, 0.18s);

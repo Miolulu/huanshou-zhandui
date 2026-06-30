@@ -2,9 +2,11 @@ import {
   CONFIG,
   getTavernUpgradeCost,
   getTeamSlotsForTavern,
-  formatTavernShopOdds,
+  getTavernCostOddsList,
+  getCostBorderClass,
   getCardBuyCost,
   RARITY_NAMES,
+  ELEMENT_NAMES,
 } from './config.js';
 import { getTemplate } from './cards.js';
 import { formatSkillList } from './skills.js';
@@ -50,6 +52,7 @@ export class UI {
       shopHint: document.getElementById('shop-tier-hint'),
       players: document.getElementById('players-list'),
       shop: document.getElementById('shop-cards'),
+      shopOdds: document.getElementById('shop-odds-list'),
       team: document.getElementById('team-slots'),
       opponent: document.getElementById('opponent-info'),
       battleArena: document.getElementById('battle'),
@@ -98,10 +101,23 @@ export class UI {
         this.renderCardPanel(null);
       }
     };
-    document.getElementById('btn-skip-battle').onclick = () => this.game.skipBattle();
+    const speedBtn = document.getElementById('btn-battle-speed');
+    if (speedBtn) {
+      speedBtn.onclick = () => {
+        const s = this.game.cycleBattleSpeed();
+        speedBtn.textContent = `${s}×`;
+        speedBtn.classList.toggle('active', s > 1);
+      };
+    }
     document.getElementById('btn-toggle-bond-guide').onclick = () => this.toggleBondGuide();
     if (this.el.bondGuidePanel) {
-      this.el.bondGuidePanel.innerHTML = renderBondGuideHTML();
+      this.el.bondGuidePanel.innerHTML = `<div class="bond-guide-panel">${renderBondGuideHTML()}<button type="button" class="btn-muted bond-modal-close" style="margin-top:12px">关闭</button></div>`;
+      this.el.bondGuidePanel.onclick = (e) => {
+        if (e.target === this.el.bondGuidePanel || e.target.classList.contains('bond-modal-close')) {
+          this.bondGuideOpen = false;
+          this.el.bondGuidePanel.classList.add('hidden');
+        }
+      };
     }
   }
 
@@ -109,7 +125,7 @@ export class UI {
     this.bondGuideOpen = !this.bondGuideOpen;
     this.el.bondGuidePanel?.classList.toggle('hidden', !this.bondGuideOpen);
     const btn = document.getElementById('btn-toggle-bond-guide');
-    if (btn) btn.textContent = this.bondGuideOpen ? '收起说明' : '羁绊说明';
+    if (btn) btn.textContent = this.bondGuideOpen ? '收起' : '图鉴';
   }
 
   render(state) {
@@ -207,11 +223,17 @@ export class UI {
     const nextSlots = human.tavernTier < CONFIG.MAX_TAVERN_TIER
       ? getTeamSlotsForTavern(human.tavernTier + 1) : human.team.maxSize;
     const slotsHint = human.tavernTier >= CONFIG.MAX_TAVERN_TIER
-      ? '(满级)' : `(${tavernCost}金→Lv${human.tavernTier + 1} · ${human.team.maxSize}→${nextSlots}格)`;
+      ? '满级' : `${tavernCost}金 → Lv${human.tavernTier + 1} · ${nextSlots}人口`;
 
     this.el.tavernCost.textContent = slotsHint;
     if (this.el.teamCost) this.el.teamCost.textContent = '';
-    this.el.shopHint.textContent = `货架 ★1 · ${formatTavernShopOdds(human.tavernTier)}`;
+    if (this.el.shopHint) this.el.shopHint.textContent = '';
+    if (this.el.shopOdds) {
+      const odds = getTavernCostOddsList(human.tavernTier);
+      this.el.shopOdds.innerHTML = odds.map((o) =>
+        `<span class="tft-odds-item ${getCostBorderClass(o.cost)}">${o.cost}费 ${o.percent}%</span>`
+      ).join('');
+    }
     document.getElementById('freeze-state').textContent = human.shop.frozen ? '开' : '关';
   }
 
@@ -226,31 +248,44 @@ export class UI {
   }
 
   renderShop(human) {
-    if (this.game.phase !== 'PREPARE') {
-      this.el.shop.innerHTML = '<p class="hint">战斗阶段无法购物</p>';
+    const canShop = this.game.phase === 'PREPARE';
+    const slots = canShop ? [...human.shop.cards] : [];
+
+    if (!canShop) {
+      this.el.shop.innerHTML = Array.from({ length: CONFIG.SHOP_SIZE }, () =>
+        `<div class="tft-shop-card sold-out disabled"><div class="tft-shop-portrait">—</div><div class="tft-shop-name">战斗中</div></div>`
+      ).join('');
       return;
     }
-    this.el.shop.innerHTML = human.shop.cards.map((sc, i) => {
-      const tpl = getTemplate(sc.cardTemplateId);
-      const skillsHtml = tpl ? formatSkillList(tpl.skills) : '';
-      return `
-      <div class="card shop-card ${RARITY_CLASS[sc.rarity]}">
-        <div class="card-head">
-          <div class="card-name">${sc.name}</div>
-          <div class="card-badges">${elementBadgeHtml(sc.element)}${classBadgeHtml(sc.cardClass || tpl?.class)}</div>
-        </div>
-        <div class="card-meta">★1 · ${sc.costTier ?? sc.cost}费 · ${RARITY_NAMES[sc.rarity]}</div>
-        <div class="card-desc">${tpl?.description || ''}</div>
-        <div class="card-skills-mini">${skillsHtml}</div>
-        <div class="card-cost">${sc.cost} 金</div>
-        <button class="btn-buy" data-shop-buy="${i}">购买</button>
-      </div>`;
-    }).join('') || '<p class="hint">货架为空</p>';
 
-    this.el.shop.querySelectorAll('[data-shop-buy]').forEach(btn => {
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        this.game.buyCard(human, parseInt(btn.dataset.shopBuy, 10));
+    while (slots.length < CONFIG.SHOP_SIZE) slots.push({ soldOut: true });
+
+    this.el.shop.innerHTML = slots.map((sc, i) => {
+      if (sc.soldOut) {
+        return `<div class="tft-shop-card sold-out"><div class="tft-shop-portrait">空</div><div class="tft-shop-name">售罄</div></div>`;
+      }
+      const tpl = getTemplate(sc.cardTemplateId);
+      const costCls = getCostBorderClass(sc.costTier ?? sc.cost);
+      const canBuy = human.gold >= sc.cost && this.game.findEmptyTeamSlot(human) !== -1;
+      const initial = (sc.name || '?').charAt(0);
+      const elName = ELEMENT_NAMES[sc.element] || sc.element;
+      const clsName = CLASS_NAMES[sc.cardClass || tpl?.class] || '';
+      return `
+      <div class="tft-shop-card ${costCls} ${canBuy ? '' : 'disabled'}" data-shop-buy="${i}" title="${tpl?.description || ''}">
+        <div class="tft-shop-traits">
+          <span class="trait-chip el-${sc.element}">${elName}</span>
+          ${clsName ? `<span class="trait-chip">${clsName}</span>` : ''}
+        </div>
+        <div class="tft-shop-portrait el-${sc.element}">${initial}</div>
+        <div class="tft-shop-name">${sc.name}</div>
+        <div class="tft-shop-price">${sc.cost}</div>
+      </div>`;
+    }).join('');
+
+    this.el.shop.querySelectorAll('[data-shop-buy]').forEach((card) => {
+      card.onclick = () => {
+        const idx = parseInt(card.dataset.shopBuy, 10);
+        if (this.game.buyCard(human, idx)) showToast('购买成功');
       };
     });
   }
@@ -332,20 +367,29 @@ export class UI {
     if (!this.el.teamBonds) return;
     const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
     const combos = summarizeActiveComboBonds(cards);
-    const progress = summarizeBondProgress(cards).filter(p => !p.tier || p.next);
+    const progress = summarizeBondProgress(cards);
 
-    const activeHtml = combos.map(b =>
-      `<span class="bond-tag bond-combo" title="${formatComboEffect(b.effect)}">${b.name}×${b.count}</span>`
-    ).join('');
-
-    const progHtml = progress.slice(0, 4).map(p => {
+    const rows = [];
+    for (const b of combos) {
+      rows.push(`<div class="tft-trait-row active" title="${formatComboEffect(b.effect)}">
+        <span class="tft-trait-hex">${b.name.charAt(0)}</span>
+        <span>${b.name}</span>
+        <span class="tft-trait-count">${b.count}</span>
+      </div>`);
+    }
+    for (const p of progress.slice(0, 6)) {
+      if (p.tier && !p.next) continue;
       const need = p.next ? `${p.count}/${p.next}` : `${p.count}`;
-      return `<span class="bond-tag bond-progress">${p.bond.name} ${need}</span>`;
-    }).join('');
+      rows.push(`<div class="tft-trait-row">
+        <span class="tft-trait-hex">${p.bond.name.charAt(0)}</span>
+        <span>${p.bond.name}</span>
+        <span class="tft-trait-count">${need}</span>
+      </div>`);
+    }
 
-    this.el.teamBonds.innerHTML = activeHtml || progHtml
-      ? `${activeHtml}${progHtml ? `<div class="bond-progress-row">${progHtml}</div>` : ''}`
-      : '<span class="hint">凑齐同属性+同职业触发组合羁绊（2/4）</span>';
+    this.el.teamBonds.innerHTML = rows.length
+      ? rows.join('')
+      : '<p class="hint" style="font-size:0.72rem">上阵幻兽后显示羁绊进度</p>';
   }
 
   handleTeamClick(pos) {
@@ -387,9 +431,16 @@ export class UI {
       !isPrepare || human.tavernTier >= CONFIG.MAX_TAVERN_TIER || human.gold < tavernCost;
     const teamBtn = document.getElementById('btn-upgrade-team');
     if (teamBtn) teamBtn.style.display = 'none';
-    document.getElementById('btn-skip-battle').style.display = state.phase === 'BATTLE' ? 'inline-block' : 'none';
+    const speedBtn = document.getElementById('btn-battle-speed');
+    if (speedBtn) {
+      const s = state.battleSpeed || this.game.battleSpeed || 1;
+      speedBtn.textContent = `${s}×`;
+      speedBtn.classList.toggle('active', s > 1);
+      speedBtn.style.display = state.phase === 'BATTLE' ? 'inline-flex' : 'none';
+    }
   }
 
+  renderBattleHUD(state, human) {
     const phaseNames = { PREPARE: '准备', MATCH: '匹配', BATTLE: '战斗中', SETTLE: '结算', ENDED: '结束' };
     const inBattle = state.phase === 'BATTLE' || state.phase === 'SETTLE';
     const round = String(state.turn || 1).padStart(2, '0');
@@ -399,9 +450,13 @@ export class UI {
 
     const opp = state.opponentPreview;
     if (this.el.battleHudOpponent) {
-      this.el.battleHudOpponent.textContent = inBattle && this.game.currentBattle
-        ? (this.game.currentBattle.playerB?.name || '对手').slice(0, 8)
-        : (opp?.name || '—').slice(0, 8);
+      if (inBattle && this.game.currentBattle) {
+        const eng = this.game.currentBattle;
+        const humanSide = eng.playerA?.isHuman ? eng.playerB : eng.playerA;
+        this.el.battleHudOpponent.textContent = (humanSide?.name || '对手').slice(0, 8);
+      } else {
+        this.el.battleHudOpponent.textContent = (opp?.name || '—').slice(0, 8);
+      }
     }
 
     const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);

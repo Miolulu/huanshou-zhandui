@@ -2,7 +2,8 @@
 
 const FX_RENDER_EVENTS = new Set([
   'DAMAGE_TAKEN', 'HEAL', 'CRIT', 'SKILL_TRIGGER',
-  'STATUS_APPLIED', 'DODGE', 'EXECUTE', 'ATTACK',
+  'STATUS_APPLIED', 'DODGE', 'EXECUTE', 'ATTACK', 'ATTACK_WINDUP',
+  'CARD_ACTION_START',
 ]);
 
 export class BattleEffects {
@@ -49,6 +50,13 @@ export class BattleEffects {
         break;
       case 'ATTACK':
         if (event.isCrit) this.floatOnCard(event.attackerId, '暴击!', 'crit');
+        if (event.defenderId) this.flashCard(event.defenderId, 'hit-flash', 350);
+        break;
+      case 'ATTACK_WINDUP':
+        this.playAttackLunge(event.attackerId, event.defenderId);
+        break;
+      case 'CARD_ACTION_START':
+        this.flashCard(event.cardId, 'skill-cast', 300);
         break;
       default:
         break;
@@ -91,6 +99,29 @@ export class BattleEffects {
   findCard(cardId) {
     if (!cardId || !this.arena) return null;
     return this.arena.querySelector(`[data-card-id="${cardId}"]`);
+  }
+
+  playAttackLunge(attackerId, defenderId) {
+    const attacker = this.findCard(attackerId);
+    const defender = this.findCard(defenderId);
+    if (!attacker || !defender) return;
+
+    const aRect = attacker.getBoundingClientRect();
+    const dRect = defender.getBoundingClientRect();
+    const dx = (dRect.left + dRect.width / 2) - (aRect.left + aRect.width / 2);
+    const dy = (dRect.top + dRect.height / 2) - (aRect.top + aRect.height / 2);
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    const moveX = (dx / dist) * Math.min(48, dist * 0.35);
+    const moveY = (dy / dist) * Math.min(32, dist * 0.35);
+
+    attacker.style.setProperty('--lunge-x', `${moveX}px`);
+    attacker.style.setProperty('--lunge-y', `${moveY}px`);
+    attacker.classList.add('hero-lunge');
+    defender.classList.add('hero-targeted');
+    setTimeout(() => {
+      attacker.classList.remove('hero-lunge');
+      defender.classList.remove('hero-targeted');
+    }, 520);
   }
 }
 

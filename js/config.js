@@ -14,9 +14,11 @@ export const CONFIG = {
   DAMAGE_PER_SURVIVOR: 2,
   STAGE_DAMAGE: [0, 0, 0, 1, 2, 3, 5, 5, 6, 7, 8],
   MAX_TURNS_PER_BATTLE: 50,
-  TURN_INTERVAL: 1100,
-  ACTION_INTERVAL_MS: 550,
-  BATTLE_START_PAUSE_MS: 800,
+  TURN_INTERVAL: 1600,
+  ACTION_INTERVAL_MS: 800,
+  ATTACK_LUNGE_MS: 650,
+  BATTLE_START_PAUSE_MS: 1000,
+  BATTLE_SPEED_OPTIONS: [1, 2, 3],
   DAMAGE_VARIANCE: 0.1,
   MIN_DAMAGE: 1,
   /** 金铲铲式公共卡池：按费用档计数（每张英雄独立） */
@@ -119,6 +121,21 @@ export function formatTavernShopOdds(tavernTier) {
     .sort(([a], [b]) => Number(a) - Number(b))
     .map(([cost, v]) => `${cost}费${Math.round((v / total) * 100)}%`)
     .join(' · ');
+}
+
+/** 金铲铲式：各费用档刷新概率列表 */
+export function getTavernCostOddsList(tavernTier) {
+  const w = getTavernCostWeights(tavernTier);
+  const total = Object.values(w).reduce((a, b) => a + b, 0);
+  return Object.entries(w)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([cost, v]) => ({ cost: Number(cost), percent: Math.round((v / total) * 100) }));
+}
+
+const COST_BORDER_CLASS = { 1: 'cost-1', 2: 'cost-2', 3: 'cost-3', 4: 'cost-4', 5: 'cost-5' };
+
+export function getCostBorderClass(costTier) {
+  return COST_BORDER_CLASS[costTier] || 'cost-1';
 }
 
 export function getInterest(gold) {
