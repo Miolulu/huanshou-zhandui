@@ -6,6 +6,7 @@ import {
   summarizeActiveClassBonds,
 } from './classes.js';
 import { COMBO_BONDS, summarizeActiveComboBonds, formatComboEffect } from './comboBonds.js';
+import { ORIGIN_BONDS, summarizeActiveOriginBonds, formatOriginEffect, originBondLabel } from './originBonds.js';
 import { elementBadgeHtml, classBadgeHtml } from './appShell.js';
 
 const CLASS_RESONANCE_SCALE = 0.35;
@@ -81,8 +82,16 @@ export function renderBondGuideHTML() {
     <div class="bond-guide-section">
       <h3>组合羁绊（主羁绊）</h3>
       <p class="hint">必须<strong>同属性 + 同职业</strong>才计入。例：场上 2 名「火属性战士」激活「炽战·火战士」；凑满 4 名同组合则强化。</p>
-      <p class="hint bond-guide-note">共 8 属性 × 6 职业 = 48 种组合，效果随属性与职业不同。</p>
+      <p class="hint bond-guide-note">共 8 属性 × 8 职业组合羁绊；5费传说三星为最强单体。</p>
       ${elementGroups}
+    </div>
+    <div class="bond-guide-section">
+      <h3>起源羁绊（跨元素创新）</h3>
+      <p class="hint">星火(火+雷) · 潮汐(水+风) · 森土(草+土) · 影光(暗+光)。双属性计数，2/4（影光2/3）激活。</p>
+      <div class="bond-guide-grid">${ORIGIN_BONDS.map(b => `<div class="bond-guide-block">
+        <h4>${b.name}</h4>
+        <ul class="bond-tier-list">${b.thresholds.map(t => `<li><strong>${t}名</strong>：${formatOriginEffect(b.getEffect(t))}</li>`).join('')}</ul>
+      </div>`).join('')}</div>
     </div>
     <div class="bond-guide-section">
       <h3>职业共鸣（辅助羁绊）</h3>
@@ -93,16 +102,22 @@ export function renderBondGuideHTML() {
 
 export function renderActiveBondsBattle(cards) {
   const combos = summarizeActiveComboBonds(cards);
+  const origins = summarizeActiveOriginBonds(cards);
   const classBonds = summarizeActiveClassBonds(cards).filter(b => b.tier >= 4);
 
-  if (!combos.length && !classBonds.length) {
-    return '<p class="hint">当前阵容未激活羁绊。主羁绊需同属性+同职业（2/4）；辅助需同职业 4/6 名。</p>';
+  if (!combos.length && !origins.length && !classBonds.length) {
+    return '<p class="hint">当前阵容未激活羁绊。主羁绊需同属性+同职业（2/4）；起源看跨元素组合。</p>';
   }
 
   const comboHtml = combos.map(b => `<div class="active-bond-card bond-combo">
       ${elementBadgeHtml(b.element)} ${classBadgeHtml(b.class)}
       <strong>${b.name}</strong> ×${b.count}
       <span class="bond-effect">${formatComboEffect(b.effect)}</span>
+    </div>`).join('');
+
+  const originHtml = origins.map(b => `<div class="active-bond-card bond-origin">
+      <strong>${originBondLabel(b)}</strong> ×${b.count}
+      <span class="bond-effect">${formatOriginEffect(b.effect)}</span>
     </div>`).join('');
 
   const classHtml = classBonds.map(b => {
@@ -115,5 +130,5 @@ export function renderActiveBondsBattle(cards) {
     </div>`;
   }).join('');
 
-  return `<div class="active-bonds-list">${comboHtml}${classHtml}</div>`;
+  return `<div class="active-bonds-list">${comboHtml}${originHtml}${classHtml}</div>`;
 }

@@ -134,6 +134,7 @@ function init() {
           'DAMAGE_TAKEN', 'CARD_DEATH', 'TURN_START', 'TURN_END',
           'HEAL', 'CRIT', 'SKILL_TRIGGER', 'STATUS_APPLIED',
           'ELEMENT_EFFECT', 'CARD_REVIVED', 'TEAM_DEFEATED', 'ATTACK', 'DODGE', 'EXECUTE',
+          'CARD_ACTION_END', 'CARD_ACTION_START',
         ];
         if (renderEvents.includes(event.type)) {
           ui.render(game.getState());

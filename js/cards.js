@@ -1,7 +1,8 @@
-import { CONFIG } from './config.js';
-import { CARD_TEMPLATES } from './cardData.js';
+import { CONFIG, getStarMultiplier } from './config.js';
+import { CARD_TEMPLATES as BASE_TEMPLATES } from './cardData.js';
+import { CARD_DATA_EXTRA } from './cardDataExtra.js';
 
-export { CARD_TEMPLATES };
+export const CARD_TEMPLATES = [...BASE_TEMPLATES, ...CARD_DATA_EXTRA];
 
 let cardIdCounter = 0;
 
@@ -151,7 +152,7 @@ export function createCard(templateId, star = 1, playerId = '', position = 0) {
   const tpl = getTemplate(templateId);
   if (!tpl) throw new Error(`Unknown template: ${templateId}`);
 
-  const tierMul = CONFIG.TIER_MULTIPLIER[star] || 1;
+  const tierMul = getStarMultiplier(tpl.rarity, star, tpl.costTier);
 
   const maxHp = Math.round(tpl.baseHp * tierMul);
   const attack = Math.round(tpl.baseAttack * tierMul);
@@ -201,7 +202,7 @@ export function recalculateCardStats(card, fullHeal = true) {
   const star = card.star ?? card.upgradeTier ?? 1;
   card.star = star;
   card.upgradeTier = star;
-  const tierMul = CONFIG.TIER_MULTIPLIER[star] || 1;
+  const tierMul = getStarMultiplier(tpl.rarity, star, tpl.costTier);
   const ratio = card.maxHp > 0 ? card.hp / card.maxHp : 1;
 
   card.maxHp = Math.round(tpl.baseHp * tierMul);

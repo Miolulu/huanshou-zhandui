@@ -7,6 +7,8 @@ export const CLASS_NAMES = {
   mage: '法师',
   archer: '射手',
   support: '辅助',
+  ranger: '游侠',
+  guardian: '守护',
 };
 
 export const CLASS_BOND_NAMES = {
@@ -16,6 +18,8 @@ export const CLASS_BOND_NAMES = {
   mage: '元素掌控',
   archer: '精准射击',
   support: '神圣庇护',
+  ranger: '疾风猎手',
+  guardian: '圣盾同盟',
 };
 
 export function getClassBondTier(count) {
@@ -56,6 +60,16 @@ export const CLASS_BOND_EFFECTS = {
     2: { supportSkillMul: 0.20 },
     4: { supportSkillMul: 0.30, teamHealPct: 0.10 },
     6: { supportSkillMul: 0.40, teamHealPct: 0.20, teamShieldPct: 0.15 },
+  },
+  ranger: {
+    2: { archerAtkPct: 0.15, teamCrit: 0.05 },
+    4: { archerAtkPct: 0.22, assassinSpdPct: 0.10 },
+    6: { archerAtkPct: 0.30, teamCrit: 0.12, assassinSpdPct: 0.15 },
+  },
+  guardian: {
+    2: { teamShieldPct: 0.12 },
+    4: { teamShieldPct: 0.20, teamDefPct: 0.08 },
+    6: { teamShieldPct: 0.28, teamDefPct: 0.15, tankTauntChance: 0.25 },
   },
 };
 

@@ -12,6 +12,7 @@ import {
   CLASS_BOND_NAMES,
 } from './classes.js';
 import { countComboBonds, getComboBondTier, COMBO_BONDS } from './comboBonds.js';
+import { summarizeActiveOriginBonds, ORIGIN_BONDS, getOriginBondTier } from './originBonds.js';
 import { ELEMENT_NAMES } from './config.js';
 
 const NEGATIVE_STATUSES = new Set([
@@ -80,7 +81,38 @@ export class BattleEngine {
   applyBonds() {
     for (const team of [this.teamA, this.teamB]) {
       this.applyComboBonds(team);
+      this.applyOriginBonds(team);
       this.applyClassBonds(team);
+    }
+  }
+
+  applyOriginBonds(team) {
+    const cards = team.cards.filter(Boolean);
+    const teamMods = {};
+
+    for (const bond of ORIGIN_BONDS) {
+      const count = cards.filter(c => bond.elements.includes(c.element)).length;
+      const tier = getOriginBondTier(bond, count);
+      if (!tier) continue;
+      const effect = bond.getEffect(tier);
+
+      this.emit({
+        type: 'SYNERGY_APPLIED',
+        teamName: team.playerName,
+        bondType: 'origin',
+        bondName: bond.name,
+        tier,
+        count,
+      });
+
+      for (const [key, val] of Object.entries(effect)) {
+        if (typeof val === 'number') teamMods[key] = (teamMods[key] || 0) + val;
+      }
+    }
+
+    for (const card of cards) {
+      card.bondMods = { ...(card.bondMods || {}), ...teamMods };
+      this.applyBondModsToCard(card, teamMods);
     }
   }
 
@@ -709,10 +741,47 @@ export class BattleEngine {
   }
 
   async runBattle(delayMs = CONFIG.TURN_INTERVAL) {
+    const actionDelay = delayMs > 0 ? (CONFIG.ACTION_INTERVAL_MS || 500) : 0;
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
     while (true) {
-      const { done, result } = this.runStep();
-      if (done) return result;
-      if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs));
+      if (this.turn === 0) {
+        this.initBattle();
+        if (delayMs > 0) await sleep(CONFIG.BATTLE_START_PAUSE_MS || 600);
+      }
+
+      this.turn++;
+      this.emit({ type: 'TURN_START', turn: this.turn });
+      this.processTurnStartEffects();
+
+      let result = this.checkBattleEnd();
+      if (result) {
+        this.emit({ type: 'BATTLE_END', ...result });
+        return result;
+      }
+
+      const sorted = this.sortBySpeed(this.getAllCards().filter(c => c.isAlive && c.hp > 0));
+      for (const card of sorted) {
+        if (!card.isAlive) continue;
+        this.executeCardAction(card);
+        if (actionDelay > 0) await sleep(actionDelay);
+        result = this.checkBattleEnd();
+        if (result) {
+          this.emit({ type: 'BATTLE_END', ...result });
+          return result;
+        }
+      }
+
+      this.processTurnEndEffects();
+      this.emit({ type: 'TURN_END', turn: this.turn });
+
+      result = this.checkBattleEnd();
+      if (result) {
+        this.emit({ type: 'BATTLE_END', ...result });
+        return result;
+      }
+
+      if (delayMs > 0) await sleep(delayMs);
     }
   }
 }

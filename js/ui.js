@@ -3,6 +3,7 @@ import {
   getTavernUpgradeCost,
   getTeamSlotsForTavern,
   formatTavernShopOdds,
+  getCardBuyCost,
   RARITY_NAMES,
 } from './config.js';
 import { getTemplate } from './cards.js';
@@ -306,7 +307,8 @@ export class UI {
       this.el.selectedMergeHint = hint;
     }
     this.el.selectedMergeHint.textContent = mergeHint;
-    document.getElementById('btn-sell-card').textContent = `卖出 (+${star}金)`;
+    document.getElementById('btn-sell-card').textContent =
+      `卖出 (+${getCardBuyCost(card.rarity, getTemplate(card.templateId)?.costTier)}金)`;
   }
 
   countSameStar(human, card) {
@@ -350,16 +352,14 @@ export class UI {
     const human = this.game.getHuman();
     if (this.game.phase !== 'PREPARE') return;
 
-    if (this.selectedTeamPos === null) {
-      if (human.team.cards[pos]) this.selectedTeamPos = pos;
-    } else if (this.selectedTeamPos === pos) {
+    const card = human.team.cards[pos];
+    if (!card) {
       this.selectedTeamPos = null;
     } else {
-      this.game.moveCard(human, this.selectedTeamPos, pos);
-      this.selectedTeamPos = pos;
-      if (!human.team.cards[pos]) this.selectedTeamPos = null;
+      this.selectedTeamPos = this.selectedTeamPos === pos ? null : pos;
     }
-    this.game.notify();
+    this.renderCardPanel(human.team.cards[this.selectedTeamPos] ?? null, human);
+    this.renderTeam(human);
   }
 
   renderOpponent(state) {
@@ -538,9 +538,11 @@ export class UI {
       }
       rewardHtml += '</div>';
     }
-    return `${rewardHtml}<ol>${sorted.map(p =>
-      `<li>${p.name}: 第${p.rank || '?'}名 ${p.eliminated && p.rank > 1 ? '淘汰' : (p.rank === 1 ? '🏆冠军' : '')}</li>`
-    ).join('')}</ol><button id="btn-restart" class="btn-accent">返回主菜单</button>`;
+    return `${rewardHtml}<ol>${sorted.map(p => {
+      const isChampion = p.rank === 1 && !p.eliminated;
+      const tag = p.eliminated ? '淘汰' : (isChampion ? '🏆冠军' : '');
+      return `<li>${p.name}: 第${p.rank || '?'}名 ${tag}</li>`;
+    }).join('')}</ol><button id="btn-restart" class="btn-accent">返回主菜单</button>`;
   }
 
   setEndRewards(data) {

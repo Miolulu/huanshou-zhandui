@@ -23,7 +23,7 @@ export function elementBadgeHtml(element) {
 }
 
 export function classBadgeHtml(cardClass) {
-  const names = { tank: '坦', warrior: '战', assassin: '刺', mage: '法', archer: '射', support: '辅' };
+  const names = { tank: '坦', warrior: '战', assassin: '刺', mage: '法', archer: '射', support: '辅', ranger: '猎', guardian: '盾' };
   const label = names[cardClass] || cardClass;
   return `<span class="class-badge class-${cardClass}">${label}</span>`;
 }

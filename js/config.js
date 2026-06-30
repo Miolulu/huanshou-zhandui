@@ -14,12 +14,25 @@ export const CONFIG = {
   DAMAGE_PER_SURVIVOR: 2,
   STAGE_DAMAGE: [0, 0, 0, 1, 2, 3, 5, 5, 6, 7, 8],
   MAX_TURNS_PER_BATTLE: 50,
-  TURN_INTERVAL: 400,
-  ACTION_INTERVAL_MS: 300,
+  TURN_INTERVAL: 1100,
+  ACTION_INTERVAL_MS: 550,
+  BATTLE_START_PAUSE_MS: 800,
   DAMAGE_VARIANCE: 0.1,
   MIN_DAMAGE: 1,
-  RARITY_WEIGHTS: { common: 60, rare: 25, epic: 12, legendary: 3 },
-  CARD_POOL_LIMITS: { common: 40, rare: 25, epic: 12, legendary: 6 },
+  /** 金铲铲式公共卡池：每张英雄独立计数（S13 近似） */
+  CARD_POOL_LIMITS: { common: 30, rare: 25, epic: 18, legendary: 9 },
+  /** 费用 = 购买金币（1/2/3/4/5 费） */
+  CARD_BUY_COST: { common: 1, rare: 2, epic: 3, epic4: 4, legendary: 5 },
+  /** 稀有度 → 费用档 */
+  RARITY_COST_TIER: { common: 1, rare: 2, epic: 3, legendary: 5 },
+  /** 三星倍率随费用升高；3星5费为最强档 */
+  STAR_MULTIPLIER_BY_COST: {
+    1: { 1: 1.0, 2: 1.8, 3: 2.8 },
+    2: { 1: 1.0, 2: 1.9, 3: 3.2 },
+    3: { 1: 1.0, 2: 2.0, 3: 3.8 },
+    4: { 1: 1.0, 2: 2.1, 3: 4.2 },
+    5: { 1: 1.0, 2: 2.3, 3: 5.5 },
+  },
   TIER_MULTIPLIER: { 1: 1.0, 2: 2.0, 3: 3.5 },
   BASE_CRIT_RATE: 0.05,
   BASE_CRIT_DAMAGE: 2.0,
@@ -64,6 +77,17 @@ export function getTeamSlotsForTavern(tavernTier) {
 export function getTavernRarityWeights(tavernTier) {
   const tier = Math.min(Math.max(tavernTier, 1), CONFIG.MAX_TAVERN_TIER);
   return CONFIG.TAVERN_RARITY_WEIGHTS[tier] || CONFIG.TAVERN_RARITY_WEIGHTS[1];
+}
+
+export function getCardBuyCost(rarity, costTier) {
+  if (costTier) return costTier;
+  return CONFIG.RARITY_COST_TIER[rarity] ?? CONFIG.BUY_COST;
+}
+
+export function getStarMultiplier(rarity, star, costTier) {
+  const tier = costTier || CONFIG.RARITY_COST_TIER[rarity] || 1;
+  const table = CONFIG.STAR_MULTIPLIER_BY_COST[tier] || CONFIG.STAR_MULTIPLIER_BY_COST[1];
+  return table[star] || table[1] || 1;
 }
 
 export function formatTavernShopOdds(tavernTier) {

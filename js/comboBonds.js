@@ -8,6 +8,7 @@ const ELEMENT_FLAVOR = {
 
 const CLASS_FLAVOR = {
   tank: '卫', warrior: '战', assassin: '刺', mage: '术', archer: '弓', support: '灵',
+  ranger: '猎', guardian: '盾',
 };
 
 /** 组合羁绊效果：2人激活基础，4人激活强化 */
@@ -20,6 +21,8 @@ function comboEffects(element, cls, tier) {
     mage: { mageSkillDmg: strong ? 0.35 : 0.18, mageSkillRate: strong ? 0.12 : 0 },
     archer: { archerAtkPct: strong ? 0.30 : 0.18 },
     support: { supportSkillMul: strong ? 0.30 : 0.18, teamHealPct: strong ? 0.12 : 0.06 },
+    ranger: { archerAtkPct: strong ? 0.28 : 0.16, assassinSpdPct: strong ? 0.12 : 0.06 },
+    guardian: { teamShieldPct: strong ? 0.22 : 0.12, teamDefPct: strong ? 0.14 : 0.08 },
   }[cls] || { teamAtkPct: strong ? 0.12 : 0.06 };
 
   const elemental = {

@@ -1,15 +1,15 @@
 import {
   CONFIG,
   getTavernUpgradeCost,
-  getAvailableRarities,
   getTavernRarityWeights,
   getTeamSlotsForTavern,
   getInterest,
   getStreakBonus,
   getTurnBaseGold,
+  getCardBuyCost,
   getStageDamage,
 } from './config.js';
-import { CARD_TEMPLATES, createCard, recalculateCardStats } from './cards.js';
+import { CARD_TEMPLATES, createCard, recalculateCardStats, getTemplate } from './cards.js';
 import { BattleEngine } from './battleEngine.js';
 import { runAIDecisions } from './ai.js';
 
@@ -240,7 +240,7 @@ export class GameEngine {
         rarity: tpl.rarity,
         element: tpl.element,
         cardClass: tpl.class,
-        cost: CONFIG.BUY_COST,
+        cost: getCardBuyCost(tpl.rarity, tpl.costTier),
         star: 1,
       });
     }
@@ -296,7 +296,7 @@ export class GameEngine {
   sellCard(player, position) {
     const card = player.team.cards[position];
     if (!card) return false;
-    player.gold += card.star ?? card.upgradeTier;
+    player.gold += getCardBuyCost(card.rarity, getTemplate(card.templateId)?.costTier);
     player.team.cards[position] = null;
     this.poolRemaining[card.templateId]++;
     this.notify();
@@ -542,8 +542,7 @@ export class GameEngine {
 
     if (this.getAlivePlayers().length <= 1) {
       this.phase = 'ENDED';
-      const winner = this.getAlivePlayers()[0];
-      if (winner) winner.rank = 1;
+      this.finalizeRanks();
       const human = this.players.find(p => p.isHuman);
       if (human?.rank) {
         this.onGameEnd?.({
@@ -563,6 +562,38 @@ export class GameEngine {
 
   skipBattle() {
     this.skipBattleAnim = true;
+  }
+
+  /** 确保仅一名冠军，排名唯一 */
+  finalizeRanks() {
+    const alive = this.players.filter(p => !p.eliminated && p.hp > 0);
+    if (alive.length === 1) {
+      alive[0].rank = 1;
+      alive[0].eliminated = false;
+    } else if (alive.length === 0) {
+      const ranked = this.players.filter(p => p.rank > 0).sort((a, b) => a.rank - b.rank);
+      if (ranked[0]) ranked[0].rank = 1;
+    }
+
+    const rankOnes = this.players.filter(p => p.rank === 1);
+    if (rankOnes.length > 1) {
+      const winner = rankOnes.find(p => !p.eliminated && p.hp > 0) || rankOnes[0];
+      let r = 2;
+      for (const p of this.players) {
+        if (p === winner) {
+          p.rank = 1;
+          continue;
+        }
+        if (p.rank === 1) p.rank = r++;
+      }
+    }
+
+    const ranked = this.players.filter(p => p.rank > 0);
+    const used = new Set();
+    for (const p of ranked) {
+      while (used.has(p.rank)) p.rank += 1;
+      used.add(p.rank);
+    }
   }
 
   delay(ms) {
