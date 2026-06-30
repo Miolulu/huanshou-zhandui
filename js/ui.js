@@ -1,16 +1,15 @@
 import {
   CONFIG,
-  getTeamSlotUpgradeCost,
   getTavernUpgradeCost,
-  getAvailableRarities,
-  ELEMENT_NAMES,
+  getTeamSlotsForTavern,
+  formatTavernShopOdds,
   RARITY_NAMES,
 } from './config.js';
 import { getTemplate } from './cards.js';
 import { formatSkillList } from './skills.js';
 import { elementBadgeHtml, classBadgeHtml, showToast } from './appShell.js';
-import { summarizeActiveElementBonds } from './elements.js';
-import { summarizeActiveClassBonds, CLASS_NAMES } from './classes.js';
+import { summarizeActiveComboBonds, summarizeBondProgress, formatComboEffect } from './comboBonds.js';
+import { CLASS_NAMES } from './classes.js';
 import { renderBondGuideHTML, renderActiveBondsBattle } from './bondGuide.js';
 
 const RARITY_CLASS = { common: 'r-common', rare: 'r-rare', epic: 'r-epic', legendary: 'r-legendary' };
@@ -75,9 +74,6 @@ export class UI {
     };
     document.getElementById('btn-upgrade-tavern').onclick = () => {
       this.game.upgradeTavern(this.game.getHuman());
-    };
-    document.getElementById('btn-upgrade-team').onclick = () => {
-      this.game.upgradeTeam(this.game.getHuman());
     };
     document.getElementById('btn-sell-card').onclick = () => {
       if (this.selectedTeamPos !== null) {
@@ -192,14 +188,14 @@ export class UI {
     this.el.tavernTier.textContent = human.tavernTier;
 
     const tavernCost = getTavernUpgradeCost(human.tavernTier);
-    const teamCost = getTeamSlotUpgradeCost(human.team.maxSize);
-    const rarities = getAvailableRarities(human.tavernTier).map(r => RARITY_NAMES[r]).join('/');
+    const nextSlots = human.tavernTier < CONFIG.MAX_TAVERN_TIER
+      ? getTeamSlotsForTavern(human.tavernTier + 1) : human.team.maxSize;
+    const slotsHint = human.tavernTier >= CONFIG.MAX_TAVERN_TIER
+      ? '(满级)' : `(${tavernCost}金→Lv${human.tavernTier + 1} · ${human.team.maxSize}→${nextSlots}格)`;
 
-    this.el.tavernCost.textContent = human.tavernTier >= CONFIG.MAX_TAVERN_TIER
-      ? '(满级)' : `(${tavernCost}金→${human.tavernTier + 1}级)`;
-    this.el.teamCost.textContent = human.team.maxSize >= CONFIG.MAX_TEAM_SIZE
-      ? '(满)' : `(${teamCost}金→${human.team.maxSize + 1}格)`;
-    this.el.shopHint.textContent = `货架均为 ★1 · 可刷出 ${rarities}`;
+    this.el.tavernCost.textContent = slotsHint;
+    if (this.el.teamCost) this.el.teamCost.textContent = '';
+    this.el.shopHint.textContent = `货架 ★1 · ${formatTavernShopOdds(human.tavernTier)}`;
     document.getElementById('freeze-state').textContent = human.shop.frozen ? '开' : '关';
   }
 
@@ -318,15 +314,21 @@ export class UI {
   renderTeamBonds(human) {
     if (!this.el.teamBonds) return;
     const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
-    const elBonds = summarizeActiveElementBonds(cards);
-    const clsBonds = summarizeActiveClassBonds(cards);
-    const parts = [
-      ...elBonds.map(b => `<span class="bond-tag bond-el">${b.name}×${b.count}</span>`),
-      ...clsBonds.map(b => `<span class="bond-tag bond-class">${b.name}×${b.count}</span>`),
-    ];
-    this.el.teamBonds.innerHTML = parts.length
-      ? parts.join('')
-      : '<span class="hint">暂无羁绊</span>';
+    const combos = summarizeActiveComboBonds(cards);
+    const progress = summarizeBondProgress(cards).filter(p => !p.tier || p.next);
+
+    const activeHtml = combos.map(b =>
+      `<span class="bond-tag bond-combo" title="${formatComboEffect(b.effect)}">${b.name}×${b.count}</span>`
+    ).join('');
+
+    const progHtml = progress.slice(0, 4).map(p => {
+      const need = p.next ? `${p.count}/${p.next}` : `${p.count}`;
+      return `<span class="bond-tag bond-progress">${p.bond.name} ${need}</span>`;
+    }).join('');
+
+    this.el.teamBonds.innerHTML = activeHtml || progHtml
+      ? `${activeHtml}${progHtml ? `<div class="bond-progress-row">${progHtml}</div>` : ''}`
+      : '<span class="hint">凑齐同属性+同职业触发组合羁绊（2/4）</span>';
   }
 
   handleTeamClick(pos) {
@@ -361,7 +363,6 @@ export class UI {
 
   renderButtonStates(state, human) {
     const tavernCost = getTavernUpgradeCost(human.tavernTier);
-    const teamCost = getTeamSlotUpgradeCost(human.team.maxSize);
     const isPrepare = state.phase === 'PREPARE';
 
     document.getElementById('btn-end-prepare').disabled = !isPrepare;
@@ -369,8 +370,8 @@ export class UI {
     document.getElementById('btn-freeze').disabled = !isPrepare;
     document.getElementById('btn-upgrade-tavern').disabled =
       !isPrepare || human.tavernTier >= CONFIG.MAX_TAVERN_TIER || human.gold < tavernCost;
-    document.getElementById('btn-upgrade-team').disabled =
-      !isPrepare || human.team.maxSize >= CONFIG.MAX_TEAM_SIZE || human.gold < teamCost;
+    const teamBtn = document.getElementById('btn-upgrade-team');
+    if (teamBtn) teamBtn.style.display = 'none';
     document.getElementById('btn-skip-battle').style.display = state.phase === 'BATTLE' ? 'inline-block' : 'none';
   }
 

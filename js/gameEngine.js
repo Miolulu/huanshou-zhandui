@@ -1,8 +1,9 @@
 import {
   CONFIG,
-  getTeamSlotUpgradeCost,
   getTavernUpgradeCost,
   getAvailableRarities,
+  getTavernRarityWeights,
+  getTeamSlotsForTavern,
   getInterest,
   getStreakBonus,
   getTurnBaseGold,
@@ -16,7 +17,7 @@ function deepClone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
-function createEmptyTeam(playerId, maxSize = CONFIG.INITIAL_TEAM_SIZE) {
+function createEmptyTeam(playerId, maxSize = getTeamSlotsForTavern(CONFIG.INITIAL_TAVERN_TIER)) {
   return { playerId, maxSize, cards: Array(7).fill(null) };
 }
 
@@ -139,6 +140,7 @@ export class GameEngine {
     this.turn = 1;
     this.phase = 'PREPARE';
     this.initPool();
+    for (const p of this.players) this.syncTeamSlots(p);
     this.beginPreparePhase();
     this.notify();
   }
@@ -204,12 +206,13 @@ export class GameEngine {
   }
 
   rollRarity(tavernTier) {
-    const available = getAvailableRarities(tavernTier);
-    const weights = available.map(r => CONFIG.RARITY_WEIGHTS[r]);
-    const total = weights.reduce((a, b) => a + b, 0);
+    const weights = getTavernRarityWeights(tavernTier);
+    const available = Object.keys(weights);
+    const vals = available.map(r => weights[r]);
+    const total = vals.reduce((a, b) => a + b, 0);
     let roll = Math.random() * total;
     for (let i = 0; i < available.length; i++) {
-      roll -= weights[i];
+      roll -= vals[i];
       if (roll <= 0) return available[i];
     }
     return 'common';
@@ -313,13 +316,9 @@ export class GameEngine {
     this.notify();
   }
 
-  upgradeTeam(player) {
-    const cost = getTeamSlotUpgradeCost(player.team.maxSize);
-    if (player.gold < cost || player.team.maxSize >= CONFIG.MAX_TEAM_SIZE) return false;
-    player.gold -= cost;
-    player.team.maxSize++;
-    this.notify();
-    return true;
+  syncTeamSlots(player) {
+    const slots = getTeamSlotsForTavern(player.tavernTier);
+    player.team.maxSize = Math.min(CONFIG.MAX_TEAM_SIZE, slots);
   }
 
   upgradeTavern(player) {
@@ -327,6 +326,7 @@ export class GameEngine {
     if (player.gold < cost || player.tavernTier >= CONFIG.MAX_TAVERN_TIER) return false;
     player.gold -= cost;
     player.tavernTier++;
+    this.syncTeamSlots(player);
     if (!player.shop.frozen) this.refreshShop(player);
     this.notify();
     return true;
@@ -593,6 +593,7 @@ export class GameEngine {
     this.prepareTimeTotal = data.prepareTimeTotal || this.getPrepareTimeSeconds();
     this.prepareTimeLeft = data.prepareTimeLeft ?? this.prepareTimeTotal;
     for (const p of this.players) {
+      this.syncTeamSlots(p);
       for (const c of p.team.cards) {
         if (!c) continue;
         if (!c.star) c.star = c.upgradeTier ?? 1;

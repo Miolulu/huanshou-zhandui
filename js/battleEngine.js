@@ -3,8 +3,6 @@ import { cloneCardForBattle } from './cards.js';
 import {
   getElementMultiplier as calcElementMul,
   getElementRelation,
-  getElementBondTier,
-  ELEMENT_BOND_NAMES,
   getSkillType,
 } from './elements.js';
 import {
@@ -13,6 +11,7 @@ import {
   getClassBondEffect,
   CLASS_BOND_NAMES,
 } from './classes.js';
+import { countComboBonds, getComboBondTier, COMBO_BONDS } from './comboBonds.js';
 import { ELEMENT_NAMES } from './config.js';
 
 const NEGATIVE_STATUSES = new Set([
@@ -80,37 +79,75 @@ export class BattleEngine {
 
   applyBonds() {
     for (const team of [this.teamA, this.teamB]) {
-      this.applyElementBonds(team);
+      this.applyComboBonds(team);
       this.applyClassBonds(team);
     }
   }
 
-  applyElementBonds(team) {
+  applyComboBonds(team) {
     const cards = team.cards.filter(Boolean);
-    const counts = {};
-    for (const c of cards) counts[c.element] = (counts[c.element] || 0) + 1;
+    const counts = countComboBonds(cards);
+    const perCardMods = new Map();
 
-    const emittedElements = new Set();
-    for (const card of cards) {
-      const tier = getElementBondTier(counts[card.element] || 0);
+    for (const bond of COMBO_BONDS) {
+      const count = counts[bond.id] || 0;
+      const tier = getComboBondTier(count);
       if (!tier) continue;
-      card.attack = Math.round(card.attack * (1 + tier.atk));
-      card.maxHp = Math.round(card.maxHp * (1 + tier.hp));
-      card.hp = Math.round(card.hp * (1 + tier.hp));
-      card.defense = Math.round(card.defense * (1 + tier.def));
-      card.speed = Math.round(card.speed * (1 + tier.spd));
-      card.critRate += tier.crit;
-      if (!emittedElements.has(card.element)) {
-        emittedElements.add(card.element);
-        this.emit({
-          type: 'SYNERGY_APPLIED',
-          teamName: team.playerName,
-          bondType: 'element',
-          bondName: ELEMENT_BOND_NAMES[card.element],
-          count: counts[card.element],
-        });
+      const effect = bond.getEffect(tier);
+
+      this.emit({
+        type: 'SYNERGY_APPLIED',
+        teamName: team.playerName,
+        bondType: 'combo',
+        bondName: bond.name,
+        tier,
+        count,
+      });
+
+      for (const card of cards) {
+        const cls = card.cardClass || card.class;
+        if (card.element !== bond.element || cls !== bond.class) continue;
+        const mods = perCardMods.get(card.id) || {};
+        for (const [key, val] of Object.entries(effect)) {
+          if (typeof val === 'number') mods[key] = (mods[key] || 0) + val;
+        }
+        perCardMods.set(card.id, mods);
       }
     }
+
+    for (const card of cards) {
+      const mods = perCardMods.get(card.id) || {};
+      card.bondMods = { ...(card.bondMods || {}), ...mods };
+      this.applyBondModsToCard(card, mods);
+    }
+  }
+
+  applyBondModsToCard(card, teamMods) {
+    if (teamMods.teamAtkPct) card.attack = Math.round(card.attack * (1 + teamMods.teamAtkPct));
+    if (teamMods.teamDefPct) card.defense = Math.round(card.defense * (1 + teamMods.teamDefPct));
+    if (teamMods.teamCrit) card.critRate += teamMods.teamCrit;
+
+    const cls = card.cardClass || card.class;
+    if (cls === 'assassin') {
+      if (teamMods.assassinCrit) card.critRate += teamMods.assassinCrit;
+      if (teamMods.assassinSpdPct) card.speed = Math.round(card.speed * (1 + teamMods.assassinSpdPct));
+      if (teamMods.assassinAtkPct) card.attack = Math.round(card.attack * (1 + teamMods.assassinAtkPct));
+    }
+    if (cls === 'archer' && teamMods.archerAtkPct) {
+      card.attack = Math.round(card.attack * (1 + teamMods.archerAtkPct));
+    }
+    if (cls === 'mage' && teamMods.mageCdReduce) {
+      for (const skill of card.skills) {
+        if (skill.cooldown > 0) skill.cooldown = Math.max(1, Math.round(skill.cooldown * (1 - teamMods.mageCdReduce)));
+      }
+    }
+    if (cls === 'tank' && teamMods.tankTauntChance && Math.random() < teamMods.tankTauntChance) {
+      this.addStatus(card, { type: 'TAUNT', value: 0, duration: 1, source: card.id });
+    }
+  }
+
+  applyElementBonds(_team) {
+    /* 元素仅保留克制关系，不再提供单一属性羁绊数值 */
   }
 
   applyClassBonds(team) {
@@ -119,9 +156,9 @@ export class BattleEngine {
     const teamMods = {};
 
     for (const [cls, count] of Object.entries(classCounts)) {
-      const tier = getClassBondTier(count);
-      if (!tier) continue;
-      const effect = getClassBondEffect(cls, count);
+      if (count < 4) continue;
+      const tier = count >= 6 ? 6 : 4;
+      const effect = getClassBondEffect(cls, tier);
       if (!effect) continue;
 
       this.emit({
@@ -134,8 +171,9 @@ export class BattleEngine {
       });
 
       for (const [key, val] of Object.entries(effect)) {
-        if (typeof val === 'number' && (key.includes('Pct') || key.includes('Mul') || key.startsWith('team'))) {
-          teamMods[key] = (teamMods[key] || 0) + val;
+        if (typeof val === 'number') {
+          const scaled = val * 0.35;
+          teamMods[key] = (teamMods[key] || 0) + scaled;
         } else {
           teamMods[key] = Math.max(teamMods[key] || 0, val);
         }
@@ -143,28 +181,8 @@ export class BattleEngine {
     }
 
     for (const card of cards) {
-      card.bondMods = { ...teamMods };
-      if (teamMods.teamAtkPct) card.attack = Math.round(card.attack * (1 + teamMods.teamAtkPct));
-      if (teamMods.teamDefPct) card.defense = Math.round(card.defense * (1 + teamMods.teamDefPct));
-      if (teamMods.teamCrit) card.critRate += teamMods.teamCrit;
-
-      const cls = card.cardClass;
-      if (cls === 'assassin') {
-        if (teamMods.assassinCrit) card.critRate += teamMods.assassinCrit;
-        if (teamMods.assassinSpdPct) card.speed = Math.round(card.speed * (1 + teamMods.assassinSpdPct));
-        if (teamMods.assassinAtkPct) card.attack = Math.round(card.attack * (1 + teamMods.assassinAtkPct));
-      }
-      if (cls === 'archer' && teamMods.archerAtkPct) {
-        card.attack = Math.round(card.attack * (1 + teamMods.archerAtkPct));
-      }
-      if (cls === 'mage' && teamMods.mageCdReduce) {
-        for (const skill of card.skills) {
-          if (skill.cooldown > 0) skill.cooldown = Math.max(1, Math.round(skill.cooldown * (1 - teamMods.mageCdReduce)));
-        }
-      }
-      if (cls === 'tank' && teamMods.tankTauntChance && Math.random() < teamMods.tankTauntChance) {
-        this.addStatus(card, { type: 'TAUNT', value: 0, duration: 1, source: card.id });
-      }
+      card.bondMods = { ...(card.bondMods || {}), ...teamMods };
+      this.applyBondModsToCard(card, teamMods);
     }
   }
 

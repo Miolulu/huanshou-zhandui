@@ -968,6 +968,11 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 .el-mul { font-size: 0.7rem; color: #6e7681; margin-left: 4px; }
 
 .slot.filled.star-2 { box-shadow: 0 0 8px rgba(240, 136, 62, 0.35); }
+.bond-tag.bond-combo { border-color: #a371f7; color: #d2a8ff; }
+.bond-tag.bond-progress { border-color: #484f58; color: #8b949e; font-size: 0.72rem; }
+.bond-progress-row { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.active-bond-card.bond-combo { border-color: #a371f744; }
+
 .slot.filled.star-3 { box-shadow: 0 0 12px rgba(63, 185, 80, 0.45); border-color: #3fb950 !important; }
 .merge-hint { color: #f0883e; margin-top: 8px; font-size: 0.8rem; }
 

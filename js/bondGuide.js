@@ -1,46 +1,9 @@
 /** 羁绊说明与图鉴（战斗中展示） */
 import { ELEMENT_NAMES } from './config.js';
-import { ELEMENT_CHART, ELEMENT_BOND_TIERS, ELEMENT_BOND_NAMES, summarizeActiveElementBonds } from './elements.js';
-import { CLASS_BOND_NAMES, CLASS_BOND_EFFECTS, CLASS_NAMES, summarizeActiveClassBonds } from './classes.js';
-import { elementBadgeHtml } from './appShell.js';
-
-function pct(v) {
-  return `${Math.round((v || 0) * 100)}%`;
-}
-
-function formatElementTierLine(count, tier) {
-  const parts = [];
-  if (tier.atk) parts.push(`攻击+${pct(tier.atk)}`);
-  if (tier.hp) parts.push(`生命+${pct(tier.hp)}`);
-  if (tier.def) parts.push(`防御+${pct(tier.def)}`);
-  if (tier.spd) parts.push(`速度+${pct(tier.spd)}`);
-  if (tier.crit) parts.push(`暴击+${pct(tier.crit)}`);
-  return `<li><strong>${count}只</strong>：${parts.join(' · ') || '无加成'}</li>`;
-}
-
-function formatClassEffect(cls, tier) {
-  const eff = CLASS_BOND_EFFECTS[cls]?.[tier];
-  if (!eff) return '无加成';
-  const parts = [];
-  if (eff.teamAtkPct) parts.push(`全队攻击+${pct(eff.teamAtkPct)}`);
-  if (eff.teamDefPct) parts.push(`全队防御+${pct(eff.teamDefPct)}`);
-  if (eff.teamShieldPct) parts.push(`护盾+${pct(eff.teamShieldPct)}`);
-  if (eff.teamCrit) parts.push(`暴击+${pct(eff.teamCrit)}`);
-  if (eff.teamHealPct) parts.push(`治疗+${pct(eff.teamHealPct)}`);
-  if (eff.assassinCrit) parts.push(`刺客暴击+${pct(eff.assassinCrit)}`);
-  if (eff.assassinSpdPct) parts.push(`刺客速度+${pct(eff.assassinSpdPct)}`);
-  if (eff.assassinAtkPct) parts.push(`刺客攻击+${pct(eff.assassinAtkPct)}`);
-  if (eff.lowHpDmgBonus) parts.push(`低血伤害+${pct(eff.lowHpDmgBonus)}`);
-  if (eff.mageSkillDmg) parts.push(`法术伤害+${pct(eff.mageSkillDmg)}`);
-  if (eff.mageSkillRate) parts.push(`技能触发+${pct(eff.mageSkillRate)}`);
-  if (eff.mageCdReduce) parts.push(`冷却-${pct(eff.mageCdReduce)}`);
-  if (eff.mageSilenceChance) parts.push(`沉默${pct(eff.mageSilenceChance)}`);
-  if (eff.archerAtkPct) parts.push(`射手攻击+${pct(eff.archerAtkPct)}`);
-  if (eff.supportSkillMul) parts.push(`辅助效果+${pct(eff.supportSkillMul)}`);
-  if (eff.warriorLifesteal) parts.push(`战士吸血+${pct(eff.warriorLifesteal)}`);
-  if (eff.tankTauntChance) parts.push(`嘲讽${pct(eff.tankTauntChance)}`);
-  return parts.join(' · ') || '特殊效果';
-}
+import { ELEMENT_CHART } from './elements.js';
+import { CLASS_NAMES } from './classes.js';
+import { COMBO_BONDS, summarizeActiveComboBonds, formatComboEffect } from './comboBonds.js';
+import { elementBadgeHtml, classBadgeHtml } from './appShell.js';
 
 export function renderElementCounterChart(compact = true) {
   return ELEMENT_CHART.map(row => {
@@ -57,68 +20,52 @@ export function renderElementCounterChart(compact = true) {
 }
 
 export function renderBondGuideHTML() {
-  const elementBlocks = Object.entries(ELEMENT_BOND_NAMES).map(([el, name]) => {
-    const tiers = [7, 5, 3, 2].map(c => {
-      const tier = ELEMENT_BOND_TIERS.find(t => t.count === c);
-      return formatElementTierLine(c, tier);
-    }).join('');
-    return `<div class="bond-guide-block">
-      <h4>${elementBadgeHtml(el)} ${name}</h4>
-      <ul class="bond-tier-list">${tiers}</ul>
-    </div>`;
-  }).join('');
+  const featured = COMBO_BONDS.filter(b =>
+    ['fire_warrior', 'fire_mage', 'water_tank', 'grass_support', 'electric_assassin',
+      'wind_archer', 'earth_tank', 'light_support', 'dark_mage', 'fire_assassin',
+      'water_mage', 'grass_warrior'].includes(b.id)
+  );
 
-  const classBlocks = Object.entries(CLASS_BOND_NAMES).map(([cls, bondName]) => {
-    const tiers = [2, 4, 6].map(t => {
-      return `<li><strong>${t}名${CLASS_NAMES[cls]}</strong>：${formatClassEffect(cls, t)}</li>`;
-    }).join('');
+  const comboBlocks = featured.map(bond => {
+    const eff2 = formatComboEffect(bond.getEffect(2));
+    const eff4 = formatComboEffect(bond.getEffect(4));
     return `<div class="bond-guide-block">
-      <h4><span class="class-badge class-${cls}">${CLASS_NAMES[cls]}</span> ${bondName}</h4>
-      <ul class="bond-tier-list">${tiers}</ul>
+      <h4>${elementBadgeHtml(bond.element)} ${classBadgeHtml(bond.class)} ${bond.name}</h4>
+      <ul class="bond-tier-list">
+        <li><strong>2名</strong>：${eff2}</li>
+        <li><strong>4名</strong>：${eff4}</li>
+      </ul>
     </div>`;
   }).join('');
 
   return `
     <div class="bond-guide-section">
       <h3>属性克制</h3>
-      <p class="hint">克制 ×1.5 · 被克 ×0.7 · 同属性无克制</p>
+      <p class="hint">克制 ×1.5 · 被克 ×0.7（战斗伤害计算，非羁绊）</p>
       <div class="element-chart compact">${renderElementCounterChart(true)}</div>
     </div>
     <div class="bond-guide-section">
-      <h3>元素羁绊（同元素出战数量）</h3>
-      <div class="bond-guide-grid">${elementBlocks}</div>
+      <h3>组合羁绊（主羁绊）</h3>
+      <p class="hint">同属性 + 同职业 同时满足才计数。例：2名火战士激活「炽战·火战士」，4名强化。</p>
+      <div class="bond-guide-grid">${comboBlocks}</div>
     </div>
     <div class="bond-guide-section">
-      <h3>职业羁绊（同职业出战数量）</h3>
-      <div class="bond-guide-grid">${classBlocks}</div>
+      <h3>职业共鸣（辅助）</h3>
+      <p class="hint">同职业达到 4/6 名时全队获得较弱加成（约为组合羁绊的 35%）。</p>
     </div>`;
 }
 
 export function renderActiveBondsBattle(cards) {
-  const elBonds = summarizeActiveElementBonds(cards);
-  const clsBonds = summarizeActiveClassBonds(cards);
-
-  if (!elBonds.length && !clsBonds.length) {
-    return '<p class="hint">当前阵容未激活羁绊</p>';
+  const combos = summarizeActiveComboBonds(cards);
+  if (!combos.length) {
+    return '<p class="hint">当前阵容未激活组合羁绊（需要同属性+同职业）</p>';
   }
 
-  const elHtml = elBonds.map(b => {
-    const tier = b.tier;
-    const detail = formatElementTierLine(tier.count, tier).replace(/<\/?li>/g, '');
-    return `<div class="active-bond-card bond-el">
-      ${elementBadgeHtml(b.element)} <strong>${b.name}</strong> ×${b.count}
-      <span class="bond-effect">${detail}</span>
-    </div>`;
-  }).join('');
-
-  const clsHtml = clsBonds.map(b => {
-    const detail = formatClassEffect(b.class, b.tier);
-    return `<div class="active-bond-card bond-class">
-      <span class="class-badge class-${b.class}">${CLASS_NAMES[b.class]}</span>
+  const html = combos.map(b => `<div class="active-bond-card bond-combo">
+      ${elementBadgeHtml(b.element)} ${classBadgeHtml(b.class)}
       <strong>${b.name}</strong> ×${b.count}
-      <span class="bond-effect">${detail}</span>
-    </div>`;
-  }).join('');
+      <span class="bond-effect">${formatComboEffect(b.effect)}</span>
+    </div>`).join('');
 
-  return `<div class="active-bonds-list">${elHtml}${clsHtml}</div>`;
+  return `<div class="active-bonds-list">${html}</div>`;
 }

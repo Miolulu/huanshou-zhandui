@@ -1,4 +1,4 @@
-import { CONFIG, getTeamSlotUpgradeCost, getTavernUpgradeCost, getAvailableRarities } from './config.js';
+import { CONFIG, getTavernUpgradeCost, getTeamSlotsForTavern, formatTavernShopOdds } from './config.js';
 import { getTemplate } from './cards.js';
 
 export const AI_CONFIG = {
@@ -34,15 +34,20 @@ function getParams(difficulty) {
 function analyzeTeam(player) {
   const elementCount = {};
   const classCount = {};
+  const comboCount = {};
   const cardCount = {};
   const cards = player.team.cards.filter(Boolean);
   for (const c of cards) {
     elementCount[c.element] = (elementCount[c.element] || 0) + 1;
     const cls = c.cardClass || c.class;
-    if (cls) classCount[cls] = (classCount[cls] || 0) + 1;
+    if (cls) {
+      classCount[cls] = (classCount[cls] || 0) + 1;
+      const key = `${c.element}_${cls}`;
+      comboCount[key] = (comboCount[key] || 0) + 1;
+    }
     cardCount[c.templateId || c.cardTemplateId] = (cardCount[c.templateId || c.cardTemplateId] || 0) + 1;
   }
-  return { elementCount, classCount, cardCount, size: cards.length };
+  return { elementCount, classCount, comboCount, cardCount, size: cards.length };
 }
 
 function evaluateCard(shopCard, analysis, params, playerGold) {
@@ -64,7 +69,15 @@ function evaluateCard(shopCard, analysis, params, playerGold) {
   if (existing === 1) score += 20 * params.comboAwareness;
 
   const cls = tpl.cardClass || tpl.class;
-  if (cls && (analysis.classCount[cls] || 0) > 0) score += 12 * params.synergyFocus;
+  const comboKey = cls ? `${tpl.element}_${cls}` : null;
+  const comboN = comboKey ? (analysis.comboCount[comboKey] || 0) : 0;
+  if (comboN > 0) {
+    score += 18 * params.synergyFocus * params.comboAwareness;
+    if (comboN >= 1) score += 12 * params.synergyFocus * params.comboAwareness;
+    if (comboN >= 3) score += 20 * params.synergyFocus * params.comboAwareness;
+  } else if (cls && (analysis.classCount[cls] || 0) > 0) {
+    score += 8 * params.synergyFocus;
+  }
 
   if (playerGold - shopCard.cost < 3) score -= 15 * (1 - params.economyAggressiveness);
   if (params.economyAggressiveness > 0.85 && playerGold > 50) score -= 5;
@@ -123,12 +136,6 @@ export function runAIDecisions(player, game) {
   const targetTier = targetTavernTier(game.turn, params);
   while (player.tavernTier < targetTier && player.gold >= getTavernUpgradeCost(player.tavernTier)) {
     if (Math.random() < params.upgradePriority + 0.2) game.upgradeTavern(player);
-    else break;
-  }
-
-  const targetSlots = params.economyAggressiveness > 0.7 ? 5 : 4;
-  while (player.team.maxSize < targetSlots && player.gold >= getTeamSlotUpgradeCost(player.team.maxSize)) {
-    if (Math.random() < params.upgradePriority + 0.15) game.upgradeTeam(player);
     else break;
   }
 

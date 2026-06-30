@@ -24,12 +24,24 @@ export const CONFIG = {
   BASE_CRIT_RATE: 0.05,
   BASE_CRIT_DAMAGE: 2.0,
   MAX_CARD_LEVEL: 5,
-  MAX_TAVERN_TIER: 6,
+  MAX_TAVERN_TIER: 7,
   INITIAL_TAVERN_TIER: 1,
+  /** 酒馆等级 → 出战栏位（金铲铲：升人口随等级解锁） */
+  TAVERN_TEAM_SLOTS: [3, 4, 5, 6, 7, 7, 7],
+  /** 酒馆等级 → 商店稀有度权重（越高越容易刷出高费） */
+  TAVERN_RARITY_WEIGHTS: {
+    1: { common: 100 },
+    2: { common: 72, rare: 28 },
+    3: { common: 55, rare: 35, epic: 10 },
+    4: { common: 42, rare: 36, epic: 18, legendary: 4 },
+    5: { common: 32, rare: 34, epic: 26, legendary: 8 },
+    6: { common: 22, rare: 30, epic: 32, legendary: 16 },
+    7: { common: 15, rare: 25, epic: 35, legendary: 25 },
+  },
   /** 每回合固定基础金币（炉石酒馆规则） */
   BASE_GOLD: 10,
   /** 升级酒馆费用（当前等级 → 下一级） */
-  TAVERN_UPGRADE_COST: [0, 5, 7, 8, 9, 11],
+  TAVERN_UPGRADE_COST: [0, 5, 7, 8, 9, 11, 13],
   /** 卡牌升级费用：当前等级 × 此系数 */
   CARD_UPGRADE_GOLD_PER_LEVEL: 2,
 };
@@ -43,9 +55,23 @@ export const RARITY_NAMES = {
   common: '普通', rare: '稀有', epic: '史诗', legendary: '传说',
 };
 
-/** 战队栏位升级费用 */
-export function getTeamSlotUpgradeCost(currentSize) {
-  return currentSize * 5;
+/** 酒馆等级对应出战栏位 */
+export function getTeamSlotsForTavern(tavernTier) {
+  const idx = Math.min(Math.max(tavernTier, 1), CONFIG.TAVERN_TEAM_SLOTS.length) - 1;
+  return CONFIG.TAVERN_TEAM_SLOTS[idx] ?? CONFIG.MAX_TEAM_SIZE;
+}
+
+export function getTavernRarityWeights(tavernTier) {
+  const tier = Math.min(Math.max(tavernTier, 1), CONFIG.MAX_TAVERN_TIER);
+  return CONFIG.TAVERN_RARITY_WEIGHTS[tier] || CONFIG.TAVERN_RARITY_WEIGHTS[1];
+}
+
+export function formatTavernShopOdds(tavernTier) {
+  const w = getTavernRarityWeights(tavernTier);
+  const total = Object.values(w).reduce((a, b) => a + b, 0);
+  return Object.entries(w)
+    .map(([r, v]) => `${RARITY_NAMES[r]}${Math.round((v / total) * 100)}%`)
+    .join(' · ');
 }
 
 export function getInterest(gold) {
@@ -72,13 +98,10 @@ export function getCardUpgradeCost(currentLevel) {
   return currentLevel * CONFIG.CARD_UPGRADE_GOLD_PER_LEVEL;
 }
 
-/** 根据酒馆等级决定商店稀有度解锁 */
+/** 根据酒馆等级决定商店可刷稀有度 */
 export function getAvailableRarities(tavernTier) {
-  const r = ['common'];
-  if (tavernTier >= 2) r.push('rare');
-  if (tavernTier >= 4) r.push('epic');
-  if (tavernTier >= 5) r.push('legendary');
-  return r;
+  const w = getTavernRarityWeights(tavernTier);
+  return Object.keys(w);
 }
 
 /** 商店卡牌等级范围由酒馆等级决定 */
