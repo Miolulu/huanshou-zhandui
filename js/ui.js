@@ -11,6 +11,8 @@ import { elementBadgeHtml, classBadgeHtml, showToast } from './appShell.js';
 import { summarizeActiveComboBonds, summarizeBondProgress, formatComboEffect } from './comboBonds.js';
 import { CLASS_NAMES } from './classes.js';
 import { renderBondGuideHTML, renderActiveBondsBattle } from './bondGuide.js';
+import { renderHeroCardRow } from './components/HeroCard.js';
+import { BattleEffects, getBattleLogClass } from './components/BattleEffects.js';
 
 const RARITY_CLASS = { common: 'r-common', rare: 'r-rare', epic: 'r-epic', legendary: 'r-legendary' };
 
@@ -21,6 +23,10 @@ export class UI {
     this.endRewards = null;
     this.bondGuideOpen = false;
     this.bindElements();
+    this.battleEffects = new BattleEffects(
+      document.getElementById('battle-effect-layer'),
+      document.getElementById('battle'),
+    );
     this.bindActions();
   }
 
@@ -383,38 +389,6 @@ export class UI {
     document.getElementById('btn-skip-battle').style.display = state.phase === 'BATTLE' ? 'inline-block' : 'none';
   }
 
-  renderHeroCard(card, side = 'player') {
-    const alive = card.isAlive !== false && card.hp > 0;
-    const star = card.star ?? card.upgradeTier ?? 1;
-    const hpPct = card.maxHp ? Math.max(0, Math.round((card.hp / card.maxHp) * 100)) : 0;
-    const initial = (card.name || '?').charAt(0);
-    const statusHtml = (card.statusEffects || [])
-      .filter(s => s.duration > 0)
-      .slice(0, 4)
-      .map(s => {
-        const icons = {
-          BURN: '🔥', POISON: '☠', STUN: '💫', SILENCE: '🤐',
-          TAUNT: '🛡', SHIELD: '🔰', FREEZE: '❄', REGEN: '💚',
-        };
-        return `<span class="buff" title="${s.type}">${icons[s.type] || '✦'}</span>`;
-      }).join('');
-
-    return `<div class="hero-card ${side} ${alive ? '' : 'dead'}" data-card-id="${card.id}">
-      <div class="rarity ${card.rarity || 'common'}"></div>
-      <div class="portrait el-${card.element}">${initial}</div>
-      <div class="hero-name">${card.name}</div>
-      <div class="hp"><div class="fill" style="width:${hpPct}%"></div></div>
-      <div class="hp-text">${card.hp}/${card.maxHp}${card.shield ? ` · 🛡${card.shield}` : ''}</div>
-      <div class="hero-stats">
-        <span>⚔ ${card.attack}</span>
-        <span>🛡 ${card.defense}</span>
-      </div>
-      <div class="star-row">${'★'.repeat(star)}${'☆'.repeat(3 - star)}</div>
-      ${statusHtml ? `<div class="status">${statusHtml}</div>` : ''}
-    </div>`;
-  }
-
-  renderBattleHUD(state, human) {
     const phaseNames = { PREPARE: '准备', MATCH: '匹配', BATTLE: '战斗中', SETTLE: '结算', ENDED: '结束' };
     const inBattle = state.phase === 'BATTLE' || state.phase === 'SETTLE';
     const round = String(state.turn || 1).padStart(2, '0');
@@ -459,15 +433,13 @@ export class UI {
 
     if (!inBattle) {
       if (this.el.battleEnemyArea) {
-        this.el.battleEnemyArea.innerHTML = '<span class="area-label">敌方战队</span>';
+        this.el.battleEnemyArea.innerHTML = renderHeroCardRow([], 'enemy', '敌方战队');
       }
       if (this.el.battlePlayerArea) {
         const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
-        this.el.battlePlayerArea.innerHTML =
-          '<span class="area-label">我方战队</span>' +
-          (cards.length
-            ? cards.map(c => this.renderHeroCard(c, 'player')).join('')
-            : '<span class="hint" style="margin-left:80px">暂无出战幻兽</span>');
+        this.el.battlePlayerArea.innerHTML = cards.length
+          ? renderHeroCardRow(cards, 'player', '我方战队')
+          : '<span class="area-label">我方战队</span><span class="hint" style="margin-left:80px">暂无出战幻兽</span>';
       }
       return;
     }
@@ -483,18 +455,10 @@ export class UI {
     const enemyCards = enemyTeam.cards.filter(Boolean);
 
     if (this.el.battleEnemyArea) {
-      this.el.battleEnemyArea.innerHTML =
-        '<span class="area-label">敌方战队</span>' +
-        (enemyCards.length
-          ? enemyCards.map(c => this.renderHeroCard(c, 'enemy')).join('')
-          : '<span class="hint">无阵容</span>');
+      this.el.battleEnemyArea.innerHTML = renderHeroCardRow(enemyCards, 'enemy', '敌方战队');
     }
     if (this.el.battlePlayerArea) {
-      this.el.battlePlayerArea.innerHTML =
-        '<span class="area-label">我方战队</span>' +
-        (playerCards.length
-          ? playerCards.map(c => this.renderHeroCard(c, 'player')).join('')
-          : '<span class="hint">无阵容</span>');
+      this.el.battlePlayerArea.innerHTML = renderHeroCardRow(playerCards, 'player', '我方战队');
     }
   }
 
@@ -502,7 +466,8 @@ export class UI {
     const line = this.formatEvent(event);
     if (!line) return;
     const div = document.createElement('div');
-    div.className = 'log-line';
+    const logCls = getBattleLogClass(event.type);
+    div.className = logCls ? `log-line ${logCls}` : 'log-line';
     div.textContent = line;
     this.el.battleLog.appendChild(div);
     this.el.battleLog.scrollTop = this.el.battleLog.scrollHeight;
@@ -581,21 +546,21 @@ export class UI {
     this.endRewards = data;
   }
 
-  flashBattleEvent(event) {
-    const arena = this.el.battleArena;
-    if (!arena) return;
-    if (event.type === 'DAMAGE_TAKEN' && event.cardId) {
-      const card = arena.querySelector(`[data-card-id="${event.cardId}"]`);
-      card?.classList.add('hit-flash');
-      setTimeout(() => card?.classList.remove('hit-flash'), 350);
-      arena.classList.add('battle-shake');
-      setTimeout(() => arena.classList.remove('battle-shake'), 300);
+  handleBattleEvent(event) {
+    if (this.battleEffects?.shouldPlay(event)) {
+      this.battleEffects.play(event);
     }
     if (event.type === 'CARD_DEATH') {
-      arena.classList.add('battle-flash-red');
-      setTimeout(() => arena.classList.remove('battle-flash-red'), 400);
+      this.battleEffects?.flashArenaRed();
     }
   }
 
-  onBattleStart() { this.clearBattleLog(); }
+  flashBattleEvent(event) {
+    this.handleBattleEvent(event);
+  }
+
+  onBattleStart() {
+    this.clearBattleLog();
+    if (this.battleEffects?.layer) this.battleEffects.layer.innerHTML = '';
+  }
 }

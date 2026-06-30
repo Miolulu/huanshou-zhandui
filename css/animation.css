@@ -1,0 +1,87 @@
+/* ===== 战斗飘字 ===== */
+.fx-float {
+  position: absolute;
+  pointer-events: none;
+  z-index: 20;
+  transform: translate(-50%, 0);
+  font-weight: 800;
+  font-size: 1rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: fxFloatUp 600ms ease-out forwards;
+  white-space: nowrap;
+}
+
+.fx-float.fx-damage { color: var(--danger, #FF6A88); font-size: 1.1rem; }
+.fx-float.fx-heal { color: var(--success, #45E09D); }
+.fx-float.fx-crit { color: var(--gold, #FFD76A); font-size: 1.2rem; }
+.fx-float.fx-skill { color: var(--secondary, #55D8FF); font-size: 0.85rem; }
+.fx-float.fx-buff { color: var(--primary, #6D6BFF); font-size: 0.78rem; }
+.fx-float.fx-miss { color: #8b949e; font-size: 0.85rem; }
+
+@keyframes fxFloatUp {
+  0% { opacity: 0; transform: translate(-50%, 8px) scale(0.85); }
+  15% { opacity: 1; transform: translate(-50%, 0) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -48px) scale(1); }
+}
+
+/* ===== 技能释放 ===== */
+.hero-card.skill-cast {
+  animation: skillCast 500ms ease;
+}
+
+@keyframes skillCast {
+  0%, 100% { box-shadow: none; }
+  40% {
+    box-shadow: 0 0 35px rgba(109, 107, 255, 0.75);
+    transform: translateY(-4px) scale(1.04);
+  }
+}
+
+.hero-card.hit-flash {
+  animation: hitFlash 350ms ease;
+}
+
+@keyframes hitFlash {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 30px rgba(255, 106, 136, 0.8); }
+}
+
+/* ===== 战场 ===== */
+#battle.battle-shake { animation: battleShake 300ms ease; }
+#battle.battle-flash-red { animation: battleFlashRed 400ms ease; }
+
+@keyframes battleShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes battleFlashRed {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: inset 0 0 60px rgba(255, 106, 136, 0.25); }
+}
+
+@keyframes energyFlow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(30deg); }
+}
+
+@keyframes circlePulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+@keyframes starTwinkle {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* ===== 通用过渡 ===== */
+.card, .slot, .hero-card, .mode-card {
+  transition: border-color var(--fast, 0.18s), transform var(--fast, 0.18s), box-shadow var(--fast, 0.18s);
+}

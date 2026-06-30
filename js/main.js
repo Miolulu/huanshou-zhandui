@@ -129,9 +129,22 @@ function init() {
       (event, engine) => {
         ui.appendBattleLog(event);
         if (event.type === 'BATTLE_START') ui.onBattleStart();
-        if (['DAMAGE_TAKEN', 'CARD_DEATH', 'TURN_START', 'TURN_END', 'ELEMENT_EFFECT', 'CARD_REVIVED', 'TEAM_DEFEATED'].includes(event.type)) {
+
+        const renderEvents = [
+          'DAMAGE_TAKEN', 'CARD_DEATH', 'TURN_START', 'TURN_END',
+          'HEAL', 'CRIT', 'SKILL_TRIGGER', 'STATUS_APPLIED',
+          'ELEMENT_EFFECT', 'CARD_REVIVED', 'TEAM_DEFEATED', 'ATTACK', 'DODGE', 'EXECUTE',
+        ];
+        if (renderEvents.includes(event.type)) {
           ui.render(game.getState());
-          ui.flashBattleEvent(event);
+        }
+
+        const fxEvents = [
+          'DAMAGE_TAKEN', 'HEAL', 'CRIT', 'SKILL_TRIGGER',
+          'STATUS_APPLIED', 'ATTACK', 'DODGE', 'EXECUTE', 'CARD_DEATH',
+        ];
+        if (fxEvents.includes(event.type)) {
+          ui.handleBattleEvent(event);
         }
       }
     );

@@ -1,0 +1,32 @@
+/* 全局主题桥接：旧页面逐步迁移到 Design System 变量 */
+body {
+  font-family: Inter, "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: var(--bg, #090C18);
+  color: var(--text, #F5F8FF);
+  min-height: 100vh;
+}
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.hint { font-size: 0.72rem; color: var(--text2, #C5D3F7); opacity: 0.75; }
+.error-msg { color: var(--danger, #FF6A88); font-size: 0.85rem; margin-top: 12px; min-height: 1.2em; }
+
+/* 旧版侧边栏 panel（非玻璃） */
+aside.panel,
+.panel.sidebar-left,
+.panel.sidebar-right {
+  background: var(--bg-2, #11172B);
+  border: 1px solid rgba(132, 177, 255, 0.15);
+  border-radius: var(--r-sm, 12px);
+  padding: 12px;
+}
+
+aside.panel h2,
+.panel h2 {
+  font-size: 0.85rem;
+  color: var(--gold, #FFD76A);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(132, 177, 255, 0.12);
+}

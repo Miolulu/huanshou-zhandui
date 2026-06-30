@@ -3,11 +3,12 @@
   --bg: #090C18;
   --bg-2: #11172B;
   --bg-3: #1A2440;
-  --panel: rgba(18, 26, 45, 0.72);
+  --panel: rgba(24, 32, 56, 0.78);
   --panel-light: rgba(35, 48, 82, 0.75);
   --primary: #6D6BFF;
   --secondary: #55D8FF;
   --gold: #FFD76A;
+  --accent: #FFD166;
   --danger: #FF6A88;
   --success: #45E09D;
   --text: #F5F8FF;
@@ -25,6 +26,15 @@
   --r-md: 18px;
   --r-lg: 28px;
   --r-xl: 40px;
+
+  /* Spacing */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
 
   /* Blur */
   --blur: 20px;

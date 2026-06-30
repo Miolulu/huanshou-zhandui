@@ -1,0 +1,200 @@
+/* ===== 顶栏 & 三栏布局 ===== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: linear-gradient(180deg, var(--bg-2, #11172B) 0%, var(--bg, #090C18) 100%);
+  border-bottom: 1px solid rgba(132, 177, 255, 0.15);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand h1 {
+  font-size: 1.4rem;
+  color: var(--gold, #FFD76A);
+  display: inline;
+  margin-right: 8px;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: var(--text2, #C5D3F7);
+  opacity: 0.75;
+}
+
+.resource-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+}
+
+.res-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.res-label {
+  font-size: 0.7rem;
+  color: var(--text2, #C5D3F7);
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+.res-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.res-value.small { font-size: 0.85rem; opacity: 0.75; }
+.res-gold .res-value { color: var(--gold, #FFD76A); }
+.res-detail { font-size: 0.72rem; color: var(--secondary, #55D8FF); white-space: nowrap; }
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 180px 1fr 260px;
+  gap: 10px;
+  padding: 10px;
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: calc(100vh - 70px);
+}
+
+.tavern-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tavern-control-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-2, #11172B);
+  border: 1px solid rgba(132, 177, 255, 0.15);
+  border-radius: var(--r-sm, 12px);
+  flex-wrap: wrap;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.section-head h2 {
+  font-size: 0.9rem;
+  color: var(--gold, #FFD76A);
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.board-section,
+.shop-section,
+.battle-section {
+  background: var(--bg-2, #11172B);
+  border: 1px solid rgba(132, 177, 255, 0.12);
+  border-radius: var(--r-sm, 12px);
+  padding: 12px;
+}
+
+.battle-section {
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: hidden;
+}
+
+/* ===== 主菜单布局 ===== */
+.menu-layout {
+  display: flex;
+  gap: 20px;
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 16px;
+  align-items: flex-start;
+}
+
+.menu-container {
+  max-width: 720px;
+  margin: 60px auto;
+  padding: 24px;
+  text-align: center;
+}
+
+.menu-layout .menu-container {
+  flex: 1;
+  margin: 0;
+  max-width: none;
+}
+
+/* ===== 大厅布局 ===== */
+.lobby-container {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 20px;
+}
+
+.lobby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.lobby-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.lobby-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+/* ===== 侧边栏 ===== */
+.players-list { font-size: 0.78rem; }
+
+.player-row {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(132, 177, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+}
+
+.player-row.human { color: var(--gold, #FFD76A); font-weight: bold; }
+.player-row.eliminated { color: #484f58; text-decoration: line-through; }
+
+.opponent-box { font-size: 0.78rem; margin-top: 8px; }
+.opponent-box h3 { font-size: 0.85rem; color: var(--secondary, #55D8FF); margin-bottom: 6px; }
+
+.battle-log {
+  height: calc(100vh - 120px);
+  overflow-y: auto;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.log-line {
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(132, 177, 255, 0.08);
+}
+
+.log-line.log-skill { color: var(--secondary, #55D8FF); }
+.log-line.log-damage { color: var(--danger, #FF6A88); }
+.log-line.log-heal { color: var(--success, #45E09D); }
+.log-line.log-crit { color: var(--gold, #FFD76A); }

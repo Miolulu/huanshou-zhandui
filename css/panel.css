@@ -1,4 +1,6 @@
-.panel {
+/* 玻璃拟态面板 — 限定战斗 HUD 区域，避免影响侧边栏 */
+#battle .panel,
+.panel-glass {
   position: relative;
   backdrop-filter: blur(var(--blur));
   background:
@@ -10,7 +12,8 @@
   overflow: hidden;
 }
 
-.panel::before {
+#battle .panel::before,
+.panel-glass::before {
   content: "";
   position: absolute;
   top: 0;
@@ -20,7 +23,8 @@
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
 }
 
-.panel:hover {
+#battle .panel:hover,
+.panel-glass:hover {
   border-color: rgba(120, 210, 255, 0.7);
   box-shadow: var(--shadow-lg), var(--shadow-blue);
 }

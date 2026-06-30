@@ -1,0 +1,58 @@
+@media (max-width: 1000px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .battle-log {
+    height: 220px;
+  }
+
+  .sidebar-left { order: 3; }
+  .sidebar-right { order: 4; }
+
+  .menu-layout {
+    flex-direction: column;
+  }
+
+  #battle {
+    min-height: 420px;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .hero-card {
+    width: 108px;
+    min-height: 170px;
+    padding: 8px;
+  }
+
+  .hero-card .portrait {
+    width: 52px;
+    height: 52px;
+    font-size: 1.2rem;
+  }
+
+  .hud-left .wave-box {
+    display: none;
+  }
+
+  .skill-panel.battle-footer {
+    flex-wrap: wrap;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .top-bar {
+    padding: 8px 12px;
+  }
+
+  .resource-bar {
+    gap: 10px;
+  }
+
+  .enemy-area,
+  .player-area {
+    gap: 6px;
+  }
+}
