@@ -147,8 +147,10 @@ export class UI {
 
     if (human.lastIncome) {
       const inc = human.lastIncome;
-      this.el.goldIncome.textContent =
-        `(+${inc.total}: 基础${inc.base} 利息${inc.interest} 连胜${inc.streakBonus}${inc.skillGold ? ` 技能${inc.skillGold}` : ''})`;
+      const parts = [`基础${inc.base}`, `利息${inc.interest}`];
+      if (inc.streakBonus > 0) parts.push(`${inc.streakLabel}${inc.streakBonus}`);
+      if (inc.skillGold) parts.push(`技能${inc.skillGold}`);
+      this.el.goldIncome.textContent = `(本回合 +${inc.total}：${parts.join(' · ')})`;
     } else {
       this.el.goldIncome.textContent = '';
     }

@@ -26,8 +26,8 @@ export const CONFIG = {
   MAX_CARD_LEVEL: 5,
   MAX_TAVERN_TIER: 6,
   INITIAL_TAVERN_TIER: 1,
-  /** 炉石酒馆模式：每回合固定基础金币（按回合数递增，后期恒为 10） */
-  TURN_BASE_GOLD: [3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10],
+  /** 每回合固定基础金币（炉石酒馆规则） */
+  BASE_GOLD: 10,
   /** 升级酒馆费用（当前等级 → 下一级） */
   TAVERN_UPGRADE_COST: [0, 5, 7, 8, 9, 11],
   /** 卡牌升级费用：当前等级 × 此系数 */
@@ -57,10 +57,9 @@ export function getStreakBonus(streak) {
   return CONFIG.STREAK_BONUS[idx];
 }
 
-/** 本回合固定基础金币（炉石酒馆规则） */
-export function getTurnBaseGold(turn) {
-  const idx = Math.min(turn - 1, CONFIG.TURN_BASE_GOLD.length - 1);
-  return CONFIG.TURN_BASE_GOLD[Math.max(0, idx)];
+/** 每回合固定基础金币 */
+export function getTurnBaseGold(_turn) {
+  return CONFIG.BASE_GOLD;
 }
 
 export function getTavernUpgradeCost(currentTier) {

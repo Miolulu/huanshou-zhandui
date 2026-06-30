@@ -132,14 +132,21 @@ export class GameEngine {
     };
   }
 
-  /** 计算本回合金币收入（利息基于回合开始前持有金币） */
+  /** 计算本回合金币收入（利息基于发放前持有金币） */
   calculateGoldIncome(player) {
     const base = getTurnBaseGold(this.turn);
     let streakBonus = 0;
-    if (player.winStreak >= 2) streakBonus = getStreakBonus(player.winStreak);
-    else if (player.lossStreak >= 2) streakBonus = getStreakBonus(player.lossStreak);
+    let streakLabel = '';
+    if (player.winStreak >= 2) {
+      streakBonus = getStreakBonus(player.winStreak);
+      streakLabel = '连胜';
+    } else if (player.lossStreak >= 2) {
+      streakBonus = getStreakBonus(player.lossStreak);
+      streakLabel = '连败';
+    }
 
-    const interest = getInterest(player.gold);
+    const goldBeforeIncome = player.gold;
+    const interest = getInterest(goldBeforeIncome);
 
     let skillGold = 0;
     for (const card of player.team.cards) {
@@ -154,7 +161,7 @@ export class GameEngine {
     }
 
     const total = base + streakBonus + interest + skillGold;
-    return { base, streakBonus, interest, skillGold, total };
+    return { base, streakBonus, streakLabel, interest, skillGold, total, goldBeforeIncome };
   }
 
   rollRarity(tavernTier) {
