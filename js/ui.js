@@ -15,6 +15,7 @@ import { summarizeActiveComboBonds, summarizeBondProgress, formatComboEffect } f
 import { CLASS_NAMES } from './classes.js';
 import { renderBondGuideHTML, renderActiveBondsBattle } from './bondGuide.js';
 import { renderHeroCardRow } from './components/HeroCard.js';
+import { renderBattleTimeline, getTimelineOrder } from './components/BattleTimeline.js';
 import { BattleEffects, getBattleLogClass } from './components/BattleEffects.js';
 
 const RARITY_CLASS = { common: 'r-common', rare: 'r-rare', epic: 'r-epic', legendary: 'r-legendary' };
@@ -29,6 +30,7 @@ export class UI {
     this.battleEffects = new BattleEffects(
       document.getElementById('battle-effect-layer'),
       document.getElementById('battle'),
+      document.getElementById('floating-text-layer'),
     );
     this.bindActions();
   }
@@ -78,6 +80,7 @@ export class UI {
       overlayBody: document.getElementById('overlay-body'),
       battleActiveBonds: document.getElementById('battle-active-bonds'),
       bondGuidePanel: document.getElementById('bond-guide-panel'),
+      battleTimeline: document.getElementById('battle-timeline'),
     };
   }
 
@@ -186,6 +189,14 @@ export class UI {
     }
 
     this.renderPrepareTimer(state);
+    this.syncMenuTopBar(human);
+  }
+
+  syncMenuTopBar(human) {
+    const nick = document.getElementById('menu-top-nickname');
+    const rank = document.getElementById('menu-top-rank');
+    if (nick) nick.textContent = human.name || '训练师';
+    if (rank) rank.textContent = `Lv.${human.tavernTier || 1}`;
   }
 
   renderPrepareTimer(state) {
@@ -471,6 +482,21 @@ export class UI {
       energyPct = Math.round((1 - state.prepareTimeLeft / CONFIG.PREPARE_TIME) * 100);
     }
     if (this.el.battleHudEnergy) this.el.battleHudEnergy.style.width = `${energyPct}%`;
+
+    this.renderBattleTimelinePanel(state);
+  }
+
+  renderBattleTimelinePanel(state) {
+    const el = this.el.battleTimeline;
+    if (!el) return;
+    const inBattle = state.phase === 'BATTLE' || state.phase === 'SETTLE';
+    if (!inBattle || !this.game.currentBattle) {
+      el.innerHTML = renderBattleTimeline([], null);
+      return;
+    }
+    const order = getTimelineOrder(this.game.currentBattle);
+    const nextId = this._lastActionCardId || order[0]?.id;
+    el.innerHTML = renderBattleTimeline(order, nextId);
   }
 
   renderBattleField(state) {
@@ -526,6 +552,9 @@ export class UI {
     div.className = logCls ? `log-line ${logCls}` : 'log-line';
     div.textContent = line;
     this.el.battleLog.appendChild(div);
+    while (this.el.battleLog.children.length > 20) {
+      this.el.battleLog.removeChild(this.el.battleLog.firstChild);
+    }
     this.el.battleLog.scrollTop = this.el.battleLog.scrollHeight;
   }
 
@@ -605,6 +634,8 @@ export class UI {
   }
 
   handleBattleEvent(event) {
+    if (event.cardId) this._lastActionCardId = event.cardId;
+    if (event.attackerId) this._lastActionCardId = event.attackerId;
     if (this.battleEffects?.shouldPlay(event)) {
       this.battleEffects.play(event);
     }

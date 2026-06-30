@@ -1,4 +1,9 @@
 /* ===== 战斗飘字 ===== */
+@keyframes selectedBreath {
+  0%, 100% { box-shadow: var(--shadow-glow-gold); }
+  50% { box-shadow: 0 0 28px rgba(255, 209, 102, 0.65); }
+}
+
 .fx-float {
   position: absolute;
   pointer-events: none;
@@ -7,7 +12,7 @@
   font-weight: 800;
   font-size: 1rem;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-  animation: fxFloatUp 600ms ease-out forwards;
+  animation: fxFloatUp var(--dur-float) var(--ease-out) forwards;
   white-space: nowrap;
 }
 

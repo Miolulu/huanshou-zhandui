@@ -6,8 +6,10 @@
   <title>幻兽战队 - 策略卡牌自动战斗</title>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/utilities.css">
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/pages/menu-lobby.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/panel.css">
   <link rel="stylesheet" href="css/button.css">
@@ -52,8 +54,15 @@
     </div>
   </div>
 
-  <!-- ===== 主界面 ===== -->
+  <!-- ===== 主界面（Vol.4 左档案 + 右内容） ===== -->
   <div id="screen-menu" class="screen">
+    <header class="menu-top-bar u-glass">
+      <div class="menu-top-logo">幻兽战队</div>
+      <div class="menu-top-user">
+        <span id="menu-top-nickname" class="menu-top-name">训练师</span>
+        <span class="menu-top-rank" id="menu-top-rank">黑铁</span>
+      </div>
+    </header>
     <div class="menu-layout">
       <aside class="profile-panel">
         <h3>训练师档案</h3>
@@ -163,7 +172,7 @@
 
     <div class="tft-body">
       <!-- 左侧羁绊追踪 -->
-      <aside class="tft-trait-panel panel">
+      <aside class="tft-trait-panel panel panel-glass">
         <div class="trait-head">
           <h2>羁绊</h2>
           <button type="button" id="btn-toggle-bond-guide" class="btn-small btn-gold">图鉴</button>
@@ -179,11 +188,11 @@
       <!-- 中央战场 + 备战席 -->
       <main class="tft-board-area">
         <section class="battle-section">
-          <div id="battle" class="tft-arena">
-            <div class="battle-bg"></div>
-            <div class="battle-stars"></div>
+          <div id="battle" class="tft-arena battle-app" role="application" aria-label="战斗场景">
+            <div class="battle-bg battle-background-layer z-bg" aria-hidden="true"></div>
+            <div class="battle-stars z-bg" aria-hidden="true"></div>
 
-            <header class="battle-hud panel">
+            <header class="battle-hud panel z-hud" aria-label="战斗信息">
               <div class="hud-left">
                 <div class="round-box">
                   <span class="label">回合</span>
@@ -208,15 +217,18 @@
               </div>
             </header>
 
-            <section class="enemy-area" id="battle-enemy-area"></section>
+            <nav class="battle-timeline z-hud" id="battle-timeline" aria-label="行动顺序"></nav>
 
-            <section class="battle-center">
-              <div class="magic-circle"></div>
-              <div class="effect-layer" id="battle-effect-layer"></div>
+            <section class="enemy-area battle-enemy-area z-gameplay" id="battle-enemy-area" aria-label="敌方区域"></section>
+
+            <section class="battle-center battle-field z-gameplay">
+              <div class="magic-circle" aria-hidden="true"></div>
+              <div class="effect-layer battle-effect-layer z-effects" id="battle-effect-layer"></div>
+              <div class="floating-text-layer z-effects" id="floating-text-layer"></div>
               <div id="battle-idle-msg" class="battle-idle-msg">准备完成后自动开战</div>
             </section>
 
-            <section class="player-area" id="battle-player-area"></section>
+            <section class="player-area battle-player-area z-gameplay" id="battle-player-area" aria-label="我方区域"></section>
           </div>
         </section>
 
@@ -242,7 +254,7 @@
         </section>
       </main>
 
-      <aside class="tft-log-panel panel">
+      <aside class="tft-log-panel panel panel-glass" aria-label="战斗日志">
         <h2>战斗日志</h2>
         <div id="battle-log" class="battle-log"></div>
       </aside>
@@ -286,18 +298,19 @@
         </div>
       </div>
     </footer>
-
-  <div id="bond-guide-panel" class="tft-bond-modal hidden"></div>
   </div>
 
-  <div id="overlay" class="overlay" style="display:none">
-    <div class="overlay-box">
-      <h2 id="overlay-title"></h2>
-      <div id="overlay-body"></div>
+  <div id="dialog-root" class="dialog-root" aria-live="polite">
+    <div id="bond-guide-panel" class="tft-bond-modal hidden" role="dialog" aria-modal="true" aria-label="羁绊图鉴"></div>
+    <div id="overlay" class="overlay" style="display:none" role="dialog" aria-modal="true">
+      <div class="overlay-box">
+        <h2 id="overlay-title"></h2>
+        <div id="overlay-body"></div>
+      </div>
     </div>
   </div>
 
-  <div id="toast" class="toast hidden"></div>
+  <div id="toast" class="toast hidden" role="status"></div>
 
   <div id="boot-error" class="boot-error hidden"></div>
 

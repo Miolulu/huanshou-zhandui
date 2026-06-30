@@ -11,9 +11,10 @@ export class BattleEffects {
    * @param {HTMLElement|null} layer - #battle-effect-layer
    * @param {HTMLElement|null} arena - #battle
    */
-  constructor(layer, arena) {
+  constructor(layer, arena, floatLayer = null) {
     this.layer = layer;
     this.arena = arena;
+    this.floatLayer = floatLayer || layer;
   }
 
   shouldPlay(event) {
@@ -74,15 +75,18 @@ export class BattleEffects {
     const card = this.findCard(cardId);
     if (!card || !text) return;
 
+    const targetLayer = this.floatLayer || this.layer;
+    if (!targetLayer) return;
+
     const cardRect = card.getBoundingClientRect();
-    const layerRect = this.layer.getBoundingClientRect();
+    const layerRect = targetLayer.getBoundingClientRect();
 
     const el = document.createElement('div');
     el.className = `fx-float fx-${kind}`;
     el.textContent = text;
     el.style.left = `${cardRect.left - layerRect.left + cardRect.width / 2}px`;
     el.style.top = `${cardRect.top - layerRect.top + 8}px`;
-    this.layer.appendChild(el);
+    targetLayer.appendChild(el);
     el.addEventListener('animationend', () => el.remove(), { once: true });
   }
 

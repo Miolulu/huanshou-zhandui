@@ -1,73 +1,75 @@
-/* ===== Hero Card 组件 ===== */
+/* ===== Hero Card — Vol.3 BEM ===== */
 .hero-card {
   position: relative;
-  width: 130px;
-  min-height: 200px;
-  padding: 12px 10px;
-  border-radius: var(--r-md, 18px);
-  background: rgba(22, 32, 60, 0.75);
-  backdrop-filter: blur(var(--blur, 20px));
-  border: 1px solid rgba(120, 180, 255, 0.4);
+  width: 170px;
+  min-height: 250px;
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(22, 32, 60, 0.82);
+  backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: default;
   flex-shrink: 0;
+  box-shadow: var(--shadow-hero);
+  transition: transform var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover), border-color var(--dur-hover);
 }
 
-.hero-card.enemy { border-color: rgba(255, 106, 136, 0.35); }
-.hero-card:hover:not(.dead) {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 40px rgba(92, 133, 255, 0.35);
+.hero-card--enemy { border-color: rgba(248, 113, 113, 0.35); }
+.hero-card--player:hover:not(.hero-card--dead) {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-hero), var(--shadow-glow);
 }
 
-.hero-card.dead {
+.hero-card--selected {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow-gold);
+  animation: selectedBreath 2s ease-in-out infinite;
+}
+
+.hero-card--dead {
   opacity: 0.35;
-  filter: grayscale(0.8);
+  filter: grayscale(0.85);
   transform: none;
 }
 
-.hero-card .rarity {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.hero-card__header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 20px;
+  margin-bottom: var(--sp-1);
 }
 
-.hero-card .rarity.common { background: #8b949e; box-shadow: 0 0 6px #8b949e; }
-.hero-card .rarity.rare { background: #58a6ff; box-shadow: 0 0 8px #58a6ff; }
-.hero-card .rarity.epic { background: #a371f7; box-shadow: 0 0 8px #a371f7; }
-.hero-card .rarity.legendary { background: #ffd76a; box-shadow: 0 0 10px #ffd76a; }
+.hero-card__debuffs, .hero-card__buffs {
+  display: flex;
+  gap: 2px;
+  font-size: 0.65rem;
+}
 
-.hero-card .portrait {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
+.hero-card__portrait {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
+  font-size: 2rem;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: var(--sp-2);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.hero-card .portrait.el-fire { background: linear-gradient(135deg, #5c1a1a, #ff6b4a); }
-.hero-card .portrait.el-water { background: linear-gradient(135deg, #0d3a6e, #4db8ff); }
-.hero-card .portrait.el-grass { background: linear-gradient(135deg, #1a4d2e, #5fd97a); }
-.hero-card .portrait.el-electric { background: linear-gradient(135deg, #3d2e00, #ffe066); color: #1a1200; }
-.hero-card .portrait.el-wind { background: linear-gradient(135deg, #1a3d4d, #7ee8fa); }
-.hero-card .portrait.el-earth { background: linear-gradient(135deg, #3d2e1a, #c9a66b); }
-.hero-card .portrait.el-light { background: linear-gradient(135deg, #4d4a1a, #fff5a0); color: #1a1200; }
-.hero-card .portrait.el-dark { background: linear-gradient(135deg, #1a1a3d, #7b68ee); }
-
-.hero-name {
-  font-size: 0.78rem;
+.hero-card__name {
+  font-size: 0.82rem;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 6px;
+  margin-bottom: var(--sp-2);
   line-height: 1.2;
   max-width: 100%;
   overflow: hidden;
@@ -75,8 +77,9 @@
   white-space: nowrap;
 }
 
-.hero-card .hp,
-.hero-card .mana {
+.hero-card__bars { width: 100%; margin-bottom: var(--sp-1); }
+
+.progress-bar {
   width: 100%;
   height: 8px;
   background: rgba(0, 0, 0, 0.5);
@@ -85,60 +88,94 @@
   margin-bottom: 4px;
 }
 
-.hero-card .hp .fill {
+.progress-bar__fill {
   height: 100%;
-  background: linear-gradient(90deg, #45e09d, #2db87a);
-  transition: width var(--fast, 0.18s) ease;
+  width: 100%;
+  transform-origin: left center;
+  transition: transform var(--dur-hover) var(--ease-out);
 }
 
-.hero-card .mana .fill {
-  height: 100%;
-  background: linear-gradient(90deg, #6d6bff, #55d8ff);
+.progress-bar__fill--hp {
+  background: linear-gradient(90deg, var(--success), #2db87a);
 }
 
-.hero-card .hp-text {
-  font-size: 0.65rem;
-  color: var(--text2, #C5D3F7);
-  margin-bottom: 4px;
+.progress-bar__fill--mana {
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
 }
 
-.hero-stats {
+.hero-card__hp-text {
+  font-size: var(--font-caption);
+  font-family: var(--font-mono);
+  color: var(--text2);
+  margin-bottom: var(--sp-1);
+}
+
+.hero-card__footer {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-2);
   font-size: 0.68rem;
-  color: var(--text2, #C5D3F7);
-  margin-top: 2px;
-}
-
-.hero-card .star-row {
-  font-size: 0.7rem;
-  color: var(--gold, #FFD76A);
-  margin-top: 4px;
-}
-
-.hero-card .status {
-  display: flex;
-  gap: 2px;
-  margin-top: 4px;
+  color: var(--text2);
   flex-wrap: wrap;
   justify-content: center;
 }
 
-.hero-card .status .buff { font-size: 0.7rem; }
-
-/* ===== Progress Bar ===== */
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 999px;
-  overflow: hidden;
+.hero-card__stars {
+  color: var(--accent);
+  margin-left: auto;
 }
 
-.progress-bar .fill {
-  height: 100%;
-  transition: width var(--normal, 0.3s) ease;
+.hero-card-row {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
 }
+
+.battle-area-label {
+  position: absolute;
+  left: var(--sp-3);
+  top: 0;
+  font-size: var(--font-caption);
+  letter-spacing: 0.08em;
+  color: var(--text2);
+  opacity: 0.75;
+}
+
+.enemy-area .battle-area-label { color: var(--danger); }
+.player-area .battle-area-label { color: var(--success); }
+
+/* 兼容旧类名（BattleEffects） */
+.hero-card.hit-flash,
+.hero-card.skill-cast,
+.hero-card.hero-lunge,
+.hero-card.hero-targeted { /* animation in animation.css */ }
+
+.hero-card__portrait.el-fire,
+.hero-card .portrait.el-fire { background: linear-gradient(135deg, #5c1a1a, #ff6b4a); }
+.hero-card__portrait.el-water,
+.hero-card .portrait.el-water { background: linear-gradient(135deg, #0d3a6e, #4db8ff); }
+.hero-card__portrait.el-grass,
+.hero-card .portrait.el-grass { background: linear-gradient(135deg, #1a4d2e, #5fd97a); }
+.hero-card__portrait.el-electric,
+.hero-card .portrait.el-electric { background: linear-gradient(135deg, #3d2e00, #ffe066); color: #1a1200; }
+.hero-card__portrait.el-wind,
+.hero-card .portrait.el-wind { background: linear-gradient(135deg, #1a3d4d, #7ee8fa); }
+.hero-card__portrait.el-earth,
+.hero-card .portrait.el-earth { background: linear-gradient(135deg, #3d2e1a, #c9a66b); }
+.hero-card__portrait.el-light,
+.hero-card .portrait.el-light { background: linear-gradient(135deg, #4d4a1a, #fff5a0); color: #1a1200; }
+.hero-card__portrait.el-dark,
+.hero-card .portrait.el-dark { background: linear-gradient(135deg, #1a1a3d, #7b68ee); }
+
+.timeline-portrait.el-fire { background: linear-gradient(135deg, #5c1a1a, #ff6b4a); }
+.timeline-portrait.el-water { background: linear-gradient(135deg, #0d3a6e, #4db8ff); }
+.timeline-portrait.el-grass { background: linear-gradient(135deg, #1a4d2e, #5fd97a); }
+.timeline-portrait.el-electric { background: linear-gradient(135deg, #3d2e00, #ffe066); color: #1a1200; }
+.timeline-portrait.el-wind { background: linear-gradient(135deg, #1a3d4d, #7ee8fa); }
+.timeline-portrait.el-earth { background: linear-gradient(135deg, #3d2e1a, #c9a66b); }
+.timeline-portrait.el-light { background: linear-gradient(135deg, #4d4a1a, #fff5a0); color: #1a1200; }
+.timeline-portrait.el-dark { background: linear-gradient(135deg, #1a1a3d, #7b68ee); }
 
 /* ===== 按钮 ===== */
 button {

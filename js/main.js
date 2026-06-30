@@ -139,6 +139,9 @@ function init() {
         if (renderEvents.includes(event.type)) {
           ui.render(game.getState());
         }
+        if (event.type === 'CARD_ACTION_START' || event.type === 'ATTACK_WINDUP') {
+          ui.renderBattleTimelinePanel?.(game.getState());
+        }
 
         const fxEvents = [
           'DAMAGE_TAKEN', 'HEAL', 'CRIT', 'SKILL_TRIGGER',

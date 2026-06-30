@@ -1,31 +1,48 @@
+/* Vol.10 Design Token — 幻兽战队 UI Design System */
 :root {
-  /* Colors */
+  /* Color */
   --bg: #090C18;
   --bg-2: #11172B;
   --bg-3: #1A2440;
+  --surface: #11172B;
   --panel: rgba(24, 32, 56, 0.78);
   --panel-light: rgba(35, 48, 82, 0.75);
   --primary: #6D6BFF;
   --secondary: #55D8FF;
-  --gold: #FFD76A;
   --accent: #FFD166;
-  --danger: #FF6A88;
+  --gold: #FFD166;
   --success: #45E09D;
+  --warning: #F59E0B;
+  --danger: #F87171;
   --text: #F5F8FF;
   --text2: #C5D3F7;
+  --text-secondary: #C5D3F7;
   --border: rgba(132, 177, 255, 0.35);
 
+  /* Typography (px) */
+  --font-h1: 40px;
+  --font-h2: 32px;
+  --font-h3: 24px;
+  --font-body: 16px;
+  --font-caption: 12px;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+
   /* Shadow */
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.55);
+  --shadow-panel: 0 20px 60px rgba(0, 0, 0, 0.55), inset 0 1px rgba(255, 255, 255, 0.12);
+  --shadow-hero: 0 16px 40px rgba(92, 133, 255, 0.35);
+  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-dialog: 0 24px 80px rgba(0, 0, 0, 0.65);
   --shadow-glow: 0 0 25px rgba(109, 107, 255, 0.45);
+  --shadow-glow-gold: 0 0 20px rgba(255, 209, 102, 0.4);
+  --shadow-lg: var(--shadow-panel);
   --shadow-blue: 0 0 30px rgba(80, 190, 255, 0.4);
 
   /* Radius */
   --r-xs: 8px;
   --r-sm: 12px;
-  --r-md: 18px;
-  --r-lg: 28px;
-  --r-xl: 40px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
 
   /* Spacing */
   --sp-1: 4px;
@@ -35,12 +52,40 @@
   --sp-5: 24px;
   --sp-6: 32px;
   --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* Button */
+  --btn-radius: var(--r-md);
+  --btn-height-s: 36px;
+  --btn-height-m: 48px;
+  --btn-height-l: 58px;
+  --btn-bg: linear-gradient(135deg, #7867ff, #4e7fff);
+  --btn-shadow: 0 10px 30px rgba(90, 90, 255, 0.45);
 
   /* Blur */
   --blur: 20px;
 
-  /* Transition */
+  /* Motion (Vol.5) */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-hover: 180ms;
+  --dur-press: 100ms;
+  --dur-panel: 300ms;
+  --dur-float: 600ms;
   --fast: 0.18s;
   --normal: 0.3s;
   --slow: 0.55s;
+
+  /* Z-Index layers (Vol.10) */
+  --z-bg: 0;
+  --z-gameplay: 10;
+  --z-effects: 20;
+  --z-hud: 30;
+  --z-dialog: 100;
+  --z-toast: 200;
+}
+
+html[data-theme="high-contrast"] {
+  --panel: rgba(10, 14, 28, 0.95);
+  --border: rgba(255, 255, 255, 0.55);
+  --text2: #e8eeff;
 }

@@ -188,7 +188,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px;
+  padding: var(--sp-4);
   overflow-y: auto;
   min-height: 0;
 }
@@ -257,9 +257,7 @@
 
 .tft-arena {
   height: 100%;
-  min-height: 280px;
-  grid-template-rows: 52px 1fr 1fr 1fr;
-  padding: 10px;
+  min-height: 320px;
 }
 
 .tft-bench-section {
@@ -399,12 +397,16 @@
 .tft-bond-modal {
   position: fixed;
   inset: 0;
-  z-index: 500;
+  z-index: var(--z-dialog);
   background: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--sp-5);
+}
+
+.overlay {
+  z-index: calc(var(--z-dialog) + 1);
 }
 
 .tft-bond-modal .bond-guide-panel {
@@ -421,15 +423,15 @@
 
 /* 战场内英雄卡缩小适配 */
 .tft-arena .hero-card {
-  width: 100px;
-  min-height: 150px;
-  padding: 8px 6px;
+  width: 140px;
+  min-height: 210px;
+  padding: var(--sp-2);
 }
 
-.tft-arena .hero-card .portrait {
-  width: 48px;
-  height: 48px;
-  font-size: 1.2rem;
+.tft-arena .hero-card__portrait {
+  width: 72px;
+  height: 72px;
+  font-size: 1.5rem;
 }
 
 .tft-arena .enemy-area,

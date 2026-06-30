@@ -1,14 +1,16 @@
-/* ===== Battle HUD 布局（战场结构） ===== */
-#battle {
+/* ===== Battle HUD — Vol.2 规范 ===== */
+#battle,
+.tft-arena.battle-app {
   position: relative;
   display: grid;
-  grid-template-rows: 72px auto 1fr auto 68px;
+  grid-template-rows: 96px 44px 1fr minmax(120px, 1.2fr) minmax(120px, 1.2fr);
   min-height: 480px;
-  padding: 16px;
-  gap: 12px;
+  padding: var(--sp-4);
+  gap: var(--sp-2);
   border-radius: var(--r-lg);
   background: radial-gradient(circle at 50% 20%, #1a2b66 0%, var(--bg) 65%);
   color: var(--text);
+  overflow: hidden;
 }
 
 .battle-bg,
@@ -36,16 +38,16 @@
   animation: starTwinkle 4s ease-in-out infinite alternate;
 }
 
-/* HUD Header */
+/* HUD Header — 96px / padding 24px */
 .battle-hud {
   position: relative;
-  z-index: 2;
-  height: 72px;
+  z-index: var(--z-hud);
+  height: 96px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
-  border-radius: var(--r-md);
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-lg);
 }
 
 .hud-left,
@@ -119,52 +121,124 @@
   color: var(--text2);
 }
 
-/* Team Areas */
-.enemy-area,
-.player-area {
+/* Timeline Vol.2 */
+.battle-timeline {
   position: relative;
-  z-index: 2;
+  z-index: var(--z-hud);
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  min-height: 90px;
-  padding: 4px 8px;
+  justify-content: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  min-height: 40px;
+  background: rgba(9, 12, 24, 0.55);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(132, 177, 255, 0.15);
+  overflow-x: auto;
 }
 
-.enemy-area .area-label,
-.player-area .area-label {
-  position: absolute;
-  left: 12px;
-  top: 0;
+.timeline-node {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(132, 177, 255, 0.35);
+  overflow: hidden;
+  opacity: 0.75;
+  transition: opacity var(--dur-hover), box-shadow var(--dur-hover), transform var(--dur-hover);
+}
+
+.timeline-node--next {
+  opacity: 1;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow-gold);
+  transform: scale(1.12);
+}
+
+.timeline-portrait {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.timeline-arrow {
+  color: var(--text2);
   font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.timeline-empty {
+  font-size: var(--font-caption);
   color: var(--text2);
   opacity: 0.7;
 }
 
-.enemy-area .area-label { color: var(--danger); }
-.player-area .area-label { color: var(--success); }
-
-.battle-center {
+/* Team Areas — 每排最多 4 */
+.enemy-area,
+.player-area,
+.battle-enemy-area,
+.battle-player-area {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-gameplay);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 120px;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.enemy-area .hero-card-row,
+.player-area .hero-card-row {
+  max-width: 100%;
+}
+
+.enemy-area .hero-card:nth-child(n+5),
+.player-area .hero-card:nth-child(n+5) {
+  display: none;
+}
+
+.battle-center,
+.battle-field {
+  position: relative;
+  z-index: var(--z-gameplay);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100px;
+  min-height: 80px;
 }
 
 .magic-circle {
   position: relative;
-  width: min(280px, 70%);
+  width: min(240px, 55%);
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 2px solid rgba(109, 107, 255, 0.35);
-  box-shadow: 0 0 40px rgba(109, 107, 255, 0.2), inset 0 0 30px rgba(85, 216, 255, 0.08);
-  animation: circlePulse 3s ease-in-out infinite;
+  border: 2px solid rgba(109, 107, 255, 0.2);
+  opacity: 0.15;
+  box-shadow: inset 0 0 30px rgba(85, 216, 255, 0.06);
+  animation: circleRotate 24s linear infinite, circlePulse 3s ease-in-out infinite;
 }
+
+@keyframes circleRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.effect-layer,
+.floating-text-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.floating-text-layer { z-index: var(--z-effects); }
+
+.effect-layer { z-index: calc(var(--z-effects) - 1); }
 
 .magic-circle::before,
 .magic-circle::after {
