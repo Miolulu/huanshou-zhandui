@@ -204,7 +204,7 @@ export class UI {
     const nick = document.getElementById('menu-top-nickname');
     const rank = document.getElementById('menu-top-rank');
     if (nick) nick.textContent = human.name || '训练师';
-    if (rank) rank.textContent = `Lv.${human.tavernTier || 1}`;
+    if (rank) rank.textContent = `探索${human.tavernTier || 1}`;
   }
 
   renderPrepareTimer(state) {
