@@ -641,7 +641,6 @@ export class BattleEngine {
       return;
     }
 
-    const team = this.getTeam(card);
     for (const ally of this.getAliveCards(team)) {
       this.triggerSkills(ally, 'ON_ALLY_DEATH', card);
     }
