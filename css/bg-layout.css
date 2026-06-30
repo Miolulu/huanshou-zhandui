@@ -30,7 +30,15 @@
 .bg-phase { font-size: 0.78rem; color: var(--text2); }
 .bg-streak { font-size: 0.72rem; color: var(--text2); opacity: 0.7; }
 .bg-hp { font-size: 1.1rem; font-weight: 700; color: #ff6b6b; }
-.bg-income-hint { font-size: 0.68rem; color: var(--secondary); max-width: 320px; }
+.bg-gold-hud {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffd76a;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+}
+.bg-income-hint { font-size: 0.68rem; color: var(--secondary); max-width: 280px; }
 
 .bg-tavern-badge {
   display: flex;
@@ -77,20 +85,26 @@
 .bg-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 200px 1fr 220px;
-  grid-template-rows: 1fr auto;
+  grid-template-columns: minmax(168px, 200px) minmax(0, 1fr) minmax(148px, 188px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "side main log"
+    "side tavern log";
   gap: 8px;
   padding: 8px;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .bg-side-panel {
-  grid-row: 1 / 3;
+  grid-area: side;
+  grid-row: 1 / -1;
   display: flex;
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .bg-side-panel h2, .bg-side-panel h3 {
@@ -123,20 +137,44 @@
 }
 
 .bg-board-area {
+  grid-area: main;
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-height: 0;
-  overflow: hidden;
+  min-width: 0;
 }
 
 .bg-arena-wrap {
-  flex: 1;
-  min-height: 180px;
+  flex: 1 1 auto;
+  min-height: 160px;
+  max-height: min(42vh, 360px);
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid rgba(180, 130, 60, 0.25);
   box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+/* 准备阶段：缩小战场，突出驿站与战队栏位 */
+.screen-game.phase-prepare .bg-arena-wrap {
+  flex: 0 0 auto;
+  min-height: 140px;
+  max-height: 200px;
+}
+
+.screen-game.phase-prepare #battle {
+  min-height: 140px !important;
+  grid-template-rows: 52px 28px 1fr 72px 72px !important;
+}
+
+.screen-game.phase-prepare .bg-tavern-section {
+  border-color: #c9a227;
+  box-shadow: 0 0 18px rgba(255, 215, 106, 0.18);
+}
+
+.screen-game.phase-battle .bg-arena-wrap,
+.screen-game.phase-settle .bg-arena-wrap {
+  max-height: min(50vh, 420px);
 }
 
 .bg-bench-section {
@@ -168,7 +206,6 @@
 }
 
 .bg-tavern-section {
-  grid-column: 2;
   padding: 10px 14px 12px;
   background:
     linear-gradient(180deg, rgba(60, 42, 22, 0.95), rgba(35, 24, 12, 0.98));
@@ -282,10 +319,12 @@
 }
 
 .bg-log-panel {
-  grid-row: 1 / 3;
+  grid-area: log;
+  grid-row: 1 / -1;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 
 .bg-log-panel h2 {
@@ -632,8 +671,22 @@
 @media (max-width: 1100px) {
   .bg-body {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto auto;
+    grid-template-rows: auto minmax(200px, auto) auto minmax(100px, 180px);
+    grid-template-areas:
+      "side"
+      "main"
+      "tavern"
+      "log";
   }
-  .bg-side-panel, .bg-log-panel { grid-row: auto; max-height: 120px; }
-  .bg-tavern-section { grid-column: 1; }
+  .bg-side-panel,
+  .bg-log-panel {
+    grid-row: auto;
+    max-height: none;
+  }
+  .bg-arena-wrap {
+    max-height: min(36vh, 280px);
+  }
+  .screen-game.phase-prepare .bg-arena-wrap {
+    max-height: 180px;
+  }
 }

@@ -850,6 +850,9 @@ export class GameEngine {
       }
     }
     if (this.phase === 'PREPARE') {
+      if (this.prepareTimeLeft <= 0) {
+        this.prepareTimeLeft = this.prepareTimeTotal;
+      }
       this.startPrepareTimer();
     } else {
       this.clearPrepareTimer();

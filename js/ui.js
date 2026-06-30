@@ -48,6 +48,7 @@ export class UI {
       phase: document.getElementById('phase-info'),
       turn: document.getElementById('turn-info'),
       goldAmount: document.getElementById('gold-amount'),
+      goldHud: document.getElementById('gold-hud'),
       goldIncome: document.getElementById('gold-income'),
       hp: document.getElementById('hp-info'),
       streak: document.getElementById('streak-info'),
@@ -255,12 +256,22 @@ export class UI {
     this.renderBattleTribeHud(human);
     this.renderLobbyTribes(state);
     this.renderDiscover(state);
+    this.syncGamePhaseClass(state);
 
     if (state.phase === 'ENDED') {
       this.showOverlay('游戏结束', this.buildEndSummary(state));
     } else {
       this.hideOverlay();
     }
+  }
+
+  syncGamePhaseClass(state) {
+    const screen = document.getElementById('screen-game');
+    if (!screen) return;
+    screen.classList.remove('phase-prepare', 'phase-match', 'phase-battle', 'phase-settle', 'phase-ended');
+    const map = { PREPARE: 'phase-prepare', MATCH: 'phase-match', BATTLE: 'phase-battle', SETTLE: 'phase-settle', ENDED: 'phase-ended' };
+    const cls = map[state.phase];
+    if (cls) screen.classList.add(cls);
   }
 
   showStartScreen() {
@@ -275,6 +286,7 @@ export class UI {
     this.el.phase.textContent = phaseNames[state.phase] || state.phase;
     this.el.turn.textContent = `R${state.turn}`;
     this.el.goldAmount.textContent = human.gold;
+    if (this.el.goldHud) this.el.goldHud.textContent = `💰 ${human.gold}`;
     this.el.hp.textContent = `${human.hp}/${human.maxHp}`;
     this.el.streak.textContent = `胜${human.winStreak} 负${human.lossStreak}`;
 
@@ -802,8 +814,9 @@ export class UI {
     let energyPct = 0;
     if (inBattle && engine) {
       energyPct = Math.min(100, Math.round((engine.turn / CONFIG.MAX_TURNS_PER_BATTLE) * 100));
-    } else if (state.phase === 'PREPARE' && state.prepareTimeLeft != null && CONFIG.PREPARE_TIME) {
-      energyPct = Math.round((1 - state.prepareTimeLeft / CONFIG.PREPARE_TIME) * 100);
+    } else if (state.phase === 'PREPARE' && state.prepareTimeLeft != null) {
+      const total = state.prepareTimeTotal || CONFIG.PREPARE_TIME;
+      energyPct = Math.round((1 - state.prepareTimeLeft / total) * 100);
     }
     if (this.el.battleHudEnergy) this.el.battleHudEnergy.style.width = `${energyPct}%`;
 
@@ -832,7 +845,7 @@ export class UI {
       this.el.battleIdleMsg.style.display = inBattle ? 'none' : 'block';
       if (!inBattle) {
         this.el.battleIdleMsg.textContent = state.phase === 'PREPARE'
-          ? '准备完成后自动开战'
+          ? '👇 下方幻兽驿站收服幻兽 · 战队栏位调整站位 · 准备好后点「提前开战」'
           : '等待战斗开始…';
       }
     }

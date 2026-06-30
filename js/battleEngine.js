@@ -52,6 +52,11 @@ export class BattleEngine {
     this.onEvent(event);
   }
 
+  emitBattleEnd(result) {
+    const { type: outcome, ...rest } = result;
+    this.emit({ type: 'BATTLE_END', outcome, ...rest });
+  }
+
   sortBySpeed(cards) {
     return [...cards].sort((a, b) => b.speed - a.speed || (a.id > b.id ? 1 : -1));
   }
@@ -826,7 +831,7 @@ export class BattleEngine {
 
     let result = this.checkBattleEnd();
     if (result) {
-      this.emit({ type: 'BATTLE_END', ...result });
+      this.emitBattleEnd(result);
       return { done: true, result };
     }
 
@@ -836,7 +841,7 @@ export class BattleEngine {
       this.executeCardAction(card);
       result = this.checkBattleEnd();
       if (result) {
-        this.emit({ type: 'BATTLE_END', ...result });
+        this.emitBattleEnd(result);
         return { done: true, result };
       }
     }
@@ -846,7 +851,7 @@ export class BattleEngine {
 
     result = this.checkBattleEnd();
     if (result) {
-      this.emit({ type: 'BATTLE_END', ...result });
+      this.emitBattleEnd(result);
       return { done: true, result };
     }
     return { done: false, result: null };
@@ -873,7 +878,7 @@ export class BattleEngine {
 
       let result = this.checkBattleEnd();
       if (result) {
-        this.emit({ type: 'BATTLE_END', ...result });
+        this.emitBattleEnd(result);
         return result;
       }
 
@@ -881,7 +886,7 @@ export class BattleEngine {
 
       result = this.checkBattleEnd();
       if (result) {
-        this.emit({ type: 'BATTLE_END', ...result });
+        this.emitBattleEnd(result);
         return result;
       }
 
@@ -891,7 +896,7 @@ export class BattleEngine {
         await this.executeCardActionPaced(card, { actionDelay, lungeDelay, paced });
         result = this.checkBattleEnd();
         if (result) {
-          this.emit({ type: 'BATTLE_END', ...result });
+          this.emitBattleEnd(result);
           return result;
         }
       }
@@ -902,7 +907,7 @@ export class BattleEngine {
 
       result = this.checkBattleEnd();
       if (result) {
-        this.emit({ type: 'BATTLE_END', ...result });
+        this.emitBattleEnd(result);
         return result;
       }
 
