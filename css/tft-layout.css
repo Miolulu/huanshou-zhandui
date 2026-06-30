@@ -421,29 +421,6 @@
   content: '';
 }
 
-/* 战场内英雄卡缩小适配 */
-.tft-arena .hero-card {
-  width: 140px;
-  min-height: 210px;
-  padding: var(--sp-2);
-}
-
-.tft-arena .hero-card__portrait {
-  width: 72px;
-  height: 72px;
-  font-size: 1.5rem;
-}
-
-.tft-arena .enemy-area,
-.tft-arena .player-area {
-  min-height: 100px;
-}
-
-.tft-arena .battle-hud {
-  height: 52px;
-  padding: 0 12px;
-}
-
 /* 备战席格子 */
 .tft-bench .slot {
   width: 96px;

@@ -12,6 +12,8 @@ import {
 } from './config.js';
 import { CARD_TEMPLATES, createCard, recalculateCardStats, getTemplate, getTemplateCostTier } from './cards.js';
 import { resolveCardTribe } from './tribeAssignment.js';
+import { rollLobbyTribes, isTemplateInLobby } from './lobbyTribes.js';
+import { queueDiscover } from './discover.js';
 import { BattleEngine } from './battleEngine.js';
 import { runAIDecisions } from './ai.js';
 
@@ -71,6 +73,8 @@ export class GameEngine {
     this.prepareTimedOut = false;
     this._prepareTimer = null;
     this._endingPrepare = false;
+    this.pendingDiscover = null;
+    this.lobbyTribes = [];
     this.initPool();
   }
 
@@ -141,6 +145,8 @@ export class GameEngine {
 
     this.turn = 1;
     this.phase = 'PREPARE';
+    this.pendingDiscover = null;
+    this.lobbyTribes = rollLobbyTribes();
     this.initPool();
     for (const p of this.players) this.syncTeamSlots(p);
     this.beginPreparePhase();
@@ -173,6 +179,8 @@ export class GameEngine {
       prepareTimeTotal: this.prepareTimeTotal,
       prepareTimedOut: this.prepareTimedOut,
       battleSpeed: this.battleSpeed,
+      lobbyTribes: this.lobbyTribes,
+      pendingDiscover: this.pendingDiscover,
     };
   }
 
@@ -223,16 +231,17 @@ export class GameEngine {
 
   pickShopTemplate(costTier) {
     const inPool = (tpl) => (this.poolRemaining[tpl.id] || 0) > 0;
+    const inLobby = (tpl) => isTemplateInLobby(tpl, this.lobbyTribes);
     let candidates = CARD_TEMPLATES.filter(
-      (t) => getTemplateCostTier(t) === costTier && inPool(t),
+      (t) => getTemplateCostTier(t) === costTier && inPool(t) && inLobby(t),
     );
     if (!candidates.length) {
       candidates = CARD_TEMPLATES.filter(
-        (t) => getTemplateCostTier(t) <= costTier && inPool(t),
+        (t) => getTemplateCostTier(t) <= costTier && inPool(t) && inLobby(t),
       );
     }
     if (!candidates.length) {
-      candidates = CARD_TEMPLATES.filter((t) => getTemplateCostTier(t) === 1 && inPool(t));
+      candidates = CARD_TEMPLATES.filter((t) => getTemplateCostTier(t) === 1 && inPool(t) && inLobby(t));
     }
     if (!candidates.length) return null;
     return candidates[Math.floor(Math.random() * candidates.length)];
@@ -324,6 +333,7 @@ export class GameEngine {
     player.gold += getCardBuyCost(card.rarity, getTemplate(card.templateId)?.costTier);
     player.team.cards[position] = null;
     this.poolRemaining[card.templateId]++;
+    this.tryFulfillPendingDiscover(player);
     this.notify();
     return true;
   }
@@ -360,7 +370,8 @@ export class GameEngine {
 
   moveCard(player, fromPos, toPos) {
     if (fromPos === toPos) return false;
-    if (toPos >= player.team.maxSize) return false;
+    if (fromPos < 0 || toPos < 0) return false;
+    if (fromPos >= player.team.maxSize || toPos >= player.team.maxSize) return false;
     const from = player.team.cards[fromPos];
     const to = player.team.cards[toPos];
     if (!from) return false;
@@ -370,6 +381,35 @@ export class GameEngine {
     if (to) to.position = fromPos;
     this.notify();
     return true;
+  }
+
+  grantDiscoverCard(player, templateId) {
+    const emptyPos = this.findEmptyTeamSlot(player);
+    if (emptyPos === -1) return false;
+    const card = createCard(templateId, 1, player.id, emptyPos);
+    player.team.cards[emptyPos] = card;
+    this.poolRemaining[templateId] = Math.max(0, (this.poolRemaining[templateId] || 0) - 1);
+    this.pendingDiscover = null;
+    this.checkStarMerge(player);
+    this.notify();
+    return true;
+  }
+
+  resolveDiscover(templateId) {
+    if (!this.pendingDiscover) return false;
+    const player = this.players.find((p) => p.id === this.pendingDiscover.playerId);
+    if (!player) return false;
+    const ok = this.grantDiscoverCard(player, templateId);
+    if (!ok) return false;
+    return true;
+  }
+
+  tryFulfillPendingDiscover(player) {
+    if (!this.pendingDiscover || this.pendingDiscover.playerId !== player.id) return;
+    if (this.findEmptyTeamSlot(player) === -1) return;
+    if (this.pendingDiscover.options?.length === 1) {
+      this.grantDiscoverCard(player, this.pendingDiscover.options[0]);
+    }
   }
 
   /** 3张同名同星自动合成下一星（最高3星） */
@@ -402,6 +442,7 @@ export class GameEngine {
 
         const newCard = createCard(templateId, newStar, player.id, pos);
         player.team.cards[pos] = newCard;
+        queueDiscover(this, player, newStar);
         merged = true;
         break;
       }
@@ -655,6 +696,8 @@ export class GameEngine {
       maxHp: CONFIG.BASE_HP,
     }));
     this.poolRemaining = data.poolRemaining || {};
+    this.lobbyTribes = data.lobbyTribes || rollLobbyTribes();
+    this.pendingDiscover = data.pendingDiscover || null;
     this.prepareTimeTotal = data.prepareTimeTotal || this.getPrepareTimeSeconds();
     this.prepareTimeLeft = data.prepareTimeLeft ?? this.prepareTimeTotal;
     for (const p of this.players) {

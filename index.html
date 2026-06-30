@@ -175,6 +175,7 @@
           <button type="button" id="btn-toggle-bond-guide" class="btn-small btn-gold">图鉴</button>
         </div>
         <div id="team-bonds" class="bg-tribe-list"></div>
+        <div id="lobby-tribes-hint" class="lobby-tribes-hint"></div>
         <h3 class="trait-sub">排名</h3>
         <div id="players-list" class="players-list"></div>
         <h3 class="trait-sub">下轮对手</h3>
@@ -230,7 +231,7 @@
         <section class="bg-bench-section">
           <div class="bench-head">
             <h2>战队栏位</h2>
-            <span class="hint">单击选中 · 3张同名同星自动合成升星</span>
+            <span class="hint">单击交换站位 · 拖拽调整顺序 · 3张同名同星合成</span>
           </div>
           <div id="team-slots" class="bg-bench"></div>
         </section>
@@ -306,6 +307,14 @@
   <div id="dialog-root" class="dialog-root" aria-live="polite">
     <div id="tooltip-root" class="tooltip-root"></div>
     <div id="bond-guide-panel" class="bg-guide-modal hidden" role="dialog" aria-modal="true" aria-label="种族图鉴"></div>
+    <div id="discover-panel" class="bg-discover-modal hidden" role="dialog" aria-modal="true" aria-label="三连发现">
+      <div class="bg-discover-box panel panel-glass">
+        <h2>✨ 三连发现</h2>
+        <p id="discover-hint" class="hint">选择一张随从加入战队</p>
+        <div id="discover-options" class="discover-options"></div>
+        <p class="hint discover-slot-hint">需要战队有空栏位；可先卖出或拖拽调整站位</p>
+      </div>
+    </div>
     <div id="overlay" class="overlay" style="display:none" role="dialog" aria-modal="true">
       <div class="overlay-box">
         <h2 id="overlay-title"></h2>

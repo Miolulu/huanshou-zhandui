@@ -24,6 +24,8 @@ export function saveGameSession(engine, meta = {}) {
         shop: { frozen: p.shop.frozen, cards: p.shop.cards },
       })),
       poolRemaining: engine.poolRemaining,
+      lobbyTribes: engine.lobbyTribes,
+      pendingDiscover: engine.pendingDiscover,
       prepareTimeLeft: engine.prepareTimeLeft,
       prepareTimeTotal: engine.prepareTimeTotal,
     };

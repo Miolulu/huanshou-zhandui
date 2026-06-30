@@ -12,6 +12,8 @@ import { formatSkillList } from './skills.js';
 import { elementBadgeHtml, showToast } from './appShell.js';
 import { getTribe, tribeBadgeHtml } from './tribes.js';
 import { renderTribeGuideHTML, renderTeamTribeSummary } from './tribeGuide.js';
+import { formatDiscoverOption } from './discover.js';
+import { formatLobbyTribes } from './lobbyTribes.js';
 import { renderHeroCardRow } from './components/HeroCard.js';
 import { renderBattleTimeline, getTimelineOrder } from './components/BattleTimeline.js';
 import { BattleEffects, getBattleLogClass } from './components/BattleEffects.js';
@@ -24,6 +26,7 @@ export class UI {
     this.selectedTeamPos = null;
     this.endRewards = null;
     this.bondGuideOpen = false;
+    this._dragFromPos = null;
     this.bindElements();
     this.battleEffects = new BattleEffects(
       document.getElementById('battle-effect-layer'),
@@ -78,6 +81,10 @@ export class UI {
       overlayBody: document.getElementById('overlay-body'),
       battleActiveBonds: null,
       bondGuidePanel: document.getElementById('bond-guide-panel'),
+      discoverPanel: document.getElementById('discover-panel'),
+      discoverHint: document.getElementById('discover-hint'),
+      discoverOptions: document.getElementById('discover-options'),
+      lobbyTribesHint: document.getElementById('lobby-tribes-hint'),
       battleTimeline: document.getElementById('battle-timeline'),
     };
   }
@@ -152,6 +159,8 @@ export class UI {
     this.renderButtonStates(state, human);
     this.renderBattleField(state);
     this.renderBattleTribeHud(human);
+    this.renderLobbyTribes(state);
+    this.renderDiscover(state);
 
     if (state.phase === 'ENDED') {
       this.showOverlay('游戏结束', this.buildEndSummary(state));
@@ -304,12 +313,14 @@ export class UI {
       const card = human.team.cards[i];
       if (!unlocked) return `<div class="slot locked">🔒</div>`;
       if (!card) {
-        return `<div class="slot empty" data-pos="${i}">${i + 1}</div>`;
+        return `<div class="slot empty" data-pos="${i}" data-drop="1"><span class="slot-pos">${i + 1}</span></div>`;
       }
       const star = card.star ?? card.upgradeTier ?? 1;
       const starCls = star >= 3 ? 'star-3' : star >= 2 ? 'star-2' : 'star-1';
       return `
-        <div class="slot filled ${RARITY_CLASS[card.rarity]} ${starCls} ${this.selectedTeamPos === i ? 'selected' : ''}" data-pos="${i}">
+        <div class="slot filled ${RARITY_CLASS[card.rarity]} ${starCls} ${this.selectedTeamPos === i ? 'selected' : ''}"
+          data-pos="${i}" draggable="${this.game.phase === 'PREPARE' ? 'true' : 'false'}">
+          <span class="slot-pos">${i + 1}</span>
           <div class="card-head">
             <div class="card-name">${card.name}</div>
             <div class="card-badges">${tribeBadgeHtml(card.tribe || 'neutral')}${elementBadgeHtml(card.element)}</div>
@@ -321,6 +332,51 @@ export class UI {
 
     this.el.team.querySelectorAll('.slot.filled, .slot.empty').forEach(slot => {
       slot.onclick = () => this.handleTeamClick(parseInt(slot.dataset.pos, 10));
+    });
+    this.bindTeamDragDrop();
+  }
+
+  bindTeamDragDrop() {
+    if (this.game.phase !== 'PREPARE') return;
+    const human = this.game.getHuman();
+    if (!human) return;
+
+    this.el.team.querySelectorAll('.slot').forEach((slot) => {
+      const pos = parseInt(slot.dataset.pos, 10);
+      const isFilled = slot.classList.contains('filled');
+
+      if (isFilled) {
+        slot.ondragstart = (e) => {
+          this._dragFromPos = pos;
+          e.dataTransfer.setData('text/plain', String(pos));
+          e.dataTransfer.effectAllowed = 'move';
+          slot.classList.add('dragging');
+        };
+        slot.ondragend = () => {
+          this._dragFromPos = null;
+          slot.classList.remove('dragging');
+        };
+      } else {
+        slot.draggable = false;
+      }
+
+      slot.ondragover = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        slot.classList.add('drag-over');
+      };
+      slot.ondragleave = () => slot.classList.remove('drag-over');
+      slot.ondrop = (e) => {
+        e.preventDefault();
+        slot.classList.remove('drag-over');
+        const from = this._dragFromPos ?? parseInt(e.dataTransfer.getData('text/plain'), 10);
+        if (!Number.isFinite(from) || from === pos) return;
+        if (this.game.moveCard(human, from, pos)) {
+          this.selectedTeamPos = pos;
+          this.renderTeam(human);
+          this.renderCardPanel(human.team.cards[pos] ?? null, human);
+        }
+      };
     });
   }
 
@@ -341,7 +397,9 @@ export class UI {
       this.el.selectedDesc.textContent = card.description || getTemplate(card.templateId)?.description || '';
     }
     this.el.selectedSkills.innerHTML = formatSkillList(card.skills);
-    const mergeHint = star < 3 ? `再收集 ${Math.max(0, 3 - this.countSameStar(human, card))} 张同名 ★${star} → 自动合成 ★${star + 1}` : '已达最高星级 ★3';
+    const mergeHint = star < 3
+      ? `再收集 ${Math.max(0, 3 - this.countSameStar(human, card))} 张同名 ★${star} → 合成 ★${star + 1}并发现高费随从`
+      : '已达最高星级 ★3';
     if (!this.el.selectedMergeHint) {
       const hint = document.createElement('p');
       hint.id = 'selected-merge-hint';
@@ -382,9 +440,63 @@ export class UI {
     this.el.teamBonds.innerHTML = renderTeamTribeSummary(cards);
   }
 
+  renderLobbyTribes(state) {
+    if (!this.el.lobbyTribesHint) return;
+    const tribes = state.lobbyTribes || [];
+    this.el.lobbyTribesHint.innerHTML = tribes.length
+      ? `<p class="hint lobby-pool-label">本局种族池</p><p class="lobby-pool-tags">${formatLobbyTribes(tribes)}</p>`
+      : '';
+  }
+
+  renderDiscover(state) {
+    const panel = this.el.discoverPanel;
+    if (!panel) return;
+    const d = state.pendingDiscover;
+    const human = state.human;
+    if (!d || !human || d.playerId !== human.id) {
+      panel.classList.add('hidden');
+      return;
+    }
+    panel.classList.remove('hidden');
+    const canAdd = this.game.findEmptyTeamSlot(human) !== -1;
+    if (this.el.discoverHint) {
+      this.el.discoverHint.textContent = canAdd
+        ? `发现 ${d.discoverTier} 费随从 · 三连奖励，选一张加入战队`
+        : `发现 ${d.discoverTier} 费随从 · 请先腾出空栏位（卖出或合成）`;
+    }
+    if (!this.el.discoverOptions) return;
+    this.el.discoverOptions.innerHTML = d.options.map((id) => {
+      const info = formatDiscoverOption(id);
+      return `<button type="button" class="discover-opt cost-${info.costTier}" data-discover-id="${id}" ${canAdd ? '' : 'disabled'}>
+        <span class="discover-opt-tribe">${info.tribeIcon} ${info.tribeLabel}</span>
+        <strong class="discover-opt-name">${info.name}</strong>
+        <span class="discover-opt-tier">${info.costTier}费</span>
+      </button>`;
+    }).join('');
+    this.el.discoverOptions.querySelectorAll('[data-discover-id]').forEach((btn) => {
+      btn.onclick = () => {
+        if (this.game.resolveDiscover(btn.dataset.discoverId)) {
+          showToast('发现成功！');
+        } else {
+          showToast('需要空栏位才能发现随从');
+        }
+      };
+    });
+  }
+
   handleTeamClick(pos) {
     const human = this.game.getHuman();
     if (this.game.phase !== 'PREPARE') return;
+
+    if (this.selectedTeamPos !== null && this.selectedTeamPos !== pos) {
+      const moved = this.game.moveCard(human, this.selectedTeamPos, pos);
+      if (moved) {
+        this.selectedTeamPos = human.team.cards[pos] ? pos : null;
+        this.renderTeam(human);
+        this.renderCardPanel(human.team.cards[this.selectedTeamPos] ?? null, human);
+        return;
+      }
+    }
 
     const card = human.team.cards[pos];
     if (!card) {

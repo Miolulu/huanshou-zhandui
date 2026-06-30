@@ -2,6 +2,7 @@
  * 炉石酒馆式流派核心技能覆盖
  * 玩家自行研究搭配，无羁绊条加成
  */
+import { buildSkillPatches } from './tribeSkillCatalog.js';
 
 const LEAPFROG_SKILL = {
   id: 'leapfrog_dr',
@@ -136,8 +137,8 @@ const PIRATE_BOUNTY = {
   effects: [{ type: 'BUFF_TRIBE', target: 'TEAM_ALL', tribe: 'pirate', attack: 2, defense: 0 }],
 };
 
-/** templateId → 追加/替换的核心流派技能 */
-export const TRIBE_SKILL_PATCHES = {
+/** 核心流派补丁（replace 或叠加在 catalog 之上） */
+const CORE_TRIBE_PATCHES = {
   charge_rabbit: { replace: true, skills: [LEAPFROG_SKILL, SUMMON_RAT] },
   storm_eagle: { replace: false, add: [MACAW_SKILL] },
   dark_lord: { replace: false, add: [BARON_AURA] },
@@ -154,6 +155,8 @@ export const TRIBE_SKILL_PATCHES = {
   storm_ranger: { replace: false, add: [PIRATE_BOUNTY] },
   leaf_wolf: { replace: false, add: [SUMMON_RAT] },
 };
+
+export const TRIBE_SKILL_PATCHES = buildSkillPatches(CORE_TRIBE_PATCHES);
 
 export function applyTribeSkillPatch(templateId, skills) {
   const patch = TRIBE_SKILL_PATCHES[templateId];

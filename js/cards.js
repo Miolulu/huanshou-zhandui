@@ -12,6 +12,7 @@ function resolveCostTier(tpl) {
 export const CARD_TEMPLATES = [...BASE_TEMPLATES, ...CARD_DATA_EXTRA].map((tpl) => ({
   ...tpl,
   costTier: resolveCostTier(tpl),
+  tribe: tpl.tribe || resolveCardTribe(tpl.id, tpl.element, tpl.class),
 }));
 
 export function getTemplateCostTier(tpl) {

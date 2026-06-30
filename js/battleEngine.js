@@ -303,6 +303,14 @@ export class BattleEngine {
       case 'SUMMON_TOKEN':
         this.summonTokens(caster, effect);
         break;
+      case 'BUFF_ADJACENT': {
+        const team = this.getTeam(caster);
+        const adjacent = this.resolveTargets('ADJACENT_ALLIES', caster, source);
+        for (const ally of adjacent) {
+          this.applyDirectStatBuff(ally, effect.attack || 0, effect.defense || 0, caster);
+        }
+        break;
+      }
       default:
         break;
     }
