@@ -173,7 +173,7 @@ export class GameEngine {
     };
   }
 
-  /** 计算本回合金币收入（利息基于发放前持有金币） */
+  /** 计算本回合金币收入（利息基于上回合结束时持有金币，发放后金币重置为收入总额） */
   calculateGoldIncome(player) {
     const base = getTurnBaseGold(this.turn);
     let streakBonus = 0;
@@ -252,7 +252,8 @@ export class GameEngine {
     for (const player of this.getAlivePlayers()) {
       const income = this.calculateGoldIncome(player);
       player.lastIncome = income;
-      player.gold += income.total;
+      // 每回合重置金币：未花费的不保留，仅发放本回合收入（利息按清零前持有量结算）
+      player.gold = income.total;
 
       if (!player.shop.frozen || !player.shop.cards.length) {
         this.refreshShop(player);

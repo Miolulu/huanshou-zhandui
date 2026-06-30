@@ -162,7 +162,8 @@ export class UI {
       const parts = [`基础${inc.base}`, `利息${inc.interest}`];
       if (inc.streakBonus > 0) parts.push(`${inc.streakLabel}${inc.streakBonus}`);
       if (inc.skillGold) parts.push(`技能${inc.skillGold}`);
-      this.el.goldIncome.textContent = `(本回合 +${inc.total}：${parts.join(' · ')})`;
+      const carryNote = inc.goldBeforeIncome > 0 ? ` · 上回合结余${inc.goldBeforeIncome}金已清零` : '';
+      this.el.goldIncome.textContent = `(本回合 ${inc.total} 金：${parts.join(' · ')}${carryNote})`;
     } else {
       this.el.goldIncome.textContent = '';
     }
