@@ -1,0 +1,36 @@
+:root {
+  /* Colors */
+  --bg: #090C18;
+  --bg-2: #11172B;
+  --bg-3: #1A2440;
+  --panel: rgba(18, 26, 45, 0.72);
+  --panel-light: rgba(35, 48, 82, 0.75);
+  --primary: #6D6BFF;
+  --secondary: #55D8FF;
+  --gold: #FFD76A;
+  --danger: #FF6A88;
+  --success: #45E09D;
+  --text: #F5F8FF;
+  --text2: #C5D3F7;
+  --border: rgba(132, 177, 255, 0.35);
+
+  /* Shadow */
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.55);
+  --shadow-glow: 0 0 25px rgba(109, 107, 255, 0.45);
+  --shadow-blue: 0 0 30px rgba(80, 190, 255, 0.4);
+
+  /* Radius */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 28px;
+  --r-xl: 40px;
+
+  /* Blur */
+  --blur: 20px;
+
+  /* Transition */
+  --fast: 0.18s;
+  --normal: 0.3s;
+  --slow: 0.55s;
+}

@@ -924,9 +924,9 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 .active-bonds-list { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .active-bond-card {
-  background: #21262d;
-  border: 1px solid #30363d;
-  border-radius: 8px;
+  background: rgba(22, 32, 60, 0.85);
+  border: 1px solid var(--border, rgba(132, 177, 255, 0.35));
+  border-radius: var(--r-xs, 8px);
   padding: 8px 10px;
   font-size: 0.8rem;
   max-width: 280px;

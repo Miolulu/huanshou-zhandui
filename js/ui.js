@@ -45,6 +45,15 @@ export class UI {
       shop: document.getElementById('shop-cards'),
       team: document.getElementById('team-slots'),
       opponent: document.getElementById('opponent-info'),
+      battleArena: document.getElementById('battle'),
+      battleHudRound: document.getElementById('battle-hud-round'),
+      battleHudOpponent: document.getElementById('battle-hud-opponent'),
+      battleHudPhase: document.getElementById('battle-hud-phase'),
+      battleHudEnergy: document.getElementById('battle-hud-energy'),
+      battleHudCombo: document.getElementById('battle-hud-combo'),
+      battleEnemyArea: document.getElementById('battle-enemy-area'),
+      battlePlayerArea: document.getElementById('battle-player-area'),
+      battleIdleMsg: document.getElementById('battle-idle-msg'),
       battleField: document.getElementById('battle-field'),
       battleLog: document.getElementById('battle-log'),
       cardPanel: document.getElementById('card-action-panel'),
@@ -305,7 +314,7 @@ export class UI {
     if (this.el.battleActiveBonds) {
       const showActive = ['PREPARE', 'BATTLE', 'SETTLE', 'MATCH'].includes(phase);
       this.el.battleActiveBonds.innerHTML = showActive
-        ? `<h3 class="bond-active-title">当前激活羁绊</h3>${renderActiveBondsBattle(cards)}`
+        ? renderActiveBondsBattle(cards)
         : '';
     }
   }
@@ -374,30 +383,119 @@ export class UI {
     document.getElementById('btn-skip-battle').style.display = state.phase === 'BATTLE' ? 'inline-block' : 'none';
   }
 
+  renderHeroCard(card, side = 'player') {
+    const alive = card.isAlive !== false && card.hp > 0;
+    const star = card.star ?? card.upgradeTier ?? 1;
+    const hpPct = card.maxHp ? Math.max(0, Math.round((card.hp / card.maxHp) * 100)) : 0;
+    const initial = (card.name || '?').charAt(0);
+    const statusHtml = (card.statusEffects || [])
+      .filter(s => s.duration > 0)
+      .slice(0, 4)
+      .map(s => {
+        const icons = {
+          BURN: '🔥', POISON: '☠', STUN: '💫', SILENCE: '🤐',
+          TAUNT: '🛡', SHIELD: '🔰', FREEZE: '❄', REGEN: '💚',
+        };
+        return `<span class="buff" title="${s.type}">${icons[s.type] || '✦'}</span>`;
+      }).join('');
+
+    return `<div class="hero-card ${side} ${alive ? '' : 'dead'}" data-card-id="${card.id}">
+      <div class="rarity ${card.rarity || 'common'}"></div>
+      <div class="portrait el-${card.element}">${initial}</div>
+      <div class="hero-name">${card.name}</div>
+      <div class="hp"><div class="fill" style="width:${hpPct}%"></div></div>
+      <div class="hp-text">${card.hp}/${card.maxHp}${card.shield ? ` · 🛡${card.shield}` : ''}</div>
+      <div class="hero-stats">
+        <span>⚔ ${card.attack}</span>
+        <span>🛡 ${card.defense}</span>
+      </div>
+      <div class="star-row">${'★'.repeat(star)}${'☆'.repeat(3 - star)}</div>
+      ${statusHtml ? `<div class="status">${statusHtml}</div>` : ''}
+    </div>`;
+  }
+
+  renderBattleHUD(state, human) {
+    const phaseNames = { PREPARE: '准备', MATCH: '匹配', BATTLE: '战斗中', SETTLE: '结算', ENDED: '结束' };
+    const inBattle = state.phase === 'BATTLE' || state.phase === 'SETTLE';
+    const round = String(state.turn || 1).padStart(2, '0');
+
+    if (this.el.battleHudRound) this.el.battleHudRound.textContent = round;
+    if (this.el.battleHudPhase) this.el.battleHudPhase.textContent = phaseNames[state.phase] || state.phase;
+
+    const opp = state.opponentPreview;
+    if (this.el.battleHudOpponent) {
+      this.el.battleHudOpponent.textContent = inBattle && this.game.currentBattle
+        ? (this.game.currentBattle.playerB?.name || '对手').slice(0, 8)
+        : (opp?.name || '—').slice(0, 8);
+    }
+
+    const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
+    const comboCount = summarizeActiveComboBonds(cards).length;
+    if (this.el.battleHudCombo) this.el.battleHudCombo.textContent = `×${comboCount}`;
+
+    const engine = this.game.currentBattle;
+    let energyPct = 0;
+    if (inBattle && engine) {
+      energyPct = Math.min(100, Math.round((engine.turn / CONFIG.MAX_TURNS_PER_BATTLE) * 100));
+    } else if (state.phase === 'PREPARE' && state.prepareTimeLeft != null && CONFIG.PREPARE_TIME) {
+      energyPct = Math.round((1 - state.prepareTimeLeft / CONFIG.PREPARE_TIME) * 100);
+    }
+    if (this.el.battleHudEnergy) this.el.battleHudEnergy.style.width = `${energyPct}%`;
+  }
+
   renderBattleField(state) {
-    if (state.phase !== 'BATTLE' && state.phase !== 'SETTLE') {
-      this.el.battleField.innerHTML = '<p class="hint">准备完成后进入战斗</p>';
+    const human = state.human;
+    this.renderBattleHUD(state, human);
+
+    const inBattle = state.phase === 'BATTLE' || state.phase === 'SETTLE';
+    if (this.el.battleIdleMsg) {
+      this.el.battleIdleMsg.style.display = inBattle ? 'none' : 'block';
+      if (!inBattle) {
+        this.el.battleIdleMsg.textContent = state.phase === 'PREPARE'
+          ? '准备完成后自动开战'
+          : '等待战斗开始…';
+      }
+    }
+
+    if (!inBattle) {
+      if (this.el.battleEnemyArea) {
+        this.el.battleEnemyArea.innerHTML = '<span class="area-label">敌方战队</span>';
+      }
+      if (this.el.battlePlayerArea) {
+        const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
+        this.el.battlePlayerArea.innerHTML =
+          '<span class="area-label">我方战队</span>' +
+          (cards.length
+            ? cards.map(c => this.renderHeroCard(c, 'player')).join('')
+            : '<span class="hint" style="margin-left:80px">暂无出战幻兽</span>');
+      }
       return;
     }
+
     const engine = this.game.currentBattle;
     if (!engine) return;
 
-    const renderSide = (team, label) => {
-      const cards = team.cards.filter(c => c);
-      return `<div class="battle-side">
-        <h4>${label}</h4>
-        ${cards.map(c => `
-          <div class="battle-card ${c.isAlive && c.hp > 0 ? '' : 'dead'} ${RARITY_CLASS[c.rarity]}">
-            ${c.name}${'★'.repeat(c.star ?? c.upgradeTier ?? 1)}<br>
-            ${c.hp}/${c.maxHp}${c.shield ? ` 🛡${c.shield}` : ''}
-          </div>`).join('')}
-      </div>`;
-    };
+    const isHumanA = engine.playerA?.isHuman;
+    const playerTeam = isHumanA ? engine.teamA : engine.teamB;
+    const enemyTeam = isHumanA ? engine.teamB : engine.teamA;
 
-    this.el.battleField.innerHTML =
-      renderSide(engine.teamA, engine.playerA.name) +
-      '<div class="vs">VS</div>' +
-      renderSide(engine.teamB, engine.playerB.name);
+    const playerCards = playerTeam.cards.filter(Boolean);
+    const enemyCards = enemyTeam.cards.filter(Boolean);
+
+    if (this.el.battleEnemyArea) {
+      this.el.battleEnemyArea.innerHTML =
+        '<span class="area-label">敌方战队</span>' +
+        (enemyCards.length
+          ? enemyCards.map(c => this.renderHeroCard(c, 'enemy')).join('')
+          : '<span class="hint">无阵容</span>');
+    }
+    if (this.el.battlePlayerArea) {
+      this.el.battlePlayerArea.innerHTML =
+        '<span class="area-label">我方战队</span>' +
+        (playerCards.length
+          ? playerCards.map(c => this.renderHeroCard(c, 'player')).join('')
+          : '<span class="hint">无阵容</span>');
+    }
   }
 
   appendBattleLog(event) {
@@ -484,15 +582,18 @@ export class UI {
   }
 
   flashBattleEvent(event) {
-    const field = this.el.battleField;
-    if (!field) return;
-    if (event.type === 'DAMAGE_TAKEN') {
-      field.classList.add('battle-shake');
-      setTimeout(() => field.classList.remove('battle-shake'), 300);
+    const arena = this.el.battleArena;
+    if (!arena) return;
+    if (event.type === 'DAMAGE_TAKEN' && event.cardId) {
+      const card = arena.querySelector(`[data-card-id="${event.cardId}"]`);
+      card?.classList.add('hit-flash');
+      setTimeout(() => card?.classList.remove('hit-flash'), 350);
+      arena.classList.add('battle-shake');
+      setTimeout(() => arena.classList.remove('battle-shake'), 300);
     }
     if (event.type === 'CARD_DEATH') {
-      field.classList.add('battle-flash-red');
-      setTimeout(() => field.classList.remove('battle-flash-red'), 400);
+      arena.classList.add('battle-flash-red');
+      setTimeout(() => arena.classList.remove('battle-flash-red'), 400);
     }
   }
 

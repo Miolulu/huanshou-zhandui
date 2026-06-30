@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>幻兽战队 - 策略卡牌自动战斗</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/panel.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/battle.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -187,7 +191,6 @@
             <button id="btn-refresh">刷新 <span class="cost-tag">2</span></button>
             <button id="btn-freeze">冻结 <span id="freeze-state">关</span></button>
             <button id="btn-end-prepare" class="btn-accent">提前开战</button>
-            <button id="btn-skip-battle" class="btn-muted">跳过战斗</button>
           </div>
         </div>
 
@@ -222,13 +225,60 @@
         </section>
 
         <section class="battle-section">
-          <div class="battle-section-head">
-            <h2>战斗场面</h2>
-            <button type="button" id="btn-toggle-bond-guide" class="btn-small btn-gold">羁绊说明</button>
+          <div id="battle">
+            <div class="battle-bg"></div>
+            <div class="battle-stars"></div>
+            <div class="battle-particles"></div>
+
+            <header class="battle-hud panel">
+              <div class="hud-left">
+                <div class="round-box">
+                  <span class="label">ROUND</span>
+                  <span id="battle-hud-round" class="value">01</span>
+                </div>
+                <div class="wave-box">
+                  <span class="label">对手</span>
+                  <span id="battle-hud-opponent" class="value">—</span>
+                </div>
+                <span id="battle-hud-phase" class="hud-phase-tag">准备</span>
+              </div>
+              <div class="hud-center">
+                <div class="energy-bar">
+                  <div id="battle-hud-energy" class="energy-fill"></div>
+                </div>
+              </div>
+              <div class="hud-right">
+                <div class="combo-box">
+                  <span class="label">羁绊</span>
+                  <strong id="battle-hud-combo">×0</strong>
+                </div>
+              </div>
+            </header>
+
+            <section class="enemy-area" id="battle-enemy-area">
+              <span class="area-label">敌方战队</span>
+            </section>
+
+            <section class="battle-center">
+              <div class="magic-circle"></div>
+              <div class="effect-layer" id="battle-effect-layer"></div>
+              <span class="vs-label">VS</span>
+              <div id="battle-idle-msg" class="battle-idle-msg">准备完成后自动开战</div>
+              <div id="battle-field" class="floating-layer" hidden></div>
+            </section>
+
+            <section class="player-area" id="battle-player-area">
+              <span class="area-label">我方战队</span>
+            </section>
+
+            <footer class="skill-panel panel battle-footer">
+              <button type="button" id="btn-toggle-bond-guide" class="magic-button magic-gold">羁绊说明</button>
+              <div id="battle-active-bonds" class="battle-active-bonds"></div>
+              <button type="button" id="btn-skip-battle" class="magic-button magic-muted end-turn-btn">跳过战斗</button>
+            </footer>
+
+            <div id="bond-guide-panel" class="bond-guide-panel panel hidden"></div>
           </div>
-          <div id="battle-active-bonds" class="battle-active-bonds"></div>
-          <div id="bond-guide-panel" class="bond-guide-panel hidden"></div>
-          <div id="battle-field" class="battle-field"></div>
         </section>
       </main>
 
