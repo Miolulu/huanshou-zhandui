@@ -26,4 +26,12 @@ git commit -m "your message"
 git push origin main
 ```
 
-推送后 GitHub Actions 会自动部署到 Pages（约 1–2 分钟）。
+推送 `main` 分支后，GitHub Pages 会自动更新（约 1 分钟）。
+
+```powershell
+git add -A
+git commit -m "your message"
+git push origin main
+```
+
+或双击 `deploy.bat`。
