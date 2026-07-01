@@ -32,6 +32,11 @@ while (steps++ < maxSteps) {
     continue;
   }
 
+  if (phase === RUN_PHASES.SHOP) {
+    run.leaveShop();
+    continue;
+  }
+
   if (phase === RUN_PHASES.COMBAT) {
     const c = run.combat;
     if (!c) break;

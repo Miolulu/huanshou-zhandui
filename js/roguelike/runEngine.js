@@ -7,6 +7,7 @@ import {
   RUN_MODES, generateFloorChoices, nodeTier as floorNodeTier, TIER_MAX_FLOOR, createRng,
 } from './floorMap.js';
 import { CombatEngine, createTutorialCombat } from './combatEngine.js';
+import { generateShopInventory, REMOVE_CARD_PRICE } from './shop.js';
 
 export { RUN_MODES, TIER_MAX_FLOOR };
 
@@ -15,6 +16,7 @@ export const RUN_PHASES = {
   COMBAT: 'combat',
   REWARD: 'reward',
   REST: 'rest',
+  SHOP: 'shop',
   VICTORY: 'victory',
   DEFEAT: 'defeat',
 };
@@ -37,6 +39,8 @@ export class RunEngine {
     this.gold = 99;
     this.combat = null;
     this.rewardOptions = [];
+    this.shopInventory = [];
+    this.shopRemoving = false;
     this.pendingNode = null;
     this.runHp = 70;
     this.maxHp = 70;
@@ -85,6 +89,13 @@ export class RunEngine {
       return { ok: true, phase: RUN_PHASES.REST };
     }
 
+    if (node.type === NODE_TYPES.SHOP) {
+      this.shopInventory = generateShopInventory(this.rng);
+      this.shopRemoving = false;
+      this.phase = RUN_PHASES.SHOP;
+      return { ok: true, phase: RUN_PHASES.SHOP };
+    }
+
     if ([NODE_TYPES.BATTLE, NODE_TYPES.ELITE, NODE_TYPES.BOSS].includes(node.type)) {
       return this.enterCombat(mapNodeTier(node.type), this.floor);
     }
@@ -100,6 +111,13 @@ export class RunEngine {
     if (node.type === 'rest') {
       this.phase = RUN_PHASES.REST;
       return { ok: true, phase: RUN_PHASES.REST };
+    }
+
+    if (node.type === 'shop') {
+      this.shopInventory = generateShopInventory(this.rng);
+      this.shopRemoving = false;
+      this.phase = RUN_PHASES.SHOP;
+      return { ok: true, phase: RUN_PHASES.SHOP };
     }
 
     return this.enterCombat(floorNodeTier(node.type), this.floor);
@@ -278,6 +296,57 @@ export class RunEngine {
     this.phase = RUN_PHASES.MAP;
   }
 
+  buyShopItem(index) {
+    if (this.phase !== RUN_PHASES.SHOP) return { ok: false };
+    const item = this.shopInventory[index];
+    if (!item || item.sold) return { ok: false, message: '已售出' };
+    if (this.gold < item.price) return { ok: false, message: '探索币不足' };
+    this.gold -= item.price;
+    this.deck.push(cloneCard(item.card));
+    item.sold = true;
+    return { ok: true, card: item.card };
+  }
+
+  startShopRemove() {
+    if (this.phase !== RUN_PHASES.SHOP) return { ok: false };
+    if (this.deck.length <= 5) return { ok: false, message: '秘典技法过少，无法移除' };
+    if (this.gold < REMOVE_CARD_PRICE) return { ok: false, message: '探索币不足' };
+    this.shopRemoving = true;
+    return { ok: true };
+  }
+
+  cancelShopRemove() {
+    if (this.phase !== RUN_PHASES.SHOP) return { ok: false };
+    this.shopRemoving = false;
+    return { ok: true };
+  }
+
+  confirmShopRemove(cardUid) {
+    if (this.phase !== RUN_PHASES.SHOP || !this.shopRemoving) return { ok: false };
+    if (this.gold < REMOVE_CARD_PRICE) return { ok: false, message: '探索币不足' };
+    const idx = this.deck.findIndex((c) => c.uid === cardUid);
+    if (idx < 0) return { ok: false, message: '无效技法' };
+    this.gold -= REMOVE_CARD_PRICE;
+    this.deck.splice(idx, 1);
+    this.shopRemoving = false;
+    return { ok: true };
+  }
+
+  leaveShop() {
+    if (this.phase !== RUN_PHASES.SHOP) return { ok: false };
+    this.shopInventory = [];
+    this.shopRemoving = false;
+    if (this.mode === RUN_MODES.EXPEDITION) {
+      this.phase = RUN_PHASES.MAP;
+      if (isRunComplete(this.map)) this.phase = RUN_PHASES.VICTORY;
+      return { ok: true };
+    }
+    this.floor += 1;
+    this.refreshFloorChoices();
+    this.phase = RUN_PHASES.MAP;
+    return { ok: true };
+  }
+
   getState() {
     return {
       phase: this.phase,
@@ -291,6 +360,13 @@ export class RunEngine {
       gold: this.gold,
       combat: this.combat?.getState() ?? null,
       rewardOptions: this.rewardOptions.map((c) => ({ ...c })),
+      shopInventory: this.shopInventory.map((item) => ({
+        card: { ...item.card },
+        price: item.price,
+        sold: item.sold,
+      })),
+      shopRemoving: this.shopRemoving,
+      removeCardPrice: REMOVE_CARD_PRICE,
       stats: { ...this.stats },
       runHp: this.runHp,
       maxHp: this.maxHp,

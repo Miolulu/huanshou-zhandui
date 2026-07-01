@@ -6,6 +6,7 @@ export const NODE_TYPES = {
   BATTLE: 'battle',
   ELITE: 'elite',
   REST: 'rest',
+  SHOP: 'shop',
   BOSS: 'boss',
 };
 
@@ -13,7 +14,7 @@ const ROW_LAYOUT = [
   [{ type: NODE_TYPES.START }],
   [{ type: NODE_TYPES.BATTLE }, { type: NODE_TYPES.BATTLE }],
   [{ type: NODE_TYPES.BATTLE }, { type: NODE_TYPES.ELITE }],
-  [{ type: NODE_TYPES.REST }, { type: NODE_TYPES.BATTLE }],
+  [{ type: NODE_TYPES.REST }, { type: NODE_TYPES.SHOP }],
   [{ type: NODE_TYPES.ELITE }, { type: NODE_TYPES.BATTLE }],
   [{ type: NODE_TYPES.REST }, { type: NODE_TYPES.BATTLE }],
   [{ type: NODE_TYPES.BOSS }],
@@ -53,6 +54,7 @@ function nodeLabel(type) {
     [NODE_TYPES.BATTLE]: NODE_LORE.battle.label,
     [NODE_TYPES.ELITE]: NODE_LORE.elite.label,
     [NODE_TYPES.REST]: NODE_LORE.rest.label,
+    [NODE_TYPES.SHOP]: NODE_LORE.shop.label,
     [NODE_TYPES.BOSS]: NODE_LORE.boss.label,
   };
   return map[type] || type;
@@ -64,6 +66,7 @@ function nodeIcon(type) {
     [NODE_TYPES.BATTLE]: NODE_LORE.battle.icon,
     [NODE_TYPES.ELITE]: NODE_LORE.elite.icon,
     [NODE_TYPES.REST]: NODE_LORE.rest.icon,
+    [NODE_TYPES.SHOP]: NODE_LORE.shop.icon,
     [NODE_TYPES.BOSS]: NODE_LORE.boss.icon,
   };
   return map[type] || '●';

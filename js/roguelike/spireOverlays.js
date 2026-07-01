@@ -31,12 +31,14 @@ export class SpireOverlays {
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
       if (e.key === 'Escape') {
+        e.preventDefault();
         if (this.openId) {
-          e.preventDefault();
           const el = document.getElementById(this.openId);
           if (el?.classList.contains('StwModal')) return;
           this.closeAll();
+          return;
         }
+        this.toggle('spire-overlay-menu');
         return;
       }
 

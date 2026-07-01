@@ -44,16 +44,18 @@ export const TERMS = {
   nodeElite: '深渊',
   nodeRest: '驿站',
   nodeBoss: '源点',
+  nodeShop: '秘法铺',
 
   nodeStartIcon: '🌱',
   nodeBattleIcon: '⚔️',
   nodeEliteIcon: '❓',
   nodeRestIcon: '🔥',
   nodeBossIcon: '👹',
+  nodeShopIcon: '🏪',
 
   // 事件界面
   mapTitle: '污染地带路线图',
-  mapHint: '⚔️ 战斗 · ❓ 事件 · 🔥 休息 · 🏪 驿站奖励 · 👹 源点',
+  mapHint: '⚔️ 遭遇 · 🏪 秘法铺 · 🔥 驿站 · 👹 源点',
   rewardTitle: '悟道 · 择一技法入秘典',
   rewardSkip: '暂不入秘典',
   restTitle: '幻兽驿站',
@@ -68,6 +70,17 @@ export const TERMS = {
   pickRewardToast: '技法已写入净化秘典',
   restHealToast: (n) => `调息恢复 ${n} 点心神`,
   restUpgradeToast: '秘典中的一张技法获得了强化',
+
+  shopTitle: '秘法铺',
+  shopIntro: '用探索币购入新技法，或移除一张秘典中的技法',
+  shopLeave: '离开秘法铺',
+  shopBuy: '购入秘典',
+  shopRemove: '移除技法',
+  shopRemovePrice: (n) => `移除一张技法 · ${n} 探索币`,
+  shopSoldOut: '已售出',
+  shopNotEnoughGold: '探索币不足',
+  shopBoughtToast: (name) => `已购入「${name}」`,
+  shopRemovedToast: '技法已从秘典移除',
 
   // 统计
   statPurified: '净化幻兽',
@@ -89,6 +102,7 @@ export const NODE_LORE = {
   battle: { label: TERMS.nodeBattle, icon: TERMS.nodeBattleIcon },
   elite: { label: TERMS.nodeElite, icon: TERMS.nodeEliteIcon },
   rest: { label: TERMS.nodeRest, icon: TERMS.nodeRestIcon },
+  shop: { label: TERMS.nodeShop, icon: TERMS.nodeShopIcon },
   boss: { label: TERMS.nodeBoss, icon: TERMS.nodeBossIcon },
 };
 

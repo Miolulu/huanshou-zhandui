@@ -22,8 +22,9 @@ function renderManualBody() {
   el.innerHTML = `
     <p>${TERMS.modeDesc}</p>
     <ul>
-      <li><strong>路线图</strong>：按 M 打开，选择遭遇 / 深渊 / 驿站 / 源点</li>
-      <li><strong>调息战斗</strong>：消耗 ${TERMS.spirit} 打出攻型与守型技法，${TERMS.endTurn} 后敌人行动</li>
+      <li><strong>路线图</strong>：按 M 打开，选择遭遇 / 秘法铺 / 驿站 / 源点</li>
+      <li><strong>秘法铺</strong>：用探索币购入技法，或移除一张秘典技法</li>
+      <li><strong>调息战斗</strong>：消耗 ${TERMS.spirit} 打出攻型与守型技法，按 E 或点击「收势」</li>
       <li><strong>护幕</strong>：抵御伤害，下轮 ${TERMS.endTurn} 后清零</li>
       <li><strong>污意</strong>：敌人下一 ${TERMS.turn} 的意图预告</li>
       <li><strong>悟道</strong>：净化成功后择一技法入 ${TERMS.codex}</li>

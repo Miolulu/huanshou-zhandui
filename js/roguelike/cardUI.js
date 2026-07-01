@@ -13,12 +13,14 @@ const ELEMENT_ART_CLASS = {
   neutral: 'el-neutral',
 };
 
-export function renderPurifyCardHtml(card, { playable = true, extraClass = '' } = {}) {
+export function renderPurifyCardHtml(card, { playable = true, extraClass = '', tag = 'button' } = {}) {
   const el = ELEMENT_ART_CLASS[card.element] || ELEMENT_ART_CLASS.neutral;
   const disabled = playable ? '' : 'disabled';
-  return `<button type="button"
+  const typeAttr = tag === 'button' ? 'type="button"' : '';
+  const disabledAttr = tag === 'button' && !playable ? 'disabled' : '';
+  return `<${tag} ${typeAttr}
     class="purify-card Card ${cardTypeClass(card.type)} ${el} ${extraClass} ${playable ? '' : 'disabled'}"
-    data-uid="${card.uid}" data-card-id="${card.id}" data-card-type="${card.type}" ${disabled}>
+    data-uid="${card.uid}" data-card-id="${card.id}" data-card-type="${card.type}" ${disabledAttr}>
     <div class="Card-inner">
       <p class="Card-energy EnergyBadge" title="灵耗"><span>${card.cost}</span></p>
       <figure class="Card-media">
@@ -28,5 +30,19 @@ export function renderPurifyCardHtml(card, { playable = true, extraClass = '' } 
       <h3 class="Card-name">${card.name}</h3>
       <p class="Card-description">${card.desc || ''}</p>
     </div>
+  </${tag}>`;
+}
+
+export function renderShopOfferHtml(item, index, { gold = 0 } = {}) {
+  if (item.sold) {
+    return `<div class="Shop-offer Shop-offer--sold" data-shop-index="${index}">
+      <div class="Shop-sold-label">已售出</div>
+      ${renderPurifyCardHtml(item.card, { playable: false, extraClass: 'Shop-card', tag: 'div' })}
+    </div>`;
+  }
+  const canBuy = gold >= item.price;
+  return `<button type="button" class="Shop-offer ${canBuy ? '' : 'Shop-offer--cant-afford'}" data-shop-buy="${index}">
+    ${renderPurifyCardHtml(item.card, { playable: canBuy, extraClass: 'Shop-card', tag: 'div' })}
+    <span class="Shop-price">💰 ${item.price}</span>
   </button>`;
 }

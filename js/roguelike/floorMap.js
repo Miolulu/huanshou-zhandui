@@ -57,6 +57,14 @@ export function generateFloorChoices(floor, mode, rng = Math.random) {
       label: NODE_LORE.rest.label,
       icon: NODE_LORE.rest.icon,
     });
+  } else if (floor % 6 === 3) {
+    choices.push({
+      id: `f${floor}_shop`,
+      type: 'shop',
+      floor,
+      label: NODE_LORE.shop.label,
+      icon: NODE_LORE.shop.icon,
+    });
   } else {
     choices.push({
       id: `f${floor}_battle_b`,

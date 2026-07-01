@@ -561,6 +561,96 @@
   75% { transform: rotate(8deg); }
 }
 
+/* ===== 秘法铺（StW Campfire / Shop 中间 Overlay） ===== */
+#screen-spire .ShopBox {
+  max-width: 44rem;
+  width: 100%;
+}
+
+#screen-spire .Shop-gold {
+  text-align: center;
+  font-size: 1.05rem;
+  color: hsl(39, 100%, 45%);
+  margin: 0.5rem 0 1rem;
+}
+
+#screen-spire .Shop-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+#screen-spire .Shop-offer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: var(--cursor-point, pointer);
+}
+
+#screen-spire .Shop-offer .Shop-card {
+  width: 9rem;
+  height: 14.5rem;
+  pointer-events: none;
+}
+
+#screen-spire .Shop-offer--cant-afford {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+#screen-spire .Shop-offer--sold {
+  opacity: 0.45;
+}
+
+#screen-spire .Shop-price {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.15);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+#screen-spire .Shop-sold-label {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  z-index: 2;
+  background: hsla(0, 77%, 29%, 0.9);
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+}
+
+#screen-spire .Shop-remove-panel {
+  margin: 1rem 0;
+  padding-top: 0.75rem;
+  border-top: 2px dashed hsla(17, 6%, 20%, 0.25);
+}
+
+#screen-spire .Shop-remove-panel h3 {
+  text-align: center;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+#screen-spire .Shop-actions {
+  margin-top: 0.5rem;
+}
+
+#screen-spire .purify-node[data-type="shop"] {
+  border-color: hsl(39, 100%, 50%) !important;
+}
+
 @media (max-width: 900px) {
   .purify-battle {
     grid-template-columns: 1fr;

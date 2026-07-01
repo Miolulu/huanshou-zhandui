@@ -1,7 +1,7 @@
 /** 幻兽净化师 · 净化远征 UI */
 import { RUN_PHASES, RUN_MODES, TIER_MAX_FLOOR } from './runEngine.js';
 import { modeLabel } from './floorMap.js';
-import { renderPurifyCardHtml } from './cardUI.js';
+import { renderPurifyCardHtml, renderShopOfferHtml } from './cardUI.js';
 import { TERMS } from './lore.js';
 import { CombatTutorial } from './combatTutorial.js';
 import { PurifyBattleEffects } from './purifyBattleEffects.js';
@@ -33,6 +33,7 @@ export class SpireUI {
     this.overlays.onOpen = (id) => this.onOverlayOpen(id);
     this.bindElements();
     this.bindActions();
+    this.bindCombatShortcuts();
   }
 
   bindElements() {
@@ -61,6 +62,11 @@ export class SpireUI {
       actionBar: document.getElementById('purify-action-bar'),
       combatBattle: document.querySelector('#spire-view-combat .purify-battle'),
       rewardCards: document.getElementById('spire-reward-cards'),
+      shopCards: document.getElementById('spire-shop-cards'),
+      shopGold: document.getElementById('purify-shop-gold'),
+      shopIntro: document.getElementById('purify-shop-intro'),
+      shopRemovePanel: document.getElementById('spire-shop-remove-panel'),
+      shopDeckPick: document.getElementById('spire-shop-deck-pick'),
       endTitle: document.getElementById('spire-end-title'),
       endStats: document.getElementById('spire-end-stats'),
       tutorialHost: document.getElementById('purify-tutorial-host'),
@@ -98,6 +104,35 @@ export class SpireUI {
     });
     document.getElementById('btn-spire-end-continue')?.addEventListener('click', () => {
       this.finishRun(this.run.getState().phase === RUN_PHASES.VICTORY);
+    });
+    document.getElementById('btn-spire-shop-leave')?.addEventListener('click', () => {
+      this.run.leaveShop();
+      this.render();
+    });
+    document.getElementById('btn-spire-shop-remove')?.addEventListener('click', () => {
+      const r = this.run.startShopRemove();
+      if (!r.ok && r.message) showToast(r.message);
+      this.render();
+    });
+    document.getElementById('btn-spire-shop-remove-cancel')?.addEventListener('click', () => {
+      this.run.cancelShopRemove();
+      this.render();
+    });
+  }
+
+  bindCombatShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      if (!this.el.screen?.classList.contains('active')) return;
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      const state = this.run?.getState?.();
+      if (!state) return;
+
+      if ((e.key === 'e' || e.key === 'E') && state.phase === RUN_PHASES.COMBAT) {
+        e.preventDefault();
+        document.getElementById('btn-spire-end-turn')?.click();
+      }
     });
   }
 
@@ -245,6 +280,10 @@ export class SpireUI {
         break;
       case RUN_PHASES.REST:
         this.overlays.open('spire-overlay-rest');
+        break;
+      case RUN_PHASES.SHOP:
+        this.renderShop(state);
+        this.overlays.open('spire-overlay-shop');
         break;
       case RUN_PHASES.VICTORY:
       case RUN_PHASES.DEFEAT:
@@ -554,6 +593,53 @@ export class SpireUI {
         this.render();
       };
     });
+  }
+
+  renderShop(state) {
+    const title = document.getElementById('purify-shop-title');
+    if (title) title.textContent = `🏪 ${TERMS.shopTitle}`;
+    if (this.el.shopIntro) this.el.shopIntro.textContent = TERMS.shopIntro;
+    if (this.el.shopGold) {
+      this.el.shopGold.textContent = `${TERMS.exploreCoin}：${state.gold}`;
+    }
+
+    const removeBtn = document.getElementById('btn-spire-shop-remove');
+    const leaveBtn = document.getElementById('btn-spire-shop-leave');
+    if (removeBtn) {
+      removeBtn.textContent = TERMS.shopRemovePrice(state.removeCardPrice);
+      removeBtn.disabled = state.gold < state.removeCardPrice || this.run.deck.length <= 5;
+    }
+    if (leaveBtn) leaveBtn.textContent = TERMS.shopLeave;
+
+    if (this.el.shopRemovePanel) {
+      this.el.shopRemovePanel.classList.toggle('hidden', !state.shopRemoving);
+    }
+
+    if (state.shopRemoving && this.el.shopDeckPick) {
+      this.el.shopDeckPick.innerHTML = this.run.deck.map((card) =>
+        renderPurifyCardHtml(card, { playable: true, extraClass: 'Shop-remove-pick' })
+      ).join('');
+      this.el.shopDeckPick.querySelectorAll('.Shop-remove-pick').forEach((btn) => {
+        btn.onclick = () => {
+          const r = this.run.confirmShopRemove(btn.dataset.uid);
+          if (r.ok) showToast(TERMS.shopRemovedToast);
+          else if (r.message) showToast(r.message);
+          this.render();
+        };
+      });
+    } else if (this.el.shopCards) {
+      this.el.shopCards.innerHTML = state.shopInventory.map((item, i) =>
+        renderShopOfferHtml(item, i, { gold: state.gold })
+      ).join('');
+      this.el.shopCards.querySelectorAll('[data-shop-buy]').forEach((btn) => {
+        btn.onclick = () => {
+          const r = this.run.buyShopItem(Number(btn.dataset.shopBuy));
+          if (r.ok) showToast(TERMS.shopBoughtToast(r.card.name));
+          else if (r.message) showToast(r.message);
+          this.render();
+        };
+      });
+    }
   }
 
   renderEnd(state) {
