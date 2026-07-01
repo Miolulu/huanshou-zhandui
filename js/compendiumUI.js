@@ -1,5 +1,6 @@
 /** 怪物手册 · 主页图鉴面板 */
 import { ENEMIES, getAllEnemyIds } from './roguelike/enemies.js';
+import { enemySpriteUrl } from './roguelike/assetPaths.js';
 import { loadProfile } from './playerProfile.js';
 import { getCompendiumEntry, ensurePurifyProfile } from './roguelike/purifyProfile.js';
 
@@ -11,11 +12,18 @@ export function renderCompendiumPanel(container) {
   container.innerHTML = `
     <div class="compendium-header">
       <h3 id="compendium-modal-title">怪物手册</h3>
-      <p class="hint">遭遇污化幻兽后解锁档案 · 未遇见过显示 ???</p>
     </div>
     <div class="compendium-grid">
       ${ids.map((id) => renderCompendiumCard(id, profile)).join('')}
     </div>`;
+}
+
+function compendiumPortraitHtml(id, def) {
+  const src = enemySpriteUrl(id);
+  if (src) {
+    return `<div class="compendium-icon compendium-portrait" aria-hidden="true"><img src="${src}" alt=""></div>`;
+  }
+  return `<div class="compendium-icon">${def.icon}</div>`;
 }
 
 function renderCompendiumCard(id, profile) {
@@ -28,14 +36,13 @@ function renderCompendiumCard(id, profile) {
       <article class="compendium-card locked">
         <div class="compendium-icon">???</div>
         <h4>未知幻兽</h4>
-        <p>尚未在污染地带遭遇</p>
       </article>`;
   }
 
   const defeated = entry?.defeated;
   return `
     <article class="compendium-card ${defeated ? 'defeated' : 'seen'}">
-      <div class="compendium-icon">${def.icon}</div>
+      ${compendiumPortraitHtml(id, def)}
       <h4>${def.name}</h4>
       <p class="compendium-personality"><strong>性格</strong> ${def.personality || '—'}</p>
       <p class="compendium-story"><strong>故事</strong> ${def.story || def.desc}</p>

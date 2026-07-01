@@ -451,6 +451,23 @@
   margin-bottom: 4px;
 }
 
+.compendium-portrait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.compendium-portrait img {
+  width: 100%;
+  max-width: 7.5rem;
+  max-height: 5.5rem;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.22));
+}
+
 .compendium-card h4 {
   color: var(--dark-text, #2E2E2E);
   margin-bottom: 6px;

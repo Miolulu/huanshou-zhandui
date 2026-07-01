@@ -4,31 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:,">
-  <meta name="build-version" content="768c3ea">
+  <meta name="build-version" content="20260702">
   <title>幻兽战队 - 幻兽净化师</title>
-  <link rel="stylesheet" href="css/variables.css?v=768c3ea">
-  <link rel="stylesheet" href="css/reset.css?v=768c3ea">
-  <link rel="stylesheet" href="css/utilities.css?v=768c3ea">
-  <link rel="stylesheet" href="css/theme.css?v=768c3ea">
-  <link rel="stylesheet" href="css/layout.css?v=768c3ea">
-  <link rel="stylesheet" href="css/pages/menu-lobby.css?v=768c3ea">
-  <link rel="stylesheet" href="css/components/hero-card.css?v=768c3ea">
-  <link rel="stylesheet" href="css/components/tooltip.css?v=768c3ea">
-  <link rel="stylesheet" href="css/components/result-screen.css?v=768c3ea">
-  <link rel="stylesheet" href="css/components.css?v=768c3ea">
-  <link rel="stylesheet" href="css/panel.css?v=768c3ea">
-  <link rel="stylesheet" href="css/button.css?v=768c3ea">
-  <link rel="stylesheet" href="css/battle.css?v=768c3ea">
-  <link rel="stylesheet" href="css/animation.css?v=768c3ea">
-  <link rel="stylesheet" href="css/bg-layout.css?v=768c3ea">
-  <link rel="stylesheet" href="css/roguelike.css?v=768c3ea">
-  <link rel="stylesheet" href="css/style.css?v=768c3ea">
-  <link rel="stylesheet" href="css/slaytheweb-theme.css?v=768c3ea">
-  <link rel="stylesheet" href="css/slaytheweb-ui.css?v=768c3ea">
-  <link rel="stylesheet" href="css/slaytheweb-overlays.css?v=768c3ea">
-  <link rel="stylesheet" href="css/combat-fx.css?v=768c3ea">
-  <link rel="stylesheet" href="css/stw-combat.css?v=768c3ea">
-  <link rel="stylesheet" href="css/stw-splash.css?v=768c3ea">
+  <link rel="stylesheet" href="css/variables.css?v=20260702">
+  <link rel="stylesheet" href="css/reset.css?v=20260702">
+  <link rel="stylesheet" href="css/utilities.css?v=20260702">
+  <link rel="stylesheet" href="css/theme.css?v=20260702">
+  <link rel="stylesheet" href="css/layout.css?v=20260702">
+  <link rel="stylesheet" href="css/pages/menu-lobby.css?v=20260702">
+  <link rel="stylesheet" href="css/components/hero-card.css?v=20260702">
+  <link rel="stylesheet" href="css/components/tooltip.css?v=20260702">
+  <link rel="stylesheet" href="css/components/result-screen.css?v=20260702">
+  <link rel="stylesheet" href="css/components.css?v=20260702">
+  <link rel="stylesheet" href="css/panel.css?v=20260702">
+  <link rel="stylesheet" href="css/button.css?v=20260702">
+  <link rel="stylesheet" href="css/battle.css?v=20260702">
+  <link rel="stylesheet" href="css/animation.css?v=20260702">
+  <link rel="stylesheet" href="css/bg-layout.css?v=20260702">
+  <link rel="stylesheet" href="css/roguelike.css?v=20260702">
+  <link rel="stylesheet" href="css/style.css?v=20260702">
+  <link rel="stylesheet" href="css/slaytheweb-theme.css?v=20260702">
+  <link rel="stylesheet" href="css/slaytheweb-ui.css?v=20260702">
+  <link rel="stylesheet" href="css/slaytheweb-overlays.css?v=20260702">
+  <link rel="stylesheet" href="css/combat-fx.css?v=20260702">
+  <link rel="stylesheet" href="css/stw-combat.css?v=20260702">
+  <link rel="stylesheet" href="css/stw-splash.css?v=20260702">
 </head>
 <body>
   <!-- ===== 登录 / 注册（StW Splash 风格） ===== -->
@@ -37,7 +37,6 @@
     <h1 class="App-splash-title Title">幻兽战队</h1>
     <article class="Container Container--vcenter Splash">
       <div class="Box Box--auth auth-container">
-        <p class="Box-sub auth-logo p">注册账号以保存净化远征进度与怪物手册</p>
         <ul class="Options Options--tabs auth-tabs">
           <li><button type="button" id="tab-login" class="Button active">登录</button></li>
           <li><button type="button" id="tab-register" class="Button">注册</button></li>
@@ -56,7 +55,6 @@
           <p id="auth-register-error" class="error-msg"></p>
           <ul class="Options"><li><button type="submit" class="Button primary btn-accent btn-lg">注册并进入</button></li></ul>
         </form>
-        <p class="auth-hint">数据保存在本浏览器本地。换设备需重新注册。</p>
       </div>
     </article>
   </div>
@@ -78,7 +76,6 @@
           <li><button id="btn-menu-manual" type="button" class="Button"><u>玩</u>法说明</button></li>
           <li><button id="btn-logout" type="button" class="Button" danger>退出登录</button></li>
         </ul>
-        <p class="auth-hint">单机 · 无需联机 · 拖拽技法到目标出牌</p>
         <p id="menu-error" class="error-msg"></p>
       </div>
     </article>
@@ -422,7 +419,6 @@
         <div class="Box purify-rest-card">
           <button type="button" class="Overlay-close" data-overlay-close="spire-overlay-rest" aria-label="关闭">×</button>
           <h2>🌿 幻兽驿站</h2>
-          <p id="purify-rest-hint" class="purify-pane-desc">调息恢复心神，或精研强化秘典中的技法</p>
           <ul class="Options purify-rest-actions">
             <li><button type="button" id="btn-spire-rest-heal" class="Button purify-rest-btn purify-rest-heal">调息 · 恢复 20 心神</button></li>
             <li><button type="button" id="btn-spire-rest-upgrade" class="Button purify-rest-btn purify-rest-upgrade">精研 · 强化秘典技法</button></li>
@@ -448,7 +444,6 @@
         <div class="Box">
           <button type="button" class="Overlay-close" data-overlay-close="spire-overlay-menu" aria-label="关闭">×</button>
           <h2 class="Title">净化远征</h2>
-          <p class="Box-sub">幻兽净化师 · 单机净化</p>
           <div id="spire-menu-actions">
             <ul class="Options">
               <li><button type="button" id="btn-spire-back" class="Button" danger>放弃远征</button></li>
@@ -461,7 +456,6 @@
               <li><button type="button" id="btn-spire-abandon-cancel" class="Button">取消</button></li>
             </ul>
           </div>
-          <p class="auth-hint">M 路线图 · D 秘典 · A 待启 · S 余韵 · J 日志</p>
         </div>
       </div>
       <figure class="Overlay-bg"></figure>
@@ -474,7 +468,6 @@
           <h2 id="overlay-map-title">污染地带路线图</h2>
           <p id="overlay-map-intro" class="Box-sub"></p>
           <div id="spire-overlay-map-nodes" class="purify-path"></div>
-          <p id="purify-map-hint" class="purify-map-hint Box-sub">⚔️ 遭遇 · 🏪 秘法铺 · 🔥 驿站 · 👹 源点</p>
         </div>
       </div>
       <figure class="Overlay-bg"></figure>
@@ -496,7 +489,6 @@
       <div class="Overlay-content">
         <div class="Box">
           <h2>已竭牌堆</h2>
-          <p id="overlay-exhaust-desc" class="Box-sub">常驻秘法等已竭技法，本场战斗不再回到待启。</p>
           <div id="spire-overlay-exhaust-cards" class="Cards PileCards"></div>
         </div>
       </div>
@@ -508,7 +500,6 @@
       <div class="Overlay-content">
         <div class="Box">
           <h2>待启牌堆</h2>
-          <p id="overlay-draw-desc" class="Box-sub">待启牌堆中的技法会在调息时感通入手。</p>
           <div id="spire-overlay-draw-cards" class="Cards PileCards"></div>
         </div>
       </div>
@@ -520,7 +511,6 @@
       <div class="Overlay-content">
         <div class="Box">
           <h2>余韵牌堆</h2>
-          <p id="overlay-discard-desc" class="Box-sub">已打出的技法进入余韵，待启耗尽时会洗入待启。</p>
           <div id="spire-overlay-discard-cards" class="Cards PileCards"></div>
         </div>
       </div>
@@ -626,6 +616,6 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/Draggable.min.js"></script>
-  <script type="module" src="js/main.js?v=768c3ea"></script>
+  <script type="module" src="js/main.js?v=20260702"></script>
 </body>
 </html>
