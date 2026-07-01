@@ -100,10 +100,30 @@
   position: absolute;
   top: 0.5rem;
   right: 0.75rem;
+  z-index: 2;
   background: transparent;
   border: 0;
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
   color: hsl(17, 6%, 25%);
+}
+
+#screen-spire .Overlay-close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.5rem;
+  z-index: 3;
+  background: transparent;
+  border: 0;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: var(--cursor-point, pointer);
+  color: hsl(17, 6%, 25%);
+  padding: 0.15rem 0.35rem;
+}
+
+#screen-spire .StwModal .Box,
+#screen-spire .Overlay .Box {
+  position: relative;
 }

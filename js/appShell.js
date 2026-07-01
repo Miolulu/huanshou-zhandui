@@ -39,6 +39,9 @@ export function showToast(msg, duration = 2500) {
 
 export function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#screen-menu .MenuOverlay.is-open').forEach((el) => {
+    el.classList.remove('is-open');
+  });
   const target = document.getElementById(`screen-${name}`);
   if (target) target.classList.add('active');
 }

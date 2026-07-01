@@ -261,7 +261,19 @@ button:not(:disabled),
 
 #screen-spire .Overlay .Box {
   max-width: 42rem;
+  background: hsla(17, 6%, 70%, 1);
   color: hsl(17, 6%, 7%);
+}
+
+#screen-spire .Overlay .Box :where(h1, h2, h3, p, li) {
+  color: inherit;
+  text-shadow: none;
+}
+
+#screen-spire .Overlay .Box-sub,
+#screen-spire .purify-map-hint {
+  color: hsl(17, 6%, 20%);
+  opacity: 0.9;
 }
 
 #screen-spire .Overlay .Box--map {

@@ -31,9 +31,14 @@ function resolveTargetIndex(targetEl, fallbackIndex) {
 }
 
 export function destroyCardDrag() {
-  dragInstances.forEach((d) => d.kill());
+  const gsap = window.gsap;
+  dragInstances.forEach((d) => {
+    if (gsap && d.target) gsap.set(d.target, { x: 0, y: 0, clearProps: 'transform' });
+    d.kill();
+  });
   dragInstances = [];
   document.querySelectorAll('.is-dragOver').forEach((el) => el.classList.remove('is-dragOver'));
+  document.querySelectorAll('#spire-hand .is-dragging').forEach((el) => el.classList.remove('is-dragging'));
 }
 
 /**

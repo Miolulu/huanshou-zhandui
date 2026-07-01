@@ -1,8 +1,13 @@
 /** 净化远征 · StW 风格 Overlay 面板 */
+import { TERMS } from './lore.js';
+
 export class SpireOverlays {
   constructor(root) {
     this.root = root || document.getElementById('screen-spire');
     this.openId = null;
+    this.onOpen = null;
+    /** @type {(id: string) => void} */
+    this.onModalEscape = null;
     this.bind();
   }
 
@@ -17,10 +22,21 @@ export class SpireOverlays {
       });
     });
 
+    this.root.querySelectorAll('[data-overlay-close]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.handleCloseAction(btn.dataset.overlayClose);
+      });
+    });
+
     this.root.querySelectorAll('.Overlay-bg').forEach((bg) => {
       bg.addEventListener('click', () => {
         const overlay = bg.closest('.Overlay');
-        if (overlay?.classList.contains('StwModal')) return;
+        if (!overlay) return;
+        if (overlay.classList.contains('StwModal')) {
+          this.handleCloseAction(overlay.id);
+          return;
+        }
         this.closeAll();
       });
     });
@@ -34,7 +50,14 @@ export class SpireOverlays {
         e.preventDefault();
         if (this.openId) {
           const el = document.getElementById(this.openId);
-          if (el?.classList.contains('StwModal')) return;
+          if (el?.classList.contains('StwModal')) {
+            this.handleCloseAction(this.openId);
+            return;
+          }
+          if (this.openId === 'spire-overlay-menu') {
+            this.close(this.openId);
+            return;
+          }
           this.closeAll();
           return;
         }
@@ -58,10 +81,37 @@ export class SpireOverlays {
     });
   }
 
+  /** 中间模态 / 菜单的 Esc、×、点遮罩关闭逻辑 */
+  handleCloseAction(id) {
+    switch (id) {
+      case 'spire-overlay-reward':
+        document.getElementById('btn-spire-skip-reward')?.click();
+        break;
+      case 'spire-overlay-shop':
+        document.getElementById('btn-spire-shop-leave')?.click();
+        break;
+      case 'spire-overlay-menu':
+        this.close(id);
+        break;
+      case 'spire-overlay-rest':
+      case 'spire-overlay-end':
+        this.onModalEscape?.(id);
+        break;
+      default:
+        if (id && document.getElementById(id)?.classList.contains('Overlay')) {
+          this.close(id);
+        }
+        break;
+    }
+  }
+
   toggle(id) {
     if (this.openId === id) {
       const el = document.getElementById(id);
-      if (el?.classList.contains('StwModal')) return;
+      if (el?.classList.contains('StwModal')) {
+        this.handleCloseAction(id);
+        return;
+      }
       this.closeAll();
       return;
     }
@@ -128,9 +178,17 @@ export class SpireOverlays {
     const discardEl = document.getElementById('label-overlay-discard');
     const deckEl = document.getElementById('label-overlay-deck');
     const exhaustEl = document.getElementById('label-overlay-exhaust');
-    if (drawEl) drawEl.textContent = c ? `待启 ${c.drawCount}` : `秘典 ${state.deckSize}`;
-    if (discardEl) discardEl.textContent = c ? `余韵 ${c.discardCount}` : '余韵 0';
-    if (deckEl) deckEl.textContent = `秘典 ${state.deckSize}`;
+    if (drawEl) {
+      drawEl.textContent = c
+        ? `${TERMS.drawPile} ${c.drawCount}`
+        : `${TERMS.drawPile} ${state.deckSize}`;
+    }
+    if (discardEl) {
+      discardEl.textContent = c
+        ? `${TERMS.discardPile} ${c.discardCount}`
+        : `${TERMS.discardPile} 0`;
+    }
+    if (deckEl) deckEl.textContent = `${TERMS.codexShort} ${state.deckSize}`;
     if (exhaustEl) exhaustEl.textContent = c ? String(c.exhaustCount ?? 0) : '0';
   }
 }

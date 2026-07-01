@@ -130,6 +130,12 @@ export class PurifyBattleEffects {
     const rect = cardEl.getBoundingClientRect();
     const clone = cardEl.cloneNode(true);
     clone.classList.add('Card-clone', 'card-play-fly');
+    clone.setAttribute('aria-hidden', 'true');
+    clone.removeAttribute('id');
+    if (clone.tagName === 'BUTTON') {
+      clone.disabled = true;
+      clone.tabIndex = -1;
+    }
     clone.style.cssText = `
       position:fixed;left:${rect.left}px;top:${rect.top}px;
       width:${rect.width}px;height:${rect.height}px;

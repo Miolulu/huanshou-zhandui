@@ -178,11 +178,28 @@
 }
 
 #screen-spire .Target-desc {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--stw-lightblue, hsl(194.7, 53.3%, 79%));
-  margin: 0 0 0.35rem;
+  margin: 0 0.25rem 0.35rem;
+  padding: 0 0.25rem;
   line-height: 1.35;
   text-align: center;
+  max-height: 2.7em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+#screen-spire .Target--enemy .Target-header {
+  flex-wrap: wrap;
+}
+
+#screen-spire .Target--enemy .Target-intents {
+  flex: 1 1 100%;
+  justify-content: center;
+  font-size: 0.88rem;
 }
 
 #screen-spire .Target-stat-label {
@@ -396,9 +413,14 @@
 #screen-spire .StwCombat .Hand .Card {
   width: var(--card-width);
   height: var(--card-height);
-  flex-shrink: 1;
+  flex-shrink: 0;
+  min-width: 8.5em;
   margin-left: -1.5rem;
   cursor: var(--cursor-grab, grab);
+}
+
+#screen-spire .StwCombat .Hand .Card.is-dragging {
+  z-index: 10;
 }
 
 #screen-spire .StwCombat .Hand .Card:first-child {
@@ -475,11 +497,16 @@
 }
 
 #screen-spire .Card-description {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   padding: 0.15rem 0.35rem 0.5rem;
   margin: 0;
   line-height: 1.25;
   flex: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 
 #screen-spire .Card .Card-energy {

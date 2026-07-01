@@ -29,9 +29,14 @@ export class SpireUI {
     this.tutorialDismissed = false;
     this.runEndRecorded = false;
     this.combatBusy = false;
+    this.lastRunPhase = null;
     this.battleEffects = new PurifyBattleEffects();
     this.overlays = new SpireOverlays(document.getElementById('screen-spire'));
     this.overlays.onOpen = (id) => this.onOverlayOpen(id);
+    this.overlays.onModalEscape = (id) => {
+      if (id === 'spire-overlay-rest') showToast('请先选择调息或精研');
+      else if (id === 'spire-overlay-end') showToast('请点击返回主页');
+    };
     this.bindElements();
     this.bindActions();
     this.bindCombatShortcuts();
@@ -268,7 +273,9 @@ export class SpireUI {
     switch (state.phase) {
       case RUN_PHASES.MAP:
         this.renderMapInto(state, this.el.overlayMapNodes, true);
-        this.overlays.open('spire-overlay-map');
+        if (this.lastRunPhase !== RUN_PHASES.MAP) {
+          this.overlays.open('spire-overlay-map');
+        }
         break;
       case RUN_PHASES.COMBAT:
         this.overlays.closeCornerOverlays();
@@ -295,6 +302,7 @@ export class SpireUI {
       default:
         break;
     }
+    this.lastRunPhase = state.phase;
   }
 
   renderHud(state) {
@@ -446,6 +454,8 @@ export class SpireUI {
   renderCombat(state) {
     const c = state.combat;
     if (!c) return;
+
+    document.querySelectorAll('body > .Card-clone').forEach((el) => el.remove());
 
     if (state.isTutorialCombat && !this.tutorial && !this.tutorialDismissed) {
       this.tutorial = new CombatTutorial(({ skipped } = {}) => {
