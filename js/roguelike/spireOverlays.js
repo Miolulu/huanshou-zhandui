@@ -18,7 +18,11 @@ export class SpireOverlays {
     });
 
     this.root.querySelectorAll('.Overlay-bg').forEach((bg) => {
-      bg.addEventListener('click', () => this.closeAll());
+      bg.addEventListener('click', () => {
+        const overlay = bg.closest('.Overlay');
+        if (overlay?.classList.contains('StwModal')) return;
+        this.closeAll();
+      });
     });
 
     document.addEventListener('keydown', (e) => {
@@ -29,6 +33,8 @@ export class SpireOverlays {
       if (e.key === 'Escape') {
         if (this.openId) {
           e.preventDefault();
+          const el = document.getElementById(this.openId);
+          if (el?.classList.contains('StwModal')) return;
           this.closeAll();
         }
         return;
@@ -52,20 +58,66 @@ export class SpireOverlays {
 
   toggle(id) {
     if (this.openId === id) {
+      const el = document.getElementById(id);
+      if (el?.classList.contains('StwModal')) return;
       this.closeAll();
       return;
     }
+    const next = document.getElementById(id);
+    if (next?.classList.contains('StwModal')) {
+      this.closeCornerOverlays();
+      next.classList.add('is-open');
+      this.openId = id;
+      this.onOpen?.(id);
+      return;
+    }
     this.closeAll();
+    if (!next) return;
+    next.classList.add('is-open');
+    this.openId = id;
+    this.onOpen?.(id);
+  }
+
+  open(id) {
     const el = document.getElementById(id);
-    if (!el) return;
+    if (!el || this.openId === id) return;
+    if (el.classList.contains('StwModal')) {
+      el.classList.add('is-open');
+      this.openId = id;
+      this.onOpen?.(id);
+      return;
+    }
+    this.closeAll();
     el.classList.add('is-open');
     this.openId = id;
     this.onOpen?.(id);
   }
 
+  close(id) {
+    const el = document.getElementById(id);
+    el?.classList.remove('is-open');
+    if (this.openId === id) this.openId = null;
+  }
+
+  closeCornerOverlays() {
+    this.root?.querySelectorAll('.Overlay.is-open:not(.StwModal)').forEach((el) => {
+      el.classList.remove('is-open');
+    });
+    if (this.openId && !document.getElementById(this.openId)?.classList.contains('StwModal')) {
+      this.openId = null;
+    }
+  }
+
   closeAll() {
     this.root?.querySelectorAll('.Overlay.is-open').forEach((el) => el.classList.remove('is-open'));
     this.openId = null;
+  }
+
+  closeModals() {
+    this.root?.querySelectorAll('.StwModal.is-open').forEach((el) => el.classList.remove('is-open'));
+    if (this.openId && document.getElementById(this.openId)?.classList.contains('StwModal')) {
+      this.openId = null;
+    }
   }
 
   updateLabels(state) {

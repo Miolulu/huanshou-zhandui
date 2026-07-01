@@ -27,15 +27,16 @@
   <link rel="stylesheet" href="css/slaytheweb-overlays.css">
   <link rel="stylesheet" href="css/combat-fx.css">
   <link rel="stylesheet" href="css/stw-combat.css">
+  <link rel="stylesheet" href="css/stw-splash.css">
 </head>
 <body>
-  <!-- ===== 登录 / 注册 ===== -->
+  <!-- ===== 登录 / 注册（StW Splash 风格） ===== -->
   <div id="screen-auth" class="screen App active">
     <div class="App-background App-background--auth" aria-hidden="true"></div>
-    <article class="Container Container--vcenter">
+    <h1 class="App-splash-title Title">幻兽战队</h1>
+    <article class="Container Container--vcenter Splash">
       <div class="Box Box--auth auth-container">
-        <h1 class="Title">幻兽战队</h1>
-        <p class="Box-sub auth-logo p">注册账号以保存净化远征进度、怪物手册与成长记录</p>
+        <p class="Box-sub auth-logo p">注册账号以保存净化远征进度与怪物手册</p>
         <ul class="Options Options--tabs auth-tabs">
           <li><button type="button" id="tab-login" class="Button active">登录</button></li>
           <li><button type="button" id="tab-register" class="Button">注册</button></li>
@@ -59,57 +60,62 @@
     </article>
   </div>
 
-  <!-- ===== 主界面 ===== -->
+  <!-- ===== 主界面（StW Splash 菜单） ===== -->
   <div id="screen-menu" class="screen App menu-bg">
     <div class="App-background" aria-hidden="true"></div>
-    <article class="Container menu-container-stw">
-      <div class="menu-stw-grid">
-        <aside class="Box Box--profile profile-panel">
-          <h3>净化师档案</h3>
-          <p class="profile-account">账号 <strong id="profile-username">-</strong></p>
-          <p class="profile-account">昵称 <strong id="profile-nickname">-</strong></p>
-          <span id="menu-top-nickname" class="hidden" aria-hidden="true">净化师</span>
-          <div class="profile-stats">
-            <span>Lv.<strong id="profile-level">1</strong></span>
-            <span>胜场 <strong id="profile-wins">0</strong></span>
-          </div>
-          <div class="profile-exp-bar"><div id="profile-exp-fill" class="exp-fill"></div></div>
-          <p class="profile-exp-text"><span id="profile-exp">0</span> / <span id="profile-exp-max">100</span> EXP</p>
-          <ul class="Options">
-            <li><button id="btn-daily-login" type="button" class="Button btn-gold btn-small">每日签到</button></li>
-            <li><button id="btn-show-compendium" type="button" class="Button btn-muted btn-small">怪物手册</button></li>
-            <li><button id="btn-show-tasks" type="button" class="Button btn-muted btn-small">每日任务</button></li>
-            <li><button id="btn-logout" type="button" class="Button btn-danger btn-small" danger>退出登录</button></li>
-          </ul>
-          <div id="purify-records" class="purify-records-panel"></div>
-          <div id="tasks-panel" class="tasks-panel hidden"></div>
-        </aside>
-        <div class="Box Box--main menu-container solo-hero">
-          <span class="solo-badge">单机 · 无需联机</span>
-          <h1 class="Title solo-title">幻兽净化师</h1>
-          <p class="solo-desc">携带净化秘典深入污染地带，以技法驱散污秽，挽救失控幻兽</p>
-          <ul class="solo-features">
-            <li><strong>路线图</strong> 选择遭遇 / 深渊 / 驿站 / 源点</li>
-            <li><strong>调息战斗</strong> 消耗灵力打出攻型与守型技法</li>
-            <li><strong>怪物组合</strong> 固定怪物池 · 每层随机组合遭遇</li>
-            <li><strong>悟道入秘典</strong> 净化成功后领悟新技法</li>
-          </ul>
-          <ul class="Options solo-mode-btns">
-            <li><button id="btn-quick-start" type="button" class="Button primary solo-start-btn">净化远征</button></li>
-            <li><button id="btn-tier-start" type="button" class="Button solo-mode-btn solo-mode-tier">阶层挑战 · 100 层</button></li>
-            <li><button id="btn-infinite-start" type="button" class="Button solo-mode-btn solo-mode-infinite">无限模式</button></li>
-          </ul>
-          <p class="auth-hint">首次进入战斗时将进行实战引导 · 拖拽或点击技法出牌</p>
-          <p id="menu-error" class="error-msg"></p>
-        </div>
+    <h1 class="App-splash-title Title">幻兽净化师</h1>
+    <article class="Container Container--vcenter Splash">
+      <div class="Box Box--menu">
+        <ul class="Options solo-mode-btns">
+          <li><button id="btn-quick-start" type="button" class="Button primary solo-start-btn">开始净化远征</button></li>
+          <li><button id="btn-tier-start" type="button" class="Button solo-mode-btn">阶层挑战 · 100 层</button></li>
+          <li><button id="btn-infinite-start" type="button" class="Button solo-mode-btn">无限模式</button></li>
+          <li><hr class="Options-divider"></li>
+          <li><button id="btn-menu-tutorial" type="button" class="Button"><u>实</u>战教程</button></li>
+          <li><button id="btn-show-compendium" type="button" class="Button"><u>怪</u>物手册</button></li>
+          <li><button id="btn-menu-profile" type="button" class="Button"><u>净</u>化师档案</button></li>
+          <li><button id="btn-menu-manual" type="button" class="Button"><u>玩</u>法说明</button></li>
+          <li><button id="btn-logout" type="button" class="Button" danger>退出登录</button></li>
+        </ul>
+        <p class="auth-hint">单机 · 无需联机 · 拖拽或点击技法出牌</p>
+        <p id="menu-error" class="error-msg"></p>
       </div>
     </article>
 
-    <div id="compendium-modal" class="compendium-modal hidden" role="dialog" aria-modal="true" aria-labelledby="compendium-modal-title">
-      <button type="button" class="compendium-modal-backdrop" id="compendium-modal-backdrop" aria-label="关闭怪物手册"></button>
-      <div class="compendium-modal-dialog">
-        <button type="button" class="compendium-modal-close" id="btn-compendium-close" aria-label="关闭">×</button>
+    <div id="menu-overlay-profile" class="MenuOverlay" role="dialog" aria-modal="true" aria-labelledby="menu-profile-title">
+      <div class="Box Box--profile profile-panel">
+        <button type="button" class="MenuOverlay-close" data-close-overlay="menu-overlay-profile" aria-label="关闭">×</button>
+        <h3 id="menu-profile-title">净化师档案</h3>
+        <p class="profile-account">账号 <strong id="profile-username">-</strong></p>
+        <p class="profile-account">昵称 <strong id="profile-nickname">-</strong></p>
+        <span id="menu-top-nickname" class="hidden" aria-hidden="true">净化师</span>
+        <div class="profile-stats">
+          <span>Lv.<strong id="profile-level">1</strong></span>
+          <span>胜场 <strong id="profile-wins">0</strong></span>
+        </div>
+        <div class="profile-exp-bar"><div id="profile-exp-fill" class="exp-fill"></div></div>
+        <p class="profile-exp-text"><span id="profile-exp">0</span> / <span id="profile-exp-max">100</span> EXP</p>
+        <ul class="Options">
+          <li><button id="btn-daily-login" type="button" class="Button btn-gold btn-small">每日签到</button></li>
+          <li><button id="btn-show-tasks" type="button" class="Button btn-small">每日任务</button></li>
+        </ul>
+        <div id="purify-records" class="purify-records-panel"></div>
+        <div id="tasks-panel" class="tasks-panel hidden"></div>
+      </div>
+    </div>
+
+    <div id="menu-overlay-compendium" class="MenuOverlay" role="dialog" aria-modal="true">
+      <div class="Box">
+        <button type="button" class="MenuOverlay-close" data-close-overlay="menu-overlay-compendium" aria-label="关闭">×</button>
         <div id="compendium-panel" class="compendium-panel"></div>
+      </div>
+    </div>
+
+    <div id="menu-overlay-manual" class="MenuOverlay" role="dialog" aria-modal="true">
+      <div class="Box">
+        <button type="button" class="MenuOverlay-close" data-close-overlay="menu-overlay-manual" aria-label="关闭">×</button>
+        <h2>玩法说明</h2>
+        <div id="menu-manual-body" class="Box-sub manual-body"></div>
       </div>
     </div>
   </div>
@@ -340,21 +346,8 @@
       <span class="purify-hud-chip"><span id="purify-mode-badge">远征</span></span>
     </div>
 
-    <main class="purify-main">
-      <section id="spire-view-map" class="purify-pane">
-        <div class="MapContainer">
-          <div class="purify-map-board">
-            <header class="purify-pane-head">
-              <h2 id="purify-map-title">污染地带路线图</h2>
-              <p id="purify-map-intro" class="purify-pane-desc">选择下一处净化点，深入污染地带</p>
-            </header>
-            <div id="spire-map-nodes" class="purify-path"></div>
-            <p id="purify-map-hint" class="purify-map-hint">⚔️ 战斗 · 🔥 休息 · 👹 源点 · 按 M 随时打开路线图</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="spire-view-combat" class="purify-pane hidden">
+    <main class="purify-main StwGameRoot">
+      <section id="spire-view-combat" class="purify-pane StwGameLayer hidden">
         <div class="purify-battle StwCombat">
           <div class="Targets Split">
             <div class="Targets-group">
@@ -384,17 +377,23 @@
         </div>
         <aside id="spire-combat-log" class="hidden" aria-hidden="true"></aside>
       </section>
+    </main>
 
-      <section id="spire-view-reward" class="purify-pane hidden">
-        <div class="purify-modal-card Box RewardsBox">
+    <div id="spire-overlay-reward" class="Overlay Overlay--middle StwModal" data-pos="middle">
+      <figure class="Overlay-bg"></figure>
+      <div class="Overlay-content">
+        <div class="Box RewardsBox purify-modal-card">
           <h2 id="purify-reward-title">悟道 · 择一技法入秘典</h2>
           <div id="spire-reward-cards" class="purify-reward-row Cards"></div>
           <ul class="Options"><li><button type="button" id="btn-spire-skip-reward" class="Button purify-text-btn">暂不入秘典</button></li></ul>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <section id="spire-view-rest" class="purify-pane hidden">
-        <div class="purify-modal-card Box purify-rest-card">
+    <div id="spire-overlay-rest" class="Overlay Overlay--middle StwModal" data-pos="middle">
+      <figure class="Overlay-bg"></figure>
+      <div class="Overlay-content">
+        <div class="Box purify-rest-card">
           <h2>🌿 幻兽驿站</h2>
           <p id="purify-rest-hint" class="purify-pane-desc">调息恢复心神，或精研强化秘典中的技法</p>
           <ul class="Options purify-rest-actions">
@@ -402,16 +401,19 @@
             <li><button type="button" id="btn-spire-rest-upgrade" class="Button purify-rest-btn purify-rest-upgrade">精研 · 强化秘典技法</button></li>
           </ul>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <section id="spire-view-end" class="purify-pane hidden">
-        <div class="purify-modal-card Box purify-end-card">
+    <div id="spire-overlay-end" class="Overlay Overlay--middle StwModal" data-pos="middle">
+      <figure class="Overlay-bg"></figure>
+      <div class="Overlay-content">
+        <div class="Box purify-end-card">
           <h2 id="spire-end-title">远征结束</h2>
           <div id="spire-end-stats" class="purify-end-stats"></div>
           <ul class="Options"><li><button type="button" id="btn-spire-end-continue" class="Button primary purify-start-btn">返回主页</button></li></ul>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
 
     <div id="spire-overlay-menu" class="Overlay Overlay--middle" data-pos="topleft">
       <button type="button" class="Overlay-toggle">菜单 Esc</button>
@@ -435,6 +437,7 @@
           <h2 id="overlay-map-title">污染地带路线图</h2>
           <p id="overlay-map-intro" class="Box-sub"></p>
           <div id="spire-overlay-map-nodes" class="purify-path"></div>
+          <p id="purify-map-hint" class="purify-map-hint Box-sub">⚔️ 遭遇 · 🔥 驿站 · 👹 源点</p>
         </div>
       </div>
       <figure class="Overlay-bg"></figure>
@@ -445,7 +448,7 @@
       <div class="Overlay-content">
         <div class="Box">
           <h2>净化秘典</h2>
-          <ul id="spire-overlay-deck-list" class="Overlay-deck-list"></ul>
+          <div id="spire-overlay-deck-cards" class="Cards PileCards"></div>
         </div>
       </div>
       <figure class="Overlay-bg"></figure>
@@ -454,7 +457,11 @@
     <div id="spire-overlay-exhaust" class="Overlay" data-pos="topleft2">
       <button type="button" class="Overlay-toggle"><u>X</u> 已竭 <span id="label-overlay-exhaust">0</span></button>
       <div class="Overlay-content">
-        <div class="Box"><p id="overlay-exhaust-desc">常驻秘法等已竭技法，本场战斗不再回到待启。</p></div>
+        <div class="Box">
+          <h2>已竭牌堆</h2>
+          <p id="overlay-exhaust-desc" class="Box-sub">常驻秘法等已竭技法，本场战斗不再回到待启。</p>
+          <div id="spire-overlay-exhaust-cards" class="Cards PileCards"></div>
+        </div>
       </div>
       <figure class="Overlay-bg"></figure>
     </div>
@@ -462,7 +469,11 @@
     <div id="spire-overlay-draw" class="Overlay" data-pos="bottomleft">
       <button type="button" class="Overlay-toggle"><u>A</u> <span id="label-overlay-draw">待启 0</span></button>
       <div class="Overlay-content">
-        <div class="Box"><p id="overlay-draw-desc">待启牌堆中的技法会在调息时感通入手。</p></div>
+        <div class="Box">
+          <h2>待启牌堆</h2>
+          <p id="overlay-draw-desc" class="Box-sub">待启牌堆中的技法会在调息时感通入手。</p>
+          <div id="spire-overlay-draw-cards" class="Cards PileCards"></div>
+        </div>
       </div>
       <figure class="Overlay-bg"></figure>
     </div>
@@ -470,7 +481,11 @@
     <div id="spire-overlay-discard" class="Overlay" data-pos="bottomright">
       <button type="button" class="Overlay-toggle"><u>S</u> <span id="label-overlay-discard">余韵 0</span></button>
       <div class="Overlay-content">
-        <div class="Box"><p id="overlay-discard-desc">已打出的技法进入余韵，待启耗尽时会洗入待启。</p></div>
+        <div class="Box">
+          <h2>余韵牌堆</h2>
+          <p id="overlay-discard-desc" class="Box-sub">已打出的技法进入余韵，待启耗尽时会洗入待启。</p>
+          <div id="spire-overlay-discard-cards" class="Cards PileCards"></div>
+        </div>
       </div>
       <figure class="Overlay-bg"></figure>
     </div>

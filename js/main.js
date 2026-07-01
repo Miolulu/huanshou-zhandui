@@ -32,13 +32,13 @@ function enterMainMenu() {
 
 let spireRunEndRecorded = false;
 
-function startSpireRun(mode = RUN_MODES.EXPEDITION) {
+function startSpireRun(mode = RUN_MODES.EXPEDITION, { forceTutorial = false } = {}) {
   spireRunEndRecorded = false;
   let profile = loadProfile();
   const nickname = profile.nickname || '净化师';
-  const skipTutorial = isCombatTutorialDone(profile);
+  const skipTutorial = forceTutorial ? false : isCombatTutorialDone(profile);
 
-  spireRun = createRun(nickname, { mode, skipTutorial });
+  spireRun = createRun(nickname, { mode, skipTutorial, forceTutorial });
   spireRun.onCombatWonCallback = (ids) => {
     profile = markEnemiesDefeated(loadProfile(), ids);
   };
@@ -79,6 +79,7 @@ function initApp() {
     startSpireRun,
     () => startSpireRun(RUN_MODES.TIER),
     () => startSpireRun(RUN_MODES.INFINITE),
+    () => startSpireRun(RUN_MODES.EXPEDITION, { forceTutorial: true }),
   );
 }
 

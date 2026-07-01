@@ -200,6 +200,88 @@ button:not(:disabled),
   align-items: center;
 }
 
+/* StW 中间模态（奖励 / 休息 / 结束） */
+#screen-spire .StwModal {
+  pointer-events: none;
+  z-index: 20;
+}
+
+#screen-spire .StwModal.is-open {
+  pointer-events: auto;
+}
+
+#screen-spire .StwModal .Overlay-bg {
+  display: block;
+  opacity: 0;
+  transition: opacity 200ms var(--stw-ease, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+#screen-spire .StwModal.is-open .Overlay-bg {
+  opacity: 1;
+}
+
+#screen-spire .StwModal .Overlay-content {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.98);
+  padding: 1rem;
+}
+
+#screen-spire .StwModal.is-open .Overlay-content {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 250ms 80ms var(--stw-ease, cubic-bezier(0.23, 1, 0.32, 1)),
+    transform 300ms 80ms var(--stw-ease, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+#screen-spire .StwGameRoot {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+#screen-spire .StwGameLayer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#screen-spire .StwGameLayer.hidden {
+  display: none !important;
+}
+
+/* 牌堆 Overlay 卡牌网格（参照 StW Cards） */
+#screen-spire .PileCards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 0.5rem 0;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+#screen-spire .PileCards .Card.PileCard {
+  width: 7rem;
+  height: 11.5rem;
+  flex-shrink: 0;
+  pointer-events: none;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+#screen-spire .PileCards-empty {
+  text-align: center;
+  opacity: 0.7;
+  padding: 1rem;
+}
+
 #screen-spire .Overlay .Box {
   max-width: 42rem;
   color: hsl(17, 6%, 7%);

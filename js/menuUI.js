@@ -3,63 +3,101 @@ import { loadProfile, saveProfile, checkDailyLogin, claimLoginReward, DAILY_TASK
 import { getCurrentUsername } from './auth.js';
 import { renderCompendiumPanel, renderPurifyRecords } from './compendiumUI.js';
 import { ensurePurifyProfile } from './roguelike/purifyProfile.js';
+import { TERMS } from './roguelike/lore.js';
 
 let callbacks = {};
 
-function openCompendiumModal() {
-  const modal = document.getElementById('compendium-modal');
-  const panel = document.getElementById('compendium-panel');
-  if (!modal || !panel) return;
-  renderCompendiumPanel(panel);
-  modal.classList.remove('hidden');
+function openMenuOverlay(id) {
+  document.querySelectorAll('#screen-menu .MenuOverlay.is-open').forEach((el) => el.classList.remove('is-open'));
+  document.getElementById(id)?.classList.add('is-open');
 }
 
-function closeCompendiumModal() {
-  document.getElementById('compendium-modal')?.classList.add('hidden');
+function closeMenuOverlays() {
+  document.querySelectorAll('#screen-menu .MenuOverlay.is-open').forEach((el) => el.classList.remove('is-open'));
 }
 
-function isCompendiumOpen() {
-  const modal = document.getElementById('compendium-modal');
-  return modal && !modal.classList.contains('hidden');
+function renderManualBody() {
+  const el = document.getElementById('menu-manual-body');
+  if (!el) return;
+  el.innerHTML = `
+    <p>${TERMS.modeDesc}</p>
+    <ul>
+      <li><strong>路线图</strong>：按 M 打开，选择遭遇 / 深渊 / 驿站 / 源点</li>
+      <li><strong>调息战斗</strong>：消耗 ${TERMS.spirit} 打出攻型与守型技法，${TERMS.endTurn} 后敌人行动</li>
+      <li><strong>护幕</strong>：抵御伤害，下轮 ${TERMS.endTurn} 后清零</li>
+      <li><strong>污意</strong>：敌人下一 ${TERMS.turn} 的意图预告</li>
+      <li><strong>悟道</strong>：净化成功后择一技法入 ${TERMS.codex}</li>
+      <li><strong>快捷键</strong>：M 路线图 · D 秘典 · A 待启 · S 余韵 · X 已竭 · J 日志 · Esc 菜单</li>
+    </ul>`;
 }
 
-export function initMenu(onSpireStart, onSpireTier, onSpireInfinite) {
-  callbacks = { onSpireStart, onSpireTier, onSpireInfinite };
+export function initMenu(onSpireStart, onSpireTier, onSpireInfinite, onTutorialStart) {
+  callbacks = { onSpireStart, onSpireTier, onSpireInfinite, onTutorialStart };
   renderProfilePanel();
   renderPurifyRecords(document.getElementById('purify-records'));
+  renderManualBody();
   bindProfileEvents();
 
   checkDailyLogin(loadProfile());
 
   document.getElementById('btn-quick-start')?.addEventListener('click', () => {
     setMenuError('');
+    closeMenuOverlays();
     callbacks.onSpireStart?.();
   });
 
   document.getElementById('btn-tier-start')?.addEventListener('click', () => {
     setMenuError('');
+    closeMenuOverlays();
     callbacks.onSpireTier?.();
   });
 
   document.getElementById('btn-infinite-start')?.addEventListener('click', () => {
     setMenuError('');
+    closeMenuOverlays();
     callbacks.onSpireInfinite?.();
   });
 
-  document.getElementById('btn-show-compendium')?.addEventListener('click', () => {
-    if (isCompendiumOpen()) closeCompendiumModal();
-    else openCompendiumModal();
+  document.getElementById('btn-menu-tutorial')?.addEventListener('click', () => {
+    setMenuError('');
+    closeMenuOverlays();
+    callbacks.onTutorialStart?.();
   });
 
-  document.getElementById('btn-compendium-close')?.addEventListener('click', closeCompendiumModal);
-  document.getElementById('compendium-modal-backdrop')?.addEventListener('click', closeCompendiumModal);
+  document.getElementById('btn-show-compendium')?.addEventListener('click', () => {
+    renderCompendiumPanel(document.getElementById('compendium-panel'));
+    openMenuOverlay('menu-overlay-compendium');
+  });
+
+  document.getElementById('btn-menu-profile')?.addEventListener('click', () => {
+    renderProfilePanel();
+    renderPurifyRecords(document.getElementById('purify-records'));
+    openMenuOverlay('menu-overlay-profile');
+  });
+
+  document.getElementById('btn-menu-manual')?.addEventListener('click', () => {
+    openMenuOverlay('menu-overlay-manual');
+  });
+
+  document.querySelectorAll('[data-close-overlay]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.getElementById(btn.dataset.closeOverlay)?.classList.remove('is-open');
+    });
+  });
+
+  document.querySelectorAll('#screen-menu .MenuOverlay').forEach((overlay) => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.classList.remove('is-open');
+    });
+  });
 }
 
 export function refreshMenuProfile() {
   renderProfilePanel();
   renderPurifyRecords(document.getElementById('purify-records'));
-  if (isCompendiumOpen()) {
-    renderCompendiumPanel(document.getElementById('compendium-panel'));
+  const compendiumPanel = document.getElementById('compendium-panel');
+  if (document.getElementById('menu-overlay-compendium')?.classList.contains('is-open') && compendiumPanel) {
+    renderCompendiumPanel(compendiumPanel);
   }
 }
 
@@ -119,6 +157,6 @@ function bindProfileEvents() {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isCompendiumOpen()) closeCompendiumModal();
+    if (e.key === 'Escape') closeMenuOverlays();
   });
 }

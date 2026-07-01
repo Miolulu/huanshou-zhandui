@@ -8,6 +8,7 @@ import { PurifyBattleEffects } from './purifyBattleEffects.js';
 import { destroyCardDrag, enableCardDrag } from './cardDrag.js';
 import { SpireOverlays } from './spireOverlays.js';
 import { renderPlayerTarget, renderEnemyTarget } from './combatView.js';
+import { renderPileInto } from './pileOverlay.js';
 import { showToast } from '../appShell.js';
 
 function logLineClass(line) {
@@ -45,16 +46,12 @@ export class SpireUI {
       overlayMapNodes: document.getElementById('spire-overlay-map-nodes'),
       overlayMapTitle: document.getElementById('overlay-map-title'),
       overlayMapIntro: document.getElementById('overlay-map-intro'),
-      overlayDeckList: document.getElementById('spire-overlay-deck-list'),
+      overlayDeckCards: document.getElementById('spire-overlay-deck-cards'),
+      overlayDrawCards: document.getElementById('spire-overlay-draw-cards'),
+      overlayDiscardCards: document.getElementById('spire-overlay-discard-cards'),
+      overlayExhaustCards: document.getElementById('spire-overlay-exhaust-cards'),
       overlayLogBody: document.getElementById('spire-overlay-log-body'),
-      viewMap: document.getElementById('spire-view-map'),
       viewCombat: document.getElementById('spire-view-combat'),
-      viewReward: document.getElementById('spire-view-reward'),
-      viewRest: document.getElementById('spire-view-rest'),
-      viewEnd: document.getElementById('spire-view-end'),
-      mapNodes: document.getElementById('spire-map-nodes'),
-      mapTitle: document.getElementById('purify-map-title'),
-      mapIntro: document.getElementById('purify-map-intro'),
       enemyArea: document.getElementById('spire-enemy'),
       playerArea: document.getElementById('spire-player'),
       hand: document.getElementById('spire-hand'),
@@ -223,47 +220,41 @@ export class SpireUI {
     this.renderHud(state);
     this.updateSceneBg(state);
     this.overlays.updateLabels(state);
-    this.hideAllViews();
 
     if (state.phase !== RUN_PHASES.COMBAT || !state.combat) {
       this.clearTutorialOverlay();
       destroyCardDrag();
     }
-    if (state.phase === RUN_PHASES.VICTORY || state.phase === RUN_PHASES.DEFEAT) {
-      this.overlays?.closeAll();
-    }
+
+    this.overlays.closeModals();
+    this.el.viewCombat?.classList.add('hidden');
 
     switch (state.phase) {
       case RUN_PHASES.MAP:
-        this.el.viewMap.classList.remove('hidden');
-        this.renderMap(state);
+        this.renderMapInto(state, this.el.overlayMapNodes, true);
+        this.overlays.open('spire-overlay-map');
         break;
       case RUN_PHASES.COMBAT:
-        this.el.viewCombat.classList.remove('hidden');
+        this.overlays.closeCornerOverlays();
+        this.el.viewCombat?.classList.remove('hidden');
         this.renderCombat(state);
         break;
       case RUN_PHASES.REWARD:
-        this.el.viewReward.classList.remove('hidden');
         this.renderReward(state);
+        this.overlays.open('spire-overlay-reward');
         break;
       case RUN_PHASES.REST:
-        this.el.viewRest.classList.remove('hidden');
+        this.overlays.open('spire-overlay-rest');
         break;
       case RUN_PHASES.VICTORY:
       case RUN_PHASES.DEFEAT:
-        this.el.viewEnd.classList.remove('hidden');
         this.renderEnd(state);
+        this.overlays.open('spire-overlay-end');
         this.recordRunEnd(state.phase === RUN_PHASES.VICTORY);
         break;
       default:
         break;
     }
-  }
-
-  hideAllViews() {
-    ['viewMap', 'viewCombat', 'viewReward', 'viewRest', 'viewEnd'].forEach((k) => {
-      this.el[k]?.classList.add('hidden');
-    });
   }
 
   renderHud(state) {
@@ -300,17 +291,33 @@ export class SpireUI {
 
   onOverlayOpen(id) {
     const state = this.run.getState();
-    if (id === 'spire-overlay-map') this.renderMapInto(state, this.el.overlayMapNodes, state.phase === RUN_PHASES.MAP);
-    if (id === 'spire-overlay-deck') this.renderDeckOverlay();
+    if (id === 'spire-overlay-map') {
+      this.renderMapInto(state, this.el.overlayMapNodes, state.phase === RUN_PHASES.MAP);
+    }
+    if (id === 'spire-overlay-deck') this.renderDeckOverlay(state);
+    if (id === 'spire-overlay-draw') this.renderDrawOverlay(state);
+    if (id === 'spire-overlay-discard') this.renderDiscardOverlay(state);
+    if (id === 'spire-overlay-exhaust') this.renderExhaustOverlay(state);
     if (id === 'spire-overlay-log') this.renderLogOverlay(state);
   }
 
-  renderDeckOverlay() {
-    if (!this.el.overlayDeckList) return;
-    const deck = this.run.deck || [];
-    this.el.overlayDeckList.innerHTML = deck.length
-      ? deck.map((c) => `<li>${c.name} <small>（${c.cost} 灵耗）</small></li>`).join('')
-      : '<li>秘典为空</li>';
+  renderDeckOverlay(state) {
+    renderPileInto(this.el.overlayDeckCards, this.run.deck || [], { emptyText: '秘典为空' });
+  }
+
+  renderDrawOverlay(state) {
+    const cards = state.combat?.drawPile || [];
+    renderPileInto(this.el.overlayDrawCards, cards, { emptyText: '待启为空' });
+  }
+
+  renderDiscardOverlay(state) {
+    const cards = state.combat?.discardPile || [];
+    renderPileInto(this.el.overlayDiscardCards, cards, { emptyText: '余韵为空' });
+  }
+
+  renderExhaustOverlay(state) {
+    const cards = state.combat?.exhaustPile || [];
+    renderPileInto(this.el.overlayExhaustCards, cards, { emptyText: '暂无已竭技法' });
   }
 
   renderLogOverlay(state) {
@@ -356,38 +363,6 @@ export class SpireUI {
       </div>`;
 
     if (interactive) this.bindMapNodeClicks(container);
-  }
-
-  renderMap(state) {
-    if (!this.el.mapNodes) return;
-
-    if (state.mode === RUN_MODES.EXPEDITION && state.map) {
-      if (this.el.mapTitle) this.el.mapTitle.textContent = TERMS.mapTitle;
-      if (this.el.mapIntro) this.el.mapIntro.textContent = TERMS.modeDesc;
-      this.renderExpeditionMap(state, this.el.mapNodes, true);
-      return;
-    }
-
-    if (this.el.mapTitle) {
-      this.el.mapTitle.textContent = state.mode === RUN_MODES.TIER
-        ? `阶层挑战 · 第 ${state.floor} / ${TIER_MAX_FLOOR} 层`
-        : `无限模式 · 第 ${state.floor} 层`;
-    }
-    if (this.el.mapIntro) {
-      this.el.mapIntro.textContent = '选择本层净化路线 · 每层遭遇的污化幻兽组合随机生成';
-    }
-
-    this.el.mapNodes.innerHTML = `
-      <div class="purify-path-row purify-floor-row">
-        ${state.floorChoices.map((n) =>
-          `<button type="button" class="purify-node available ${n.type === 'boss' ? 'boss-node' : ''}" data-type="${n.type || ''}" data-node="${n.id}">
-            <span class="purify-node-icon">${n.icon}</span>
-            <span class="purify-node-label">${n.label}</span>
-          </button>`
-        ).join('')}
-      </div>`;
-
-    this.bindMapNodeClicks(this.el.mapNodes);
   }
 
   bindMapNodeClicks(container) {

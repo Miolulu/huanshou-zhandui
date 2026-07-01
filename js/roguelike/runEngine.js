@@ -25,6 +25,7 @@ export class RunEngine {
       seed = Date.now(),
       mode = RUN_MODES.EXPEDITION,
       skipTutorial = false,
+      forceTutorial = false,
     } = options;
 
     this.playerName = playerName;
@@ -42,7 +43,7 @@ export class RunEngine {
     this.stats = { battlesWon: 0, elitesWon: 0 };
     this.floor = 1;
     this.floorChoices = [];
-    this.pendingTutorial = !skipTutorial;
+    this.pendingTutorial = forceTutorial || !skipTutorial;
     this.isTutorialCombat = false;
     this.lastEncounterIds = [];
     this.onCombatWonCallback = null;

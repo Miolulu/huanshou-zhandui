@@ -1,0 +1,109 @@
+/**
+ * Slay the Web Splash / 主菜单 / 登录 · 布局与卡通手写体
+ */
+@import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+
+#screen-auth,
+#screen-menu {
+  font-family: 'ZCOOL KuaiLe', 'Comic Sans MS', cursive, sans-serif;
+}
+
+#screen-auth.active,
+#screen-menu.active {
+  display: flex;
+  flex-flow: column;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+#screen-auth .App-background--auth {
+  background-image: url('https://www.slaytheweb.cards/images/scenes/moonlit-landscape-1904.jpg');
+}
+
+/* 左下角大标题（参照 StW Splash-title） */
+.App-splash-title {
+  position: fixed;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 3;
+  margin: 0;
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  line-height: 0.95;
+  pointer-events: none;
+  transform: rotate3d(5, 15, 3, -6deg);
+  background-image: linear-gradient(68deg, #ffc516, hsl(39.3, 100%, 60.8%), hsl(47.8, 100%, 50%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.35));
+}
+
+.Splash.Container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  padding: 1rem 0.75rem 5rem;
+}
+
+.Box--menu,
+.Box--auth {
+  max-width: 22rem;
+  width: 100%;
+  animation: stw-splash-in 600ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes stw-splash-in {
+  from { opacity: 0; transform: scale(0.98) translateY(0.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+.Options-divider {
+  border: 0;
+  border-top: 2px dashed hsla(17, 6%, 20%, 0.35);
+  margin: 0.35rem 0;
+}
+
+.Options .Button u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* 主菜单中间 Overlay（档案 / 手册 / 图鉴） */
+#screen-menu .MenuOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: hsla(0, 0%, 0%, 0.72);
+}
+
+#screen-menu .MenuOverlay.is-open {
+  display: flex;
+}
+
+#screen-menu .MenuOverlay .Box {
+  max-width: 36rem;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.MenuOverlay-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  background: transparent;
+  border: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: hsl(17, 6%, 25%);
+}
