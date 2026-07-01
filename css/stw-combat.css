@@ -1,0 +1,518 @@
+/**
+ * Slay the Web 战斗布局 · 照搬结构 + 幻兽战队卡通手写体
+ * 参照 oskarrough/slaytheweb targets.css / app.css / card.css / healthbar.css
+ */
+@import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Fredoka+One&display=swap');
+
+#screen-spire,
+#screen-spire .StwCombat,
+#screen-spire .Box,
+#screen-spire .Card,
+#screen-spire .Target,
+#screen-spire .Overlay-toggle,
+#screen-spire .Button {
+  font-family: 'ZCOOL KuaiLe', 'Fredoka One', 'Comic Sans MS', cursive, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+#screen-spire {
+  --card-width: 10em;
+  --card-height: 17em;
+  --stw-easing: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* 战斗面板占满主区域 */
+#spire-view-combat.purify-pane {
+  padding: 0;
+  overflow: hidden;
+}
+
+#spire-view-combat .StwCombat {
+  flex: 1;
+  width: 100%;
+}
+#screen-spire .StwCombat {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-end;
+  padding: 0 0.5rem 0.25rem;
+  overflow: hidden;
+}
+
+#screen-spire .StwCombat .Targets {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  align-items: stretch;
+  padding-top: 2.5rem;
+  animation: stw-fade-in 800ms var(--stw-easing) 200ms both;
+}
+
+#screen-spire .StwCombat .Targets-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+#screen-spire .StwCombat .Targets-group--enemies {
+  align-items: center;
+}
+
+#screen-spire .StwCombat .Target-host--enemies {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* ===== Target（player.js） ===== */
+#screen-spire .Target {
+  position: relative;
+  margin-top: 0.5rem;
+  padding: 2em 0.75em 1.2em;
+  flex: 1;
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  max-width: 20rem;
+  user-select: none;
+  transition: opacity 200ms, box-shadow 200ms;
+  border-radius: 0.5rem;
+}
+
+#screen-spire .Target--player {
+  margin-right: auto;
+  max-width: 18rem;
+}
+
+#screen-spire .Target--enemy {
+  cursor: var(--cursor-point, pointer);
+  max-width: 16rem;
+}
+
+#screen-spire .Target-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+  min-height: 1.4em;
+  margin: 0 0.25rem 0.35rem;
+  padding: 0.15em 0.5em;
+  background: linear-gradient(10deg, black -80%, transparent 80%);
+  border-top-left-radius: 0.5em;
+  border-top-right-radius: 0.5em;
+}
+
+#screen-spire .Target-sprite {
+  flex-shrink: 0;
+  font-size: 2.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+#screen-spire .Target-intents {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35em;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: normal;
+  flex: 1;
+}
+
+#screen-spire .Target-name {
+  display: inline;
+  color: var(--stw-text, hsl(34, 78%, 85%));
+  text-shadow: 1px 1px 0 #000;
+}
+
+#screen-spire .Target-intent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: #ffb0b0;
+}
+
+#screen-spire .Target-desc {
+  font-size: 0.72rem;
+  color: var(--stw-lightblue, hsl(194.7, 53.3%, 79%));
+  margin: 0 0 0.35rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+#screen-spire .Target-stat-label {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--stw-lightblue);
+  opacity: 0.85;
+}
+
+#screen-spire .Target-powers {
+  margin-top: 0.35rem;
+  margin-left: 0;
+  min-height: 1.2em;
+  text-align: center;
+}
+
+#screen-spire .Target-powers span {
+  display: inline-block;
+  background: hsl(0, 77%, 29%);
+  color: var(--stw-text);
+  margin: 0 0.15rem 0.2rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+#screen-spire .Target-combatText {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 35%;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+
+#screen-spire .Target--isDead {
+  pointer-events: none;
+  opacity: 0.2;
+}
+
+#screen-spire .Target--selected,
+#screen-spire .Target.is-targeted {
+  box-shadow: 0 0 0 3px var(--stw-gold, #ffc107);
+}
+
+#screen-spire .Target.is-dragOver .Healthbar {
+  transition-duration: 100ms;
+  box-shadow:
+    1em 0 2em var(--stw-gold),
+    3px 3px 1px black,
+    0 0 30px 20px rgba(255, 255, 255, 0.35);
+}
+
+#screen-spire .Target--isDead .Healthbar {
+  background: hsl(0, 77%, 29%);
+}
+
+/* ===== Healthbar ===== */
+#screen-spire .Healthbar {
+  position: relative;
+  text-align: center;
+  background: darkslategrey;
+  color: var(--stw-text-inverse, rgba(0, 0, 0, 0.95));
+  transition: box-shadow 400ms;
+  border: 3px solid rgba(0, 0, 0, 0.85);
+  border-radius: 0.5rem;
+  min-height: 2rem;
+}
+
+#screen-spire .Healthbar--hasBlock .Healthbar-blockBar {
+  background: #afafff;
+}
+
+#screen-spire .Healthbar-label {
+  position: relative;
+  z-index: 1;
+  margin: 0.35em 0;
+  font-weight: bold;
+  color: var(--stw-text);
+  text-shadow:
+    1px 0 0 rgba(0, 0, 0, 0.95),
+    -1px 0 0 rgba(0, 0, 0, 0.95),
+    0 1px 0 rgba(0, 0, 0, 0.95),
+    0 -1px 0 rgba(0, 0, 0, 0.95),
+    1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+#screen-spire .Healthbar-label span {
+  display: inline-block;
+  transform: scale(1.15);
+}
+
+#screen-spire .Healthbar-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0%;
+  max-width: 100%;
+  height: 100%;
+  background: var(--stw-gold, #ffc107);
+  transition: width 600ms var(--stw-easing), background 300ms var(--stw-easing);
+  border-radius: 0.4rem;
+}
+
+#screen-spire .Target--player .Healthbar-bar {
+  background: hsl(194, 55%, 48%);
+}
+
+#screen-spire .Target--enemy .Healthbar-bar {
+  background: hsl(0, 55%, 45%);
+}
+
+/* ===== 灵力 + 收势行 Split ===== */
+#screen-spire .StwCombat-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 3;
+  margin: 0.25rem 0 0;
+  padding: 0 0.5rem;
+}
+
+#screen-spire .StwCombat-actions.no-energy .EnergyBadge {
+  background: #272d2b;
+  animation: pulse-energy 1.5s infinite alternate ease-out;
+}
+
+@keyframes pulse-energy {
+  from { background: var(--stw-lightblue); }
+  to { background: #fff; box-shadow: 0 0 13px 3px var(--stw-gold); }
+}
+
+#screen-spire .StwCombat-energy.EnergyBadge {
+  position: relative;
+  z-index: 1;
+  font-size: 1.35rem;
+  width: 2.4em;
+  height: 2.4em;
+  margin: 0 auto 0 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 3px solid rgba(0, 0, 0, 0.85);
+  transform: rotate(45deg);
+  background-color: var(--stw-teal, #116f54);
+  box-shadow: 0 0 0.1em var(--stw-lightblue);
+  transition: background 700ms;
+}
+
+#screen-spire .StwCombat-energy.EnergyBadge > span {
+  transform: rotate(-45deg);
+  font-family: 'Fredoka One', 'ZCOOL KuaiLe', cursive, sans-serif;
+  text-shadow: 1px 1px 0 #000;
+  color: #fff;
+}
+
+#screen-spire .Actions {
+  text-align: right;
+  margin: 0 0.5rem 0 0;
+}
+
+#screen-spire .Actions .Button.EndTurn {
+  font-size: 1rem;
+  padding: 0.45em 1rem;
+  border: 3px solid rgba(0, 0, 0, 0.85);
+  border-radius: 0.4em;
+  background: hsl(194.7, 53.3%, 79%);
+  color: rgba(0, 0, 0, 0.95);
+  box-shadow: 0 0.2em rgba(0, 0, 0, 0.85);
+  cursor: var(--cursor-point, pointer);
+  font-family: 'ZCOOL KuaiLe', cursive, sans-serif;
+}
+
+#screen-spire .Actions .Button.EndTurn:hover {
+  box-shadow: 0 0 15px 4px var(--stw-gold);
+}
+
+#screen-spire .Actions .Button.EndTurn:active:not(:disabled) {
+  position: relative;
+  top: 0.1em;
+  box-shadow: none;
+}
+
+#screen-spire .Actions .Button.EndTurn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Hand + Cards ===== */
+#screen-spire .StwCombat .Hand {
+  margin-top: 0.5rem;
+  transform: translateY(1rem);
+  position: relative;
+  z-index: 4;
+  flex-shrink: 0;
+}
+
+#screen-spire .StwCombat .Cards {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  min-height: var(--card-height);
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
+
+#screen-spire .StwCombat .Hand .Card {
+  width: var(--card-width);
+  height: var(--card-height);
+  flex-shrink: 1;
+  margin-left: -1.5rem;
+  cursor: var(--cursor-grab, grab);
+}
+
+#screen-spire .StwCombat .Hand .Card:first-child {
+  margin-left: 0;
+}
+
+#screen-spire .StwCombat .Hand .Card:hover:not(.disabled) {
+  box-shadow: 0 0 0.75em gold;
+  z-index: 2;
+}
+
+#screen-spire .Card {
+  position: relative;
+  display: flex;
+  border: 0.5em ridge #53b5a8;
+  border-width: 0.5rem;
+  border-radius: 0.15rem;
+  background: transparent;
+  padding: 0;
+  image-rendering: pixelated;
+}
+
+#screen-spire .Card-inner {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-flow: column nowrap;
+  background: #2a3335;
+  color: var(--stw-text);
+  text-align: center;
+  user-select: none;
+  border-radius: 0.1rem;
+  overflow: hidden;
+}
+
+#screen-spire .Card-media {
+  margin: 0;
+  border-bottom: 2px solid #2a3335;
+  background: #111;
+}
+
+#screen-spire .Card-art {
+  height: 7.5rem;
+}
+
+#screen-spire .Card-name {
+  padding: 0.45rem 0.2rem 0.1rem;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+#screen-spire .Card-type {
+  margin: -0.75rem auto 0;
+  padding: 2px 6px 4px;
+  font-size: 0.72rem;
+  background: hsl(191.3, 33.3%, 18.8%);
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-bottom-width: 2px;
+  border-radius: 0.4em;
+  width: fit-content;
+}
+
+#screen-spire .Card[data-card-type="attack"] .Card-type {
+  background: hsl(0deg 33% 19%);
+}
+
+#screen-spire .Card[data-card-type="skill"] .Card-type {
+  background: hsl(200deg 33% 19%);
+}
+
+#screen-spire .Card[data-card-type="power"] .Card-type {
+  background: hsl(45deg 33% 19%);
+}
+
+#screen-spire .Card-description {
+  font-size: 0.82rem;
+  padding: 0.15rem 0.35rem 0.5rem;
+  margin: 0;
+  line-height: 1.25;
+  flex: 1;
+}
+
+#screen-spire .Card .Card-energy {
+  position: absolute;
+  top: -1.3em;
+  left: -0.3em;
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+  font-size: 1.1rem;
+  z-index: 2;
+}
+
+#screen-spire .Hand .Card[disabled].disabled .EnergyBadge,
+#screen-spire .Hand .Card.disabled .EnergyBadge {
+  color: #fb1515;
+  background-color: hsl(0deg 73% 25%);
+}
+
+#screen-spire .purify-play-zone {
+  position: absolute;
+  inset: 18% 10% 42%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#screen-spire #spire-effect-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  #screen-spire {
+    --card-width: 8.5em;
+    --card-height: 14em;
+  }
+
+  #screen-spire .StwCombat .Targets {
+    grid-template-columns: 1fr;
+    padding-top: 3rem;
+  }
+
+  #screen-spire .Target--player {
+    max-width: 100%;
+    order: 2;
+  }
+
+  #screen-spire .Targets-group--enemies {
+    order: 1;
+  }
+
+  #screen-spire .Card-art {
+    height: 5.5rem;
+  }
+}
+
+@media (max-height: 640px) {
+  #screen-spire {
+    --card-height: 13em;
+  }
+
+  #screen-spire .Card-art {
+    height: 4.5rem;
+  }
+}

@@ -40,6 +40,7 @@ export class SpireOverlays {
         d: 'spire-overlay-deck',
         a: 'spire-overlay-draw',
         s: 'spire-overlay-discard',
+        x: 'spire-overlay-exhaust',
         j: 'spire-overlay-log',
       };
       if (map[key]) {
@@ -72,8 +73,10 @@ export class SpireOverlays {
     const drawEl = document.getElementById('label-overlay-draw');
     const discardEl = document.getElementById('label-overlay-discard');
     const deckEl = document.getElementById('label-overlay-deck');
+    const exhaustEl = document.getElementById('label-overlay-exhaust');
     if (drawEl) drawEl.textContent = c ? `待启 ${c.drawCount}` : `秘典 ${state.deckSize}`;
     if (discardEl) discardEl.textContent = c ? `余韵 ${c.discardCount}` : '余韵 0';
     if (deckEl) deckEl.textContent = `秘典 ${state.deckSize}`;
+    if (exhaustEl) exhaustEl.textContent = c ? String(c.exhaustCount ?? 0) : '0';
   }
 }

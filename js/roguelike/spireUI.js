@@ -2,24 +2,13 @@
 import { RUN_PHASES, RUN_MODES, TIER_MAX_FLOOR } from './runEngine.js';
 import { modeLabel } from './floorMap.js';
 import { renderPurifyCardHtml } from './cardUI.js';
-import { intentIcon, intentLabel } from './enemies.js';
 import { TERMS } from './lore.js';
 import { CombatTutorial } from './combatTutorial.js';
 import { PurifyBattleEffects } from './purifyBattleEffects.js';
 import { destroyCardDrag, enableCardDrag } from './cardDrag.js';
 import { SpireOverlays } from './spireOverlays.js';
+import { renderPlayerTarget, renderEnemyTarget } from './combatView.js';
 import { showToast } from '../appShell.js';
-
-function hpBarHtml(current, max, label = 'HP', color = 'hsl(120, 45%, 42%)', block = 0) {
-  const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
-  const blockPct = max > 0 && block > 0 ? Math.min(100 - pct, (block / max) * 100) : 0;
-  const blockWidth = Math.min(100, pct + blockPct);
-  return `<div class="Healthbar hp-bar ${block > 0 ? 'Healthbar--hasBlock' : ''}" role="progressbar" aria-valuenow="${current}" aria-valuemax="${max}">
-    <p class="Healthbar-label hp-text"><span>${label} ${current}</span>/${max}</p>
-    <div class="Healthbar-bar hp-fill" style="width:${pct}%;background:${color}"></div>
-    ${block > 0 ? `<div class="Healthbar-blockBar" style="width:${blockWidth}%"></div>` : ''}
-  </div>`;
-}
 
 function logLineClass(line) {
   if (/伤害|扑击|攻\d|受到 \d+/.test(line)) return 'log-damage';
@@ -69,11 +58,9 @@ export class SpireUI {
       enemyArea: document.getElementById('spire-enemy'),
       playerArea: document.getElementById('spire-player'),
       hand: document.getElementById('spire-hand'),
-      piles: document.getElementById('spire-piles'),
-      energy: document.getElementById('spire-energy'),
+      energyText: document.getElementById('spire-energy-text'),
       combatLog: document.getElementById('spire-combat-log'),
       effectLayer: document.getElementById('spire-effect-layer'),
-      combatStage: document.getElementById('spire-combat-stage'),
       actionBar: document.getElementById('purify-action-bar'),
       combatBattle: document.querySelector('#spire-view-combat .purify-battle'),
       rewardCards: document.getElementById('spire-reward-cards'),
@@ -134,7 +121,7 @@ export class SpireUI {
 
   bindBattleEffectRefs() {
     this.battleEffects.bind({
-      stage: this.el.combatStage,
+      stage: this.el.combatBattle,
       effectLayer: this.el.effectLayer,
       enemyArea: this.el.enemyArea,
       playerArea: this.el.playerArea,
@@ -190,7 +177,11 @@ export class SpireUI {
     if (endBtn) {
       const canEnd = c.phase === 'player' && (!this.tutorial?.active || this.tutorial.canEndTurn());
       endBtn.disabled = !canEnd || this.combatBusy;
-      endBtn.textContent = TERMS.endTurn;
+      const label = TERMS.endTurn;
+      endBtn.innerHTML = `<u>${label.charAt(0)}</u>${label.slice(1)}`;
+    }
+    if (this.el.energyText) {
+      this.el.energyText.textContent = `${c.player.energy}/${c.player.maxEnergy}`;
     }
     if (this.el.actionBar) {
       const noEnergy = c.phase === 'player' && c.player.energy <= 0;
@@ -449,52 +440,37 @@ export class SpireUI {
     }
 
     const enemies = c.enemies || (c.enemy ? [c.enemy] : []);
-    this.el.enemyArea.innerHTML = `<div class="purify-foe-group">${enemies.map((e, i) => {
-      const dead = e.hp <= 0;
-      const targeted = i === c.targetIndex && !dead;
-      return `
-      <button type="button" class="purify-foe-card Target ${dead ? 'Target--isDead dead' : ''} ${targeted ? 'targeted' : ''}"
-        data-target="${i}" ${dead ? 'disabled' : ''}>
-        <div class="purify-foe-icon">${e.icon || '👹'}</div>
-        <div class="purify-foe-name">${e.name}</div>
-        ${e.desc && enemies.length === 1 ? `<div class="purify-foe-desc">${e.desc}</div>` : ''}
-        ${hpBarHtml(e.hp, e.maxHp, TERMS.taint, 'hsl(0, 55%, 45%)', e.block || 0)}
-        ${!dead ? `<div class="purify-intent">${intentIcon(e.intent)} ${intentLabel(e.intent)}</div>` : '<div class="purify-foe-dead">已净化</div>'}
-      </button>`;
-    }).join('')}</div>`;
+    this.el.enemyArea.innerHTML = enemies.map((e, i) =>
+      renderEnemyTarget(e, i, {
+        targeted: i === c.targetIndex && e.hp > 0,
+        showDesc: enemies.length === 1,
+      })
+    ).join('');
 
-    this.el.enemyArea.querySelectorAll('.purify-foe-card:not(.dead)').forEach((btn) => {
-      btn.onclick = () => {
-        this.run.setCombatTarget(Number(btn.dataset.target));
+    this.el.enemyArea.querySelectorAll('.Target--enemy:not(.Target--isDead)').forEach((el) => {
+      const pick = () => {
+        this.run.setCombatTarget(Number(el.dataset.target));
         if (this.tutorial?.currentStep?.action === 'observe') {
           this.tutorial.onAction('observe');
         }
         this.render();
       };
+      el.onclick = pick;
+      el.onkeydown = (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          pick();
+        }
+      };
     });
 
+    this.el.playerArea.innerHTML = renderPlayerTarget(c);
+
+    if (this.el.energyText) {
+      this.el.energyText.textContent = `${c.player.energy}/${c.player.maxEnergy}`;
+    }
+
     const p = c.player;
-    this.el.playerArea.innerHTML = `
-      <div class="purify-self-stats">
-        ${hpBarHtml(p.hp, p.maxHp, TERMS.mind, 'hsl(194, 55%, 48%)', p.block || 0)}
-        <div class="purify-stat">🛡 ${TERMS.barrier} ${p.block}</div>
-        ${c.strength ? `<div class="purify-stat">💪 ${TERMS.purifyPower} ${c.strength}</div>` : ''}
-        ${c.weak ? `<div class="purify-stat miasma">${TERMS.miasma} ${c.weak}</div>` : ''}
-      </div>`;
-
-    if (this.el.piles) {
-      this.el.piles.innerHTML = `
-        <div class="purify-pile" title="${TERMS.drawPile}"><strong>${c.drawCount}</strong>${TERMS.drawPile}</div>
-        <div class="purify-pile" title="${TERMS.discardPile}"><strong>${c.discardCount}</strong>${TERMS.discardPile}</div>
-        <div class="purify-pile" title="${TERMS.exhaustPile}"><strong>${c.exhaustCount}</strong>${TERMS.exhaustPile}</div>`;
-    }
-
-    if (this.el.energy) {
-      this.el.energy.innerHTML = Array.from({ length: p.maxEnergy }, (_, i) =>
-        `<span class="EnergyBadge ${i < p.energy ? 'filled' : 'empty'}" aria-hidden="true"><span>✦</span></span>`
-      ).join('');
-    }
-
     this.el.hand.innerHTML = c.hand.map((card) => {
       const energyOk = card.cost <= p.energy && c.phase === 'player';
       const tutorialOk = !this.tutorial?.active || this.tutorial.canPlayCard(card, c);

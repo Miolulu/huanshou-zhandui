@@ -16,12 +16,13 @@ function canDropOn(cardEl, targetEl) {
   const type = cardEl.dataset.cardType;
   if (cardNeedsEnemyTarget(type)) {
     return targetEl.classList.contains('Target')
-      && !targetEl.classList.contains('Target--isDead')
-      && !targetEl.classList.contains('dead');
+      && targetEl.dataset.type === 'enemy'
+      && !targetEl.classList.contains('Target--isDead');
   }
-  return targetEl.classList.contains('purify-self-zone')
+  return targetEl.dataset.type === 'player'
+    || targetEl.classList.contains('Target--player')
     || targetEl.classList.contains('purify-play-zone')
-    || targetEl.classList.contains('purify-stage');
+    || targetEl.classList.contains('StwCombat');
 }
 
 function resolveTargetIndex(targetEl, fallbackIndex) {
@@ -48,8 +49,8 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
 
   destroyCardDrag();
 
-  const dropTargets = root.querySelectorAll('.Target, .purify-self-zone, .purify-play-zone, .purify-stage');
-  const cards = root.querySelectorAll('.purify-hand .Card:not(.disabled)');
+  const dropTargets = root.querySelectorAll('.Target[data-type], .purify-play-zone, .StwCombat');
+  const cards = root.querySelectorAll('#spire-hand .Card:not(.disabled)');
 
   cards.forEach((card) => {
     const draggable = Draggable.create(card, {

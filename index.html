@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="css/slaytheweb-ui.css">
   <link rel="stylesheet" href="css/slaytheweb-overlays.css">
   <link rel="stylesheet" href="css/combat-fx.css">
+  <link rel="stylesheet" href="css/stw-combat.css">
 </head>
 <body>
   <!-- ===== 登录 / 注册 ===== -->
@@ -354,28 +355,34 @@
       </section>
 
       <section id="spire-view-combat" class="purify-pane hidden">
-        <div class="purify-battle">
-          <aside id="spire-combat-log" class="purify-journal" aria-label="净化日志"></aside>
-          <div id="spire-combat-stage" class="purify-stage">
-            <div class="purify-play-zone" aria-hidden="true" title="拖入守型/秘法技法"></div>
-            <div id="spire-enemy" class="purify-foe-zone Targets"></div>
-            <div id="purify-action-bar" class="purify-action-bar">
-              <div class="purify-spirit-wrap">
-                <span class="purify-spirit-label">灵力</span>
-                <div id="spire-energy" class="purify-spirit-orbs"></div>
-              </div>
-              <button type="button" id="btn-spire-end-turn" class="purify-end-turn EndTurn">收势</button>
+        <div class="purify-battle StwCombat">
+          <div class="Targets Split">
+            <div class="Targets-group">
+              <div id="spire-player"></div>
             </div>
-            <div id="spire-player" class="purify-self-zone"></div>
+            <div class="Targets-group Targets-group--enemies">
+              <div id="spire-enemy" class="Target-host--enemies Targets"></div>
+            </div>
           </div>
-          <aside id="spire-piles" class="purify-piles-bar" aria-label="牌堆"></aside>
-          <div class="purify-hand-wrap Hand">
-            <span class="purify-hand-label">当前技法 · 拖拽至目标出牌</span>
-            <div id="spire-hand" class="purify-hand Cards"></div>
+
+          <div class="Split StwCombat-actions" id="purify-action-bar">
+            <div id="spire-energy" class="EnergyBadge StwCombat-energy" title="灵力">
+              <span id="spire-energy-text">3/3</span>
+            </div>
+            <p class="Actions">
+              <button type="button" id="btn-spire-end-turn" class="Button EndTurn purify-end-turn"><u>收</u>势</button>
+            </p>
           </div>
+
+          <div class="Hand">
+            <div id="spire-hand" class="Cards purify-hand"></div>
+          </div>
+
+          <div class="purify-play-zone" aria-hidden="true" title="拖入守型/秘法技法"></div>
           <div id="spire-effect-layer" aria-hidden="true"></div>
           <div id="purify-tutorial-host" class="purify-tutorial-host hidden" aria-live="polite"></div>
         </div>
+        <aside id="spire-combat-log" class="hidden" aria-hidden="true"></aside>
       </section>
 
       <section id="spire-view-reward" class="purify-pane hidden">
@@ -444,6 +451,14 @@
       <figure class="Overlay-bg"></figure>
     </div>
 
+    <div id="spire-overlay-exhaust" class="Overlay" data-pos="topleft2">
+      <button type="button" class="Overlay-toggle"><u>X</u> 已竭 <span id="label-overlay-exhaust">0</span></button>
+      <div class="Overlay-content">
+        <div class="Box"><p id="overlay-exhaust-desc">常驻秘法等已竭技法，本场战斗不再回到待启。</p></div>
+      </div>
+      <figure class="Overlay-bg"></figure>
+    </div>
+
     <div id="spire-overlay-draw" class="Overlay" data-pos="bottomleft">
       <button type="button" class="Overlay-toggle"><u>A</u> <span id="label-overlay-draw">待启 0</span></button>
       <div class="Overlay-content">
@@ -460,7 +475,7 @@
       <figure class="Overlay-bg"></figure>
     </div>
 
-    <div id="spire-overlay-log" class="Overlay" data-pos="topleft2">
+    <div id="spire-overlay-log" class="Overlay" data-pos="bottomcenter">
       <button type="button" class="Overlay-toggle"><u>J</u> 净化日志</button>
       <div class="Overlay-content">
         <div class="Box">

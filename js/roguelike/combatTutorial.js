@@ -4,7 +4,7 @@ export const COMBAT_TUTORIAL_STEPS = [
     id: 'intent',
     title: '读懂污意',
     text: '敌人头上的「污意」预告了下一调息的行动。先观察它要暴走还是缩壳。',
-    highlight: '.purify-intent',
+    highlight: '.Target-intent',
     action: 'observe',
   },
   {
@@ -34,7 +34,7 @@ export const COMBAT_TUTORIAL_STEPS = [
     id: 'finish',
     title: '完成净化',
     text: '继续攻击直到污秽归零。净化成功后，该幻兽的故事会收录进怪物手册。',
-    highlight: '.purify-foe-card',
+    highlight: '.Target--enemy',
     action: 'win',
   },
 ];

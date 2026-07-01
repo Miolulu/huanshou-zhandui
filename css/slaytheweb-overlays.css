@@ -146,6 +146,12 @@ button:not(:disabled),
 #screen-spire .Overlay[data-pos="topleft2"] .Overlay-toggle { top: 0; left: 5.5rem; }
 #screen-spire .Overlay[data-pos="bottomleft"] .Overlay-toggle { bottom: 0; top: auto; left: 0; }
 #screen-spire .Overlay[data-pos="bottomright"] .Overlay-toggle { bottom: 0; top: auto; right: 0; }
+#screen-spire .Overlay[data-pos="bottomcenter"] .Overlay-toggle {
+  bottom: 0;
+  top: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
 
 #screen-spire .Overlay-content {
   position: absolute;

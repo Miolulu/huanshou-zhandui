@@ -170,18 +170,19 @@ export class PurifyBattleEffects {
   }
 
   floatOnFoe(index, text, kind) {
-    const card = this.enemyArea?.querySelector(`.purify-foe-card[data-target="${index}"]`);
-    const anchor = card?.querySelector('.Healthbar') || card?.querySelector('.purify-foe-icon') || card;
+    const card = this.enemyArea?.querySelector(`.Target[data-target="${index}"]`);
+    const anchor = card?.querySelector('.Target-combatText') || card?.querySelector('.Healthbar') || card;
     this.floatAt(anchor, text, kind);
   }
 
   floatOnPlayer(text, kind) {
-    const anchor = this.playerArea?.querySelector('.Healthbar') || this.playerArea;
+    const card = this.playerArea?.querySelector('.Target--player') || this.playerArea;
+    const anchor = card?.querySelector('.Target-combatText') || card?.querySelector('.Healthbar') || card;
     this.floatAt(anchor, text, kind);
   }
 
   shakeFoe(index) {
-    const card = this.enemyArea?.querySelector(`.purify-foe-card[data-target="${index}"]`);
+    const card = this.enemyArea?.querySelector(`.Target[data-target="${index}"]`);
     card?.classList.add('foe-hit');
     setTimeout(() => card?.classList.remove('foe-hit'), 450);
   }
@@ -192,17 +193,17 @@ export class PurifyBattleEffects {
   }
 
   flashFoe(index, cls) {
-    const card = this.enemyArea?.querySelector(`.purify-foe-card[data-target="${index}"]`);
+    const card = this.enemyArea?.querySelector(`.Target[data-target="${index}"]`);
     if (!card) return;
     card.classList.add(cls);
     setTimeout(() => card.classList.remove(cls), 380);
   }
 
   flashPlayer(cls) {
-    const stats = this.playerArea?.querySelector('.purify-self-stats');
-    if (!stats) return;
-    stats.classList.add(cls);
-    setTimeout(() => stats.classList.remove(cls), 380);
+    const target = this.playerArea?.querySelector('.Target--player') || this.playerArea;
+    if (!target) return;
+    target.classList.add(cls);
+    setTimeout(() => target.classList.remove(cls), 380);
   }
 
   flashStage(cls) {
@@ -211,7 +212,7 @@ export class PurifyBattleEffects {
   }
 
   highlightFoe(index) {
-    const card = this.enemyArea?.querySelector(`.purify-foe-card[data-target="${index}"]`);
+    const card = this.enemyArea?.querySelector(`.Target[data-target="${index}"]`);
     if (!card) return;
     card.classList.add('foe-acting');
     setTimeout(() => card?.classList.remove('foe-acting'), 520);
@@ -223,8 +224,9 @@ export class PurifyBattleEffects {
   }
 
   pulsePlayerBarrier() {
-    const stat = this.playerArea?.querySelector('.purify-stat');
-    stat?.classList.add('stat-pulse');
-    setTimeout(() => stat?.classList.remove('stat-pulse'), 400);
+    const bar = this.playerArea?.querySelector('.Healthbar-blockBar')
+      || this.playerArea?.querySelector('.Healthbar');
+    bar?.classList.add('stat-pulse');
+    setTimeout(() => bar?.classList.remove('stat-pulse'), 400);
   }
 }
