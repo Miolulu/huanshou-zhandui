@@ -19,16 +19,24 @@ function cardDragTarget(type) {
   return 'player';
 }
 
-export function renderPurifyCardHtml(card, { playable = true, extraClass = '', tag = 'button' } = {}) {
+export function renderPurifyCardHtml(card, {
+  playable = true,
+  extraClass = '',
+  tag = 'button',
+  handCard = false,
+} = {}) {
   const el = ELEMENT_ART_CLASS[card.element] || ELEMENT_ART_CLASS.neutral;
-  const typeAttr = tag === 'button' ? 'type="button"' : '';
-  const disabledAttr = tag === 'button' && !playable ? 'disabled' : '';
+  const useDiv = handCard || tag === 'div';
+  const actualTag = useDiv ? 'div' : tag;
+  const typeAttr = actualTag === 'button' ? 'type="button"' : '';
+  const disabledAttr = actualTag === 'button' && !playable ? 'disabled' : '';
+  const roleAttr = useDiv ? `role="button" tabindex="${playable ? 0 : -1}"` : '';
   const dragTarget = cardDragTarget(card.type);
   const artSrc = cardArtUrl(card.id);
   const artInner = artSrc
     ? `<img class="Card-art-img" src="${artSrc}" alt="" loading="lazy" draggable="false">`
     : `<div class="Card-art ${el}" role="img" aria-label="${card.name}"></div>`;
-  return `<${tag} ${typeAttr}
+  return `<${actualTag} ${typeAttr} ${roleAttr}
     class="purify-card Card ${cardTypeClass(card.type)} ${el} ${extraClass} ${playable ? '' : 'disabled'}"
     data-uid="${card.uid}" data-card-id="${card.id}" data-card-type="${card.type}" data-card-target="${dragTarget}" ${disabledAttr}>
     <div class="Card-inner">

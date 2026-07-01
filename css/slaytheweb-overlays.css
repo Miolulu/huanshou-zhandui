@@ -67,12 +67,16 @@ button:not(:disabled),
 
 #screen-spire .purify-hud-float {
   position: absolute;
-  top: 0.65rem;
-  right: 5.5rem;
+  top: 2.85rem;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
   z-index: 4;
   display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+  justify-content: center;
+  max-width: calc(100% - 1rem);
   pointer-events: none;
 }
 
@@ -509,6 +513,16 @@ button:not(:disabled),
 #screen-spire .purify-journal-overlay .purify-log-line.log-heal { color: #208850; }
 
 @media (max-width: 768px) {
+  #screen-spire .purify-hud-float {
+    top: 2.55rem;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+  }
+
+  #screen-spire .purify-hud-chip {
+    padding: 0.18rem 0.42rem;
+    font-size: 0.68rem;
+  }
+
   #screen-spire .Overlay[data-pos="topright2"] .Overlay-toggle { right: 4.5rem; font-size: 0.75rem; }
-  #screen-spire .purify-hud-float { right: 4rem; font-size: 0.72rem; }
 }

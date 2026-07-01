@@ -21,13 +21,86 @@ const SRC = path.join(
 
 const src = (name) => path.join(SRC, name);
 
-async function crop(outRel, file, region, { trim = true } = {}) {
+function shrinkRegion(region, px = 4) {
+  const inset = Math.min(px, Math.floor(region.width / 8), Math.floor(region.height / 8));
+  return {
+    left: region.left + inset,
+    top: region.top + inset,
+    width: Math.max(8, region.width - inset * 2),
+    height: Math.max(8, region.height - inset * 2),
+  };
+}
+
+async function keyBlackToAlpha(input, { tolerance = 24, softness = 42 } = {}) {
+  const source = typeof input?.ensureAlpha === 'function' ? input : sharp(input);
+  const { data, info } = await source
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const lum = Math.max(r, g, b);
+    if (lum <= tolerance) {
+      data[i + 3] = 0;
+    } else if (lum <= softness) {
+      const t = (lum - tolerance) / (softness - tolerance);
+      data[i + 3] = Math.round(data[i + 3] * t);
+    }
+  }
+
+  return sharp(data, {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  });
+}
+
+async function trimBlackEdges(input, threshold = 6) {
+  const source = typeof input?.trim === 'function' ? input : sharp(input);
+  try {
+    const trimmed = source.trim({
+      threshold,
+      background: { r: 0, g: 0, b: 0 },
+      lineArt: true,
+    });
+    const meta = await trimmed.metadata();
+    if ((meta.width || 0) > 6 && (meta.height || 0) > 6) return trimmed;
+  } catch {
+    /* keep source */
+  }
+  return source;
+}
+
+/**
+ * @param {'card'|'sprite'|'scene'|'icon'|'raw'} mode
+ */
+async function crop(outRel, file, region, { mode = 'card' } = {}) {
   const out = path.join(ROOT, outRel);
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  let pipeline = sharp(file).extract(region);
-  if (trim) {
-    pipeline = pipeline.trim({ threshold: 12, background: '#000000' });
+
+  const inset = mode === 'scene' ? 1 : mode === 'raw' ? 0 : 5;
+  let pipeline = sharp(file).extract(shrinkRegion(region, inset));
+
+  if (mode === 'sprite' || mode === 'icon') {
+    let buf = await pipeline.png().toBuffer();
+    try {
+      buf = await (await trimBlackEdges(sharp(buf), mode === 'icon' ? 10 : 8)).png().toBuffer();
+    } catch {
+      /* keep extracted buffer */
+    }
+    pipeline = await keyBlackToAlpha(sharp(buf), {
+      tolerance: mode === 'icon' ? 18 : 26,
+      softness: mode === 'icon' ? 34 : 48,
+    });
+  } else if (mode === 'card') {
+    try {
+      pipeline = await trimBlackEdges(pipeline, 5);
+    } catch {
+      /* keep extract */
+    }
   }
+
   await pipeline.png({ compressionLevel: 9 }).toFile(out);
   console.log('  ✓', outRel);
 }
@@ -68,7 +141,7 @@ async function main() {
     ['assets/enemies/corrupted_shadow.png', { left: 0, top: eh * 2, width: ew, height: ehLast }],
     ['assets/enemies/boss_dragon.png', { left: ew, top: eh * 2, width: 1024 - ew, height: ehLast }],
   ];
-  for (const [out, region] of map) await crop(out, enemies, region);
+  for (const [out, region] of map) await crop(out, enemies, region, { mode: 'sprite' });
 
   console.log('Cards (starter + extras)…');
   const ch = Math.floor(682 / 3);
@@ -129,8 +202,8 @@ async function main() {
 
   console.log('Player…');
   try {
-    await crop('assets/player/purifier_portrait.png', player, { left: 0, top: 0, width: 512, height: 682 }, { trim: false });
-    await crop('assets/player/purifier_battle.png', player, { left: 512, top: 0, width: 512, height: 682 }, { trim: false });
+    await crop('assets/player/purifier_portrait.png', player, { left: 0, top: 0, width: 512, height: 682 }, { mode: 'sprite' });
+    await crop('assets/player/purifier_battle.png', player, { left: 512, top: 0, width: 512, height: 682 }, { mode: 'sprite' });
   } catch (e) {
     console.warn('  ⚠ Player sprites skipped:', e.message);
   }
@@ -148,7 +221,7 @@ async function main() {
         top: row * sh,
         width: w,
         height: h,
-      });
+      }, { mode: 'scene' });
       idx++;
     }
   }
@@ -168,11 +241,11 @@ async function main() {
   const iconX0 = 280;
   const iconGap = 74;
   for (const [out, i] of intents) {
-    await crop(out, uiFile, { left: iconX0 + i * iconGap, top: iconY, width: iw, height: ih });
+    await crop(out, uiFile, { left: iconX0 + i * iconGap, top: iconY, width: iw, height: ih }, { mode: 'icon' });
   }
 
   console.log('Energy badge…');
-  await crop('assets/ui/energy-badge.png', uiFile, { left: 360, top: 130, width: 100, height: 100 });
+  await crop('assets/ui/energy-badge.png', uiFile, { left: 360, top: 130, width: 100, height: 100 }, { mode: 'icon' });
 
   console.log('Done.');
 }

@@ -205,7 +205,9 @@ export class SpireUI {
     if (phase !== RUN_PHASES.COMBAT) {
       this.render();
     } else {
-      this.updateCombatChrome(this.run.getState().combat);
+      const combat = this.run.getState().combat;
+      this.updateCombatChrome(combat);
+      this.setupCardDrag(combat);
     }
     return result;
   }
@@ -484,7 +486,7 @@ export class SpireUI {
       const energyOk = card.cost <= p.energy && c.phase === 'player';
       const tutorialOk = !this.tutorial?.active || this.tutorial.canPlayCard(card, c);
       const playable = energyOk && tutorialOk;
-      return renderPurifyCardHtml(card, { playable });
+      return renderPurifyCardHtml(card, { playable, handCard: true });
     }).join('');
 
     this.setupCardDrag(c);

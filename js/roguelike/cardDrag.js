@@ -71,7 +71,9 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
     const draggable = Draggable.create(card, {
       type: 'x,y',
       zIndexBoost: true,
-      minimumMovement: 8,
+      dragClickables: true,
+      allowEventDefault: true,
+      minimumMovement: 6,
 
       onDragStart() {
         gsap.killTweensOf(this.target);

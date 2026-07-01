@@ -50,7 +50,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
   align-items: stretch;
-  padding-top: 2.5rem;
+  padding-top: 3.4rem;
   animation: stw-fade-in 800ms var(--stw-easing) 200ms both;
 }
 
@@ -128,6 +128,12 @@
   max-height: 100%;
   object-fit: contain;
   image-rendering: auto;
+}
+
+#screen-spire .Target-sprite--enemy img,
+#screen-spire .Target--player .Target-sprite img {
+  mix-blend-mode: normal;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
 }
 
 #screen-spire .Target--enemy .Target-sprite {
@@ -427,6 +433,9 @@
   min-width: 7.4rem;
   margin-left: -1.5rem;
   cursor: var(--cursor-grab, grab);
+  touch-action: none;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 #screen-spire .StwCombat .Hand .Card.is-dragging {
@@ -468,7 +477,7 @@
 #screen-spire .Card-media {
   margin: 0;
   border-bottom: none;
-  background: hsl(200, 15%, 12%);
+  background: transparent;
   flex-shrink: 0;
 }
 
