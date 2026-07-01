@@ -29,6 +29,24 @@
   <link rel="stylesheet" href="css/combat-fx.css?v=20260713">
   <link rel="stylesheet" href="css/stw-combat.css?v=20260713">
   <link rel="stylesheet" href="css/stw-splash.css?v=20260713">
+  <script>
+    (function () {
+      if (location.protocol === 'file:') return;
+      try {
+        var raw = localStorage.getItem('hszd_session_v1');
+        if (!raw) return;
+        var session = JSON.parse(raw);
+        var accounts = JSON.parse(localStorage.getItem('hszd_accounts_v1') || '{}');
+        var acc = accounts[session.usernameKey];
+        if (!acc || acc.id !== session.accountId) return;
+        document.documentElement.classList.add('session-restored');
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+  <style>
+    html.session-restored #screen-auth { display: none !important; }
+    html.session-restored #screen-menu { display: block !important; }
+  </style>
 </head>
 <body>
   <!-- ===== 登录 / 注册（StW Splash 风格） ===== -->
@@ -117,6 +135,13 @@
       </div>
     </div>
   </div>
+
+  <script>
+    if (document.documentElement.classList.contains('session-restored')) {
+      document.getElementById('screen-auth')?.classList.remove('active');
+      document.getElementById('screen-menu')?.classList.add('active');
+    }
+  </script>
 
   <!-- ===== 房间大厅 ===== -->
   <div id="screen-lobby" class="screen">
@@ -616,6 +641,6 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/Draggable.min.js"></script>
-  <script type="module" src="js/main.js?v=20260713"></script>
+  <script type="module" src="js/main.js?v=20260714"></script>
 </body>
 </html>

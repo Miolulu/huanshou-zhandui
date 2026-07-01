@@ -1,5 +1,13 @@
-import { login, register, isLoggedIn, cleanupLegacyAuthData } from './auth.js';
+import { login, register, isLoggedIn, cleanupLegacyAuthData, getSession } from './auth.js';
+import { loadProfile } from './playerProfile.js';
 import { showScreen, showToast } from './appShell.js';
+
+function welcomePurifierToast() {
+  const session = getSession();
+  if (!session) return;
+  const name = loadProfile().nickname || session.nickname || '净化师';
+  showToast(`欢迎幻兽净化师${name}`);
+}
 
 export function initAuth(onAuthenticated) {
   cleanupLegacyAuthData();
@@ -7,6 +15,7 @@ export function initAuth(onAuthenticated) {
   if (isLoggedIn()) {
     try {
       onAuthenticated();
+      welcomePurifierToast();
     } catch (err) {
       console.error(err);
       showScreen('auth');
