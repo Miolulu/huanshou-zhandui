@@ -53,21 +53,24 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
     startLegacyQuick();
   });
 
-  document.getElementById('btn-create-room')?.onclick = () => {
-    setMenuError('');
-    if (selectedModeId === 'ai_battle') {
-      setMenuError('人机对战请使用「立即开始」');
-      return;
-    }
-    try {
-      onCreateRoom(getNickname(), {
-        modeId: selectedModeId,
-        aiDifficulty: document.getElementById('select-ai-difficulty').value,
-      });
-    } catch (e) {
-      setMenuError(e.message);
-    }
-  };
+  const btnCreateRoom = document.getElementById('btn-create-room');
+  if (btnCreateRoom) {
+    btnCreateRoom.onclick = () => {
+      setMenuError('');
+      if (selectedModeId === 'ai_battle') {
+        setMenuError('人机对战请使用「立即开始」');
+        return;
+      }
+      try {
+        onCreateRoom(getNickname(), {
+          modeId: selectedModeId,
+          aiDifficulty: document.getElementById('select-ai-difficulty').value,
+        });
+      } catch (e) {
+        setMenuError(e.message);
+      }
+    };
+  }
 
   document.getElementById('btn-show-join').onclick = () => {
     document.getElementById('join-panel').classList.toggle('hidden');
