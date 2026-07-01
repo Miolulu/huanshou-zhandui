@@ -5,15 +5,73 @@ import { renderCompendiumPanel, renderPurifyRecords } from './compendiumUI.js';
 import { ensurePurifyProfile } from './roguelike/purifyProfile.js';
 import { TERMS } from './roguelike/lore.js';
 
-let callbacks = {};
+const MENU_OVERLAY_OPEN = '#screen-menu .MenuOverlay.is-open';
+const MENU_CLOSE_LOCK_MS = 320;
 
-function openMenuOverlay(id) {
-  document.querySelectorAll('#screen-menu .MenuOverlay.is-open').forEach((el) => el.classList.remove('is-open'));
-  document.getElementById(id)?.classList.add('is-open');
+let callbacks = {};
+let menuOverlayBound = false;
+let closeLockTimer = 0;
+
+function syncMenuOverlayState() {
+  const menu = document.getElementById('screen-menu');
+  const open = !!menu?.querySelector(MENU_OVERLAY_OPEN);
+  menu?.classList.toggle('menu-overlay-open', open);
 }
 
-function closeMenuOverlays() {
-  document.querySelectorAll('#screen-menu .MenuOverlay.is-open').forEach((el) => el.classList.remove('is-open'));
+export function closeMenuOverlays() {
+  document.querySelectorAll(MENU_OVERLAY_OPEN).forEach((el) => el.classList.remove('is-open'));
+  document.getElementById('tasks-panel')?.classList.add('hidden');
+  syncMenuOverlayState();
+}
+
+function armMenuCloseLock() {
+  const menu = document.getElementById('screen-menu');
+  if (!menu) return;
+  menu.classList.add('menu-close-lock');
+  clearTimeout(closeLockTimer);
+  closeLockTimer = setTimeout(() => {
+    menu.classList.remove('menu-close-lock');
+  }, MENU_CLOSE_LOCK_MS);
+}
+
+function requestCloseMenuOverlays(e) {
+  e?.preventDefault();
+  e?.stopPropagation();
+  closeMenuOverlays();
+  armMenuCloseLock();
+}
+
+function openMenuOverlay(id) {
+  document.querySelectorAll(MENU_OVERLAY_OPEN).forEach((el) => el.classList.remove('is-open'));
+  document.getElementById(id)?.classList.add('is-open');
+  document.getElementById('tasks-panel')?.classList.add('hidden');
+  syncMenuOverlayState();
+}
+
+function bindMenuOverlayRoot() {
+  if (menuOverlayBound) return;
+  const menu = document.getElementById('screen-menu');
+  if (!menu) return;
+  menuOverlayBound = true;
+
+  menu.addEventListener('click', (e) => {
+    if (e.target.closest('[data-close-overlay]')) {
+      requestCloseMenuOverlays(e);
+      return;
+    }
+    if (e.target.classList.contains('MenuOverlay')) {
+      requestCloseMenuOverlays(e);
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const root = document.getElementById('screen-menu');
+    if (!root?.classList.contains('active')) return;
+    if (!root.querySelector(MENU_OVERLAY_OPEN)) return;
+    e.preventDefault();
+    requestCloseMenuOverlays(e);
+  });
 }
 
 function renderManualBody() {
@@ -38,6 +96,7 @@ export function initMenu(onSpireStart, onSpireTier, onSpireInfinite, onTutorialS
   renderPurifyRecords(document.getElementById('purify-records'));
   renderManualBody();
   bindProfileEvents();
+  bindMenuOverlayRoot();
 
   checkDailyLogin(loadProfile());
 
@@ -78,18 +137,6 @@ export function initMenu(onSpireStart, onSpireTier, onSpireInfinite, onTutorialS
 
   document.getElementById('btn-menu-manual')?.addEventListener('click', () => {
     openMenuOverlay('menu-overlay-manual');
-  });
-
-  document.querySelectorAll('[data-close-overlay]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.getElementById(btn.dataset.closeOverlay)?.classList.remove('is-open');
-    });
-  });
-
-  document.querySelectorAll('#screen-menu .MenuOverlay').forEach((overlay) => {
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.classList.remove('is-open');
-    });
   });
 }
 
@@ -155,9 +202,5 @@ function bindProfileEvents() {
       signOut();
       location.reload();
     }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeMenuOverlays();
   });
 }
