@@ -10,7 +10,7 @@ import { mountExpeditionMap } from './expeditionMapView.js';
 import { SpireOverlays } from './spireOverlays.js';
 import { renderPlayerTarget, renderEnemyTarget } from './combatView.js';
 import { renderPileInto } from './pileOverlay.js';
-import { sceneBackgroundUrl } from './assetPaths.js';
+import { mainBackgroundUrl } from './assetPaths.js';
 import { showToast } from '../appShell.js';
 
 function logLineClass(line) {
@@ -168,12 +168,12 @@ export class SpireUI {
     });
   }
 
-  async performCombatAction(actionFn, stepAction, { cardEl, fromDrag = false } = {}) {
+  async performCombatAction(actionFn, stepAction, { cardEl } = {}) {
     if (this.combatBusy) return null;
     this.combatBusy = true;
     destroyCardDrag();
 
-    if (cardEl && !fromDrag) await this.battleEffects.animateCardPlay(cardEl);
+    if (cardEl) await this.battleEffects.animateCardPlay(cardEl);
 
     const result = actionFn();
     if (!result?.ok) {
@@ -336,7 +336,7 @@ export class SpireUI {
     if (!this.el.sceneBg) return;
     const idx = Math.min(5, Math.max(0, (state.floor || 1) - 1));
     this.el.sceneBg.dataset.roomIndex = String(idx);
-    this.el.sceneBg.style.backgroundImage = `url('${sceneBackgroundUrl(idx)}')`;
+    this.el.sceneBg.style.backgroundImage = `url('${mainBackgroundUrl()}')`;
   }
 
   onOverlayOpen(id) {

@@ -142,18 +142,42 @@ export class PurifyBattleEffects {
       margin:0;z-index:9999;pointer-events:none;`;
     document.body.appendChild(clone);
     cardEl.classList.add('card-playing');
+    const eventCard = this.showCardEvent(cardEl);
     return new Promise((resolve) => {
       clone.addEventListener('animationend', () => {
         clone.remove();
+        eventCard?.remove();
         cardEl.classList.remove('card-playing');
         resolve();
       }, { once: true });
       setTimeout(() => {
         clone.remove();
+        eventCard?.remove();
         cardEl.classList.remove('card-playing');
         resolve();
       }, 900);
     });
+  }
+
+  showCardEvent(cardEl) {
+    if (!this.layer || !cardEl) return null;
+    const img = cardEl.querySelector('.Card-art-img');
+    const name = cardEl.querySelector('.Card-name')?.textContent?.trim() || '';
+    const type = cardEl.querySelector('.Card-type')?.textContent?.trim() || '';
+    const node = document.createElement('div');
+    node.className = `CardEvent CardEvent--${cardEl.dataset.cardType || 'skill'}`;
+    node.innerHTML = `
+      <div class="CardEvent-frame">
+        ${img ? `<img class="CardEvent-art" src="${img.currentSrc || img.src}" alt="">` : '<div class="CardEvent-art CardEvent-art--fallback"></div>'}
+        <div class="CardEvent-sheen"></div>
+        <div class="CardEvent-caption">
+          <span class="CardEvent-type">${type}</span>
+          <strong>${name}</strong>
+        </div>
+      </div>`;
+    this.layer.appendChild(node);
+    node.addEventListener('animationend', () => node.remove(), { once: true });
+    return node;
   }
 
   async animateHandDiscard() {

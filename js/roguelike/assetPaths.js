@@ -43,6 +43,8 @@ export const SCENE_BACKGROUNDS = [
   'assets/scenes/scene-5.png',
 ];
 
+export const MAIN_BACKGROUND = 'assets/scenes/main-bg.png';
+
 export function cardArtUrl(cardId) {
   return CARD_ART[cardId] || null;
 }
@@ -54,4 +56,8 @@ export function enemySpriteUrl(enemyId) {
 export function sceneBackgroundUrl(index) {
   const i = Math.max(0, Math.min(SCENE_BACKGROUNDS.length - 1, index));
   return SCENE_BACKGROUNDS[i];
+}
+
+export function mainBackgroundUrl() {
+  return MAIN_BACKGROUND;
 }

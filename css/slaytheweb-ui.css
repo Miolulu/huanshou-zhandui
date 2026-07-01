@@ -31,6 +31,10 @@
     radial-gradient(ellipse 90% 60% at 50% 35%, hsl(160, 30%, 18%), transparent 65%),
     radial-gradient(ellipse 70% 50% at 50% 80%, hsl(220, 40%, 12%), transparent 60%),
     linear-gradient(180deg, hsl(220, 30%, 10%), hsl(160, 20%, 8%) 45%, hsl(220, 35%, 6%));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: scale(1.01);
 }
 
 .purify-scene-bg::before,

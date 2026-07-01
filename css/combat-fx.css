@@ -122,6 +122,102 @@
 }
 
 /* ===== 卡牌打出 / 收势弃牌 ===== */
+.CardEvent {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  width: min(58vw, 34rem);
+  aspect-ratio: 3 / 2;
+  transform: translate(-50%, -50%);
+  z-index: 35;
+  animation: card-event-pop 0.86s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.CardEvent-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 0.65rem;
+  border: 2px solid rgba(255, 216, 105, 0.85);
+  box-shadow:
+    0 1rem 3rem rgba(0, 0, 0, 0.65),
+    0 0 2rem rgba(255, 193, 7, 0.35);
+  background: #111;
+}
+
+.CardEvent-art {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(1.2) contrast(1.05);
+  transform: scale(1.06);
+}
+
+.CardEvent-sheen {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.38), transparent 22%),
+    linear-gradient(110deg, transparent 15%, rgba(255, 255, 255, 0.5) 42%, transparent 58%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent 45%);
+  mix-blend-mode: screen;
+  animation: card-event-sheen 0.86s ease both;
+}
+
+.CardEvent-caption {
+  position: absolute;
+  left: 0.85rem;
+  right: 0.85rem;
+  bottom: 0.75rem;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: #fff7d0;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.75);
+}
+
+.CardEvent-caption strong {
+  font-size: clamp(1.4rem, 4vw, 2.5rem);
+  line-height: 1;
+}
+
+.CardEvent-type {
+  flex-shrink: 0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(17, 111, 84, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  font-size: clamp(0.75rem, 2vw, 1rem);
+}
+
+.CardEvent--attack .CardEvent-frame {
+  border-color: rgba(255, 110, 90, 0.95);
+  box-shadow:
+    0 1rem 3rem rgba(0, 0, 0, 0.65),
+    0 0 2.4rem rgba(255, 96, 74, 0.5);
+}
+
+.CardEvent--power .CardEvent-frame {
+  border-color: rgba(255, 216, 105, 0.95);
+}
+
+@keyframes card-event-pop {
+  0% { opacity: 0; transform: translate(-50%, -46%) scale(0.88) rotate(-1deg); filter: brightness(1.6); }
+  14% { opacity: 1; transform: translate(-50%, -50%) scale(1.03) rotate(0deg); }
+  70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -54%) scale(1.08); filter: brightness(1.25); }
+}
+
+@keyframes card-event-sheen {
+  0% { transform: translateX(-70%); opacity: 0.1; }
+  35% { opacity: 0.9; }
+  100% { transform: translateX(60%); opacity: 0.25; }
+}
+
 @keyframes card-play-fly {
   0% { transform: rotate(0deg) scale(1); opacity: 1; }
   35% { transform: rotate(18deg) translateY(-60px) scale(1.05); opacity: 1; }
@@ -173,6 +269,19 @@
 @keyframes end-turn-pulse {
   from { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 8px rgba(255, 193, 7, 0.3); }
   to { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 18px 6px rgba(255, 193, 7, 0.65); }
+}
+
+@media (max-width: 768px) {
+  .CardEvent {
+    top: 28%;
+    width: min(92vw, 28rem);
+  }
+
+  .CardEvent-caption {
+    left: 0.55rem;
+    right: 0.55rem;
+    bottom: 0.5rem;
+  }
 }
 
 /* ===== 日志着色 ===== */

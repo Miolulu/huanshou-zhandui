@@ -17,7 +17,7 @@
 }
 
 #screen-auth .App-background--auth {
-  background-image: url('https://www.slaytheweb.cards/images/scenes/moonlit-landscape-1904.jpg');
+  background-image: url('../assets/scenes/main-bg.png');
 }
 
 /* 左下角大标题（参照 StW Splash-title） */

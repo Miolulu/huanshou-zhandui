@@ -127,7 +127,7 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 
 #screen-spire .Target--enemy .Target-sprite {
@@ -244,7 +244,17 @@
 
 #screen-spire .Target--selected,
 #screen-spire .Target.is-targeted {
-  box-shadow: 0 0 0 3px var(--stw-gold, #ffc107);
+  box-shadow: none;
+}
+
+#screen-spire .Target--selected .Healthbar,
+#screen-spire .Target.is-targeted .Healthbar {
+  box-shadow: 0 0 14px rgba(255, 193, 7, 0.32);
+}
+
+#screen-spire .Target--selected .Target-sprite,
+#screen-spire .Target.is-targeted .Target-sprite {
+  filter: drop-shadow(0 0 10px rgba(255, 193, 7, 0.42));
 }
 
 #screen-spire .Target.is-dragOver .Healthbar {
@@ -411,10 +421,10 @@
 }
 
 #screen-spire .StwCombat .Hand .Card {
-  width: var(--card-width);
-  height: var(--card-height);
+  width: clamp(7.4rem, 11vw, var(--card-width));
+  height: clamp(12.6rem, 18.5vw, var(--card-height));
   flex-shrink: 0;
-  min-width: 8.5em;
+  min-width: 7.4rem;
   margin-left: -1.5rem;
   cursor: var(--cursor-grab, grab);
 }
@@ -548,26 +558,101 @@
 
 @media (max-width: 768px) {
   #screen-spire {
-    --card-width: 8.5em;
-    --card-height: 14em;
+    --card-width: 6.4rem;
+    --card-height: 10.8rem;
+  }
+
+  #screen-spire .StwCombat {
+    padding: 0 0.3rem 0.2rem;
   }
 
   #screen-spire .StwCombat .Targets {
-    grid-template-columns: 1fr;
-    padding-top: 3rem;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 0.25rem;
+    padding-top: 2.4rem;
   }
 
   #screen-spire .Target--player {
-    max-width: 100%;
-    order: 2;
+    max-width: 10rem;
+    margin-right: 0;
   }
 
   #screen-spire .Targets-group--enemies {
-    order: 1;
+    align-items: end;
+  }
+
+  #screen-spire .Target {
+    padding: 1.25em 0.35em 0.65em;
+    margin-top: 0;
+  }
+
+  #screen-spire .Target-header {
+    flex-direction: column;
+    gap: 0.2rem;
+    margin: 0 0 0.25rem;
+    padding: 0.05rem 0.2rem;
+  }
+
+  #screen-spire .Target-sprite,
+  #screen-spire .Target--enemy .Target-sprite {
+    width: 3.2rem;
+    height: 3.2rem;
+  }
+
+  #screen-spire .Target-name,
+  #screen-spire .Target-intent,
+  #screen-spire .Target-stat-label {
+    font-size: 0.62rem;
+  }
+
+  #screen-spire .Healthbar {
+    min-height: 1.35rem;
+  }
+
+  #screen-spire .Healthbar-label {
+    margin: 0.15rem 0;
+    font-size: 0.72rem;
   }
 
   #screen-spire .Card-art {
-    height: 5.5rem;
+    height: 5.1rem;
+    min-height: 5.1rem;
+  }
+
+  #screen-spire .Card-art-img {
+    min-height: 5.1rem;
+  }
+
+  #screen-spire .Card-name {
+    font-size: 0.74rem;
+    padding-top: 0.28rem;
+  }
+
+  #screen-spire .Card-type {
+    font-size: 0.58rem;
+  }
+
+  #screen-spire .Card-description {
+    font-size: 0.58rem;
+    -webkit-line-clamp: 2;
+  }
+
+  #screen-spire .StwCombat .Cards {
+    min-height: 10.8rem;
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+
+  #screen-spire .StwCombat .Hand .Card {
+    margin-left: -0.85rem;
+  }
+
+  #screen-spire .StwCombat-actions {
+    grid-template-columns: auto auto;
+    margin-top: 0;
+    padding: 0 0.35rem;
   }
 }
 

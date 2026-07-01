@@ -32,6 +32,19 @@ async function crop(outRel, file, region, { trim = true } = {}) {
   console.log('  ✓', outRel);
 }
 
+async function upscaleScene(outRel, inputRel) {
+  const out = path.join(ROOT, outRel);
+  const input = path.join(ROOT, inputRel);
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  await sharp(input)
+    .resize(1920, 1080, { fit: 'cover', kernel: sharp.kernel.lanczos3 })
+    .modulate({ saturation: 1.08, brightness: 0.95 })
+    .sharpen({ sigma: 1.1, m1: 0.8, m2: 1.4 })
+    .png({ compressionLevel: 9 })
+    .toFile(out);
+  console.log('  ✓', outRel);
+}
+
 async function main() {
   const enemies = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-27e9f85b-370a-4105-b027-1f21f44101d7.png');
   const cards3 = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-d71b1849-1a0e-453e-93c5-cc6ee61fa800.png');
@@ -139,6 +152,7 @@ async function main() {
       idx++;
     }
   }
+  await upscaleScene('assets/scenes/main-bg.png', 'assets/scenes/scene-5.png');
 
   console.log('Intent icons…');
   const iw = 64;

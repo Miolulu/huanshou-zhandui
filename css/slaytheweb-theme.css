@@ -39,7 +39,7 @@
   z-index: 0;
   pointer-events: none;
   background-color: var(--stw-bg);
-  background-image: url('https://www.slaytheweb.cards/images/scenes/moonlit-landscape-1904.jpg');
+  background-image: url('../assets/scenes/main-bg.png');
   background-size: cover;
   background-position: center;
 }
