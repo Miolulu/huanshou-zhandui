@@ -86,6 +86,7 @@ function renderManualBody() {
       <li><strong>护幕</strong>：抵御伤害，下轮 ${TERMS.endTurn} 后清零</li>
       <li><strong>污意</strong>：敌人下一 ${TERMS.turn} 的意图预告</li>
       <li><strong>悟道</strong>：净化成功后择一技法入 ${TERMS.codex}</li>
+      <li><strong>待启 / 余韵</strong>：战斗开始时整副秘典洗入待启；每轮调息从待启感通 5 张；打出技法后非秘法进入余韵；收势时手牌也入余韵；待启抽空时余韵洗回待启</li>
       <li><strong>快捷键</strong>：M 路线图 · D 秘典 · A 待启 · S 余韵 · X 已竭 · J 日志 · Esc 菜单</li>
     </ul>`;
 }

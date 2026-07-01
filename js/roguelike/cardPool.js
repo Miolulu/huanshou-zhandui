@@ -20,7 +20,7 @@ export const STARTER_DECK = [
   { id: 'holy_barrier', name: '圣光护幕', type: CARD_TYPES.SKILL, cost: 1, block: 5, desc: '获得 5 点护幕，抵御污秽反噬', element: 'light' },
   { id: 'holy_barrier', name: '圣光护幕', type: CARD_TYPES.SKILL, cost: 1, block: 5, desc: '获得 5 点护幕，抵御污秽反噬', element: 'light' },
   { id: 'holy_barrier', name: '圣光护幕', type: CARD_TYPES.SKILL, cost: 1, block: 5, desc: '获得 5 点护幕，抵御污秽反噬', element: 'light' },
-  { id: 'beast_pact', name: '契约占位', type: CARD_TYPES.ATTACK, cost: 2, damage: 14, desc: '借幻兽之力造成 14 点净化伤害', element: 'fire' },
+  { id: 'beast_pact', name: '破秽重击', type: CARD_TYPES.ATTACK, cost: 2, damage: 8, applyVulnerable: 2, desc: '造成 8 点伤害，施加剧化破绽 2 层', element: 'light' },
 ];
 
 export const REWARD_POOL = [

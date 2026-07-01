@@ -20,8 +20,8 @@ export class CombatEngine {
   constructor(deck, tier = 'normal', options = {}) {
     const {
       rng = Math.random,
-      startHp = 70,
-      maxHp = 70,
+      startHp = 72,
+      maxHp = 72,
       floor = 1,
       enemies = null,
       tutorial = false,
@@ -98,14 +98,19 @@ export class CombatEngine {
   }
 
   drawCards(n) {
-    for (let i = 0; i < n; i++) {
-      if (!this.drawPile.length && this.discard.length) {
-        this.drawPile = shuffle(this.discard, this.rng);
-        this.discard = [];
-        this.pushLog(TERMS.logShuffle);
-      }
-      if (!this.drawPile.length) break;
-      this.hand.push(this.drawPile.pop());
+    const amount = n || 0;
+    if (amount <= 0) return;
+
+    // 对齐 Slay the Web：待启不足时，余韵整堆洗入待启
+    if (this.drawPile.length < amount && this.discard.length) {
+      this.drawPile = shuffle([...this.drawPile, ...this.discard], this.rng);
+      this.discard = [];
+      this.pushLog(TERMS.logShuffle);
+    }
+
+    const drawn = Math.min(amount, this.drawPile.length);
+    for (let i = 0; i < drawn; i++) {
+      this.hand.push(this.drawPile.shift());
     }
   }
 
@@ -234,11 +239,21 @@ export class CombatEngine {
         stacks: card.applyPoison,
       });
     }
+    if (card.applyVulnerable && target) {
+      target.vulnerable = (target.vulnerable || 0) + card.applyVulnerable;
+      this.pushLog(`${card.name}：${target.name} 破绽 +${card.applyVulnerable}`);
+      this.emit({
+        type: COMBAT_EVENT.DEBUFF,
+        enemyIndex: this.enemyIndexOf(target),
+        amount: card.applyVulnerable,
+      });
+    }
     this.clampTargetIndex();
   }
 
   dealDamageToEnemy(enemy, amount) {
     let dmg = amount;
+    if (enemy.vulnerable > 0) dmg = Math.floor(dmg * 1.5);
     let blocked = 0;
     if (enemy.block > 0) {
       blocked = Math.min(enemy.block, dmg);
@@ -307,6 +322,10 @@ export class CombatEngine {
       }
     }
     if (this.weak > 0) this.weak -= 1;
+    for (const e of this.enemies) {
+      if (e.hp <= 0) continue;
+      if (e.vulnerable > 0) e.vulnerable -= 1;
+    }
   }
 
   executeEnemyIntent(e) {
@@ -354,7 +373,7 @@ export class CombatEngine {
         this.emit({ type: COMBAT_EVENT.BUFF, enemyIndex, amount: intent.value });
         break;
       case INTENTS.DEBUFF:
-        if (intent.debuff === 'weak') this.weak += intent.value;
+        if (intent.debuff === 'weak') this.weak += intent.value + 1;
         this.pushLog(`${e.name} 释放秽气，你感到虚弱`);
         this.emit({ type: COMBAT_EVENT.DEBUFF, amount: intent.value });
         break;

@@ -25,6 +25,7 @@ function renderPowers(combat, enemy = null) {
   const chips = [];
   if (enemy) {
     if (enemy.strength) chips.push(`<span>${TERMS.purifyPower} ${enemy.strength}</span>`);
+    if (enemy.vulnerable) chips.push(`<span>破绽 ${enemy.vulnerable}</span>`);
     if (enemy.poison) chips.push(`<span>${TERMS.taintStack} ${enemy.poison}</span>`);
   } else if (combat) {
     if (combat.strength) chips.push(`<span>${TERMS.purifyPower} ${combat.strength}</span>`);

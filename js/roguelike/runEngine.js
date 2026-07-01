@@ -43,8 +43,8 @@ export class RunEngine {
     this.shopInventory = [];
     this.shopRemoving = false;
     this.pendingNode = null;
-    this.runHp = 70;
-    this.maxHp = 70;
+    this.runHp = 72;
+    this.maxHp = 72;
     this.stats = { battlesWon: 0, elitesWon: 0 };
     this.floor = 1;
     this.floorChoices = [];

@@ -126,11 +126,11 @@ export const ENEMIES = {
     maxHp: 120,
     icon: '🐉',
     pattern: [
-      { intent: INTENTS.ATTACK, value: 12 },
-      { intent: INTENTS.STRONG_ATTACK, value: 22 },
-      { intent: INTENTS.DEFEND, value: 15 },
-      { intent: INTENTS.ATTACK_DEFEND, attack: 10, block: 10 },
-      { intent: INTENTS.STRONG_ATTACK, value: 28 },
+      { intent: INTENTS.ATTACK, value: 16 },
+      { intent: INTENTS.DEFEND, value: 6 },
+      { intent: INTENTS.ATTACK, value: 16 },
+      { intent: INTENTS.ATTACK, value: 7 },
+      { intent: INTENTS.DEBUFF, value: 1, debuff: 'weak' },
     ],
   },
 };
@@ -188,9 +188,12 @@ export function poolForFloor(floor) {
 }
 
 export function scaleHp(baseHp, floor, tier) {
-  const tierMul = tier === 'boss' ? 1 : tier === 'elite' ? 1.15 : 1;
-  const floorMul = 1 + Math.max(0, floor - 1) * 0.035;
-  return Math.round(baseHp * floorMul * tierMul);
+  // 对齐 Slay the Web：远征/遭遇不按层数大幅膨胀血量
+  if (tier === 'boss') return baseHp;
+  if (floor <= 15) return baseHp;
+  // 阶层/无限模式：15 层后每层 +0.5%，上限 +35%（避免 100 层变成 4～5 倍血）
+  const bonus = Math.min(0.35, (floor - 15) * 0.005);
+  return Math.round(baseHp * (1 + bonus));
 }
 
 export function createEnemy(enemyId, rng = Math.random, floor = 1, tier = 'normal') {
@@ -198,7 +201,10 @@ export function createEnemy(enemyId, rng = Math.random, floor = 1, tier = 'norma
   if (!def) return null;
   const pattern = def.pattern;
   const first = pattern[0];
-  const maxHp = scaleHp(def.maxHp, floor, tier);
+  let maxHp = scaleHp(def.maxHp, floor, tier);
+  if (tier === 'boss' && def.id === 'boss_dragon') {
+    maxHp = Math.floor(rng() * 41) + 100;
+  }
   return {
     uid: `${enemyId}_${Math.floor(rng() * 1e6)}`,
     id: def.id,
@@ -209,6 +215,7 @@ export function createEnemy(enemyId, rng = Math.random, floor = 1, tier = 'norma
     hp: maxHp,
     block: 0,
     strength: 0,
+    vulnerable: 0,
     poison: 0,
     patternIndex: 0,
     pattern,
