@@ -19,6 +19,12 @@ export function initAuth(onAuthenticated) {
   const errRegister = document.getElementById('auth-register-error');
 
   function showLoginTab() {
+    if (window.__authShowLogin) {
+      window.__authShowLogin();
+      if (errLogin) errLogin.textContent = '';
+      if (errRegister) errRegister.textContent = '';
+      return;
+    }
     tabLogin?.classList.add('active');
     tabRegister?.classList.remove('active');
     formLogin?.classList.remove('hidden');
@@ -28,6 +34,12 @@ export function initAuth(onAuthenticated) {
   }
 
   function showRegisterTab() {
+    if (window.__authShowRegister) {
+      window.__authShowRegister();
+      if (errLogin) errLogin.textContent = '';
+      if (errRegister) errRegister.textContent = '';
+      return;
+    }
     tabRegister?.classList.add('active');
     tabLogin?.classList.remove('active');
     formRegister?.classList.remove('hidden');

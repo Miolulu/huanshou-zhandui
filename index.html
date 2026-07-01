@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
   <title>幻兽战队 - 幻兽净化师</title>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/reset.css">
@@ -492,6 +493,39 @@
       });
     })();
   </script>
-  <script type="module" src="js/main.js"></script>
+  <script>
+    (function () {
+      function bindAuthTabs() {
+        var tabLogin = document.getElementById('tab-login');
+        var tabRegister = document.getElementById('tab-register');
+        var formLogin = document.getElementById('form-login');
+        var formRegister = document.getElementById('form-register');
+        if (!tabLogin || !tabRegister || !formLogin || !formRegister || tabLogin.dataset.authBound) return;
+        tabLogin.dataset.authBound = '1';
+        function showLogin() {
+          tabLogin.classList.add('active');
+          tabRegister.classList.remove('active');
+          formLogin.classList.remove('hidden');
+          formRegister.classList.add('hidden');
+        }
+        function showRegister() {
+          tabRegister.classList.add('active');
+          tabLogin.classList.remove('active');
+          formRegister.classList.remove('hidden');
+          formLogin.classList.add('hidden');
+        }
+        tabLogin.addEventListener('click', showLogin);
+        tabRegister.addEventListener('click', showRegister);
+        window.__authShowLogin = showLogin;
+        window.__authShowRegister = showRegister;
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindAuthTabs);
+      } else {
+        bindAuthTabs();
+      }
+    })();
+  </script>
+  <script type="module" src="js/main.js?v=20250630"></script>
 </body>
 </html>

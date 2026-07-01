@@ -174,77 +174,97 @@ function initApp() {
   });
 }
 
-function init() {
-  try {
-    game = new GameEngine(
-      (state) => {
-        ui?.render(state);
-        saveGameSession(game, lastGameOptions);
-        if (state.phase === 'ENDED') clearGameSession();
-      },
-      (event, engine) => {
-        ui.appendBattleLog(event);
-        if (event.type === 'BATTLE_START') ui.onBattleStart();
-        if (event.type === 'BATTLE_END') {
-          ui.render(game.getState());
-          const hr = game.lastHumanResult;
-          if (hr?.winner?.id === game.humanId) {
-            showToast(`胜利！${hr.turnCount} 回合`);
-          } else if (hr?.loser?.id === game.humanId) {
-            showToast(`战败，-${hr.damage} HP（${hr.turnCount} 回合）`);
-          } else if (hr?.type === 'DRAW') {
-            showToast(`平局，-${hr.damage} HP`);
-          }
-        }
+function hideBootError() {
+  document.getElementById('boot-error')?.classList.add('hidden');
+}
 
-        const renderEvents = [
-          'BATTLE_START', 'BATTLE_READY', 'BATTLE_END',
-          'DAMAGE_TAKEN', 'CARD_DEATH', 'TURN_START', 'TURN_END',
-          'HEAL', 'CRIT', 'SKILL_TRIGGER', 'STATUS_APPLIED',
-          'ELEMENT_EFFECT', 'CARD_REVIVED', 'TEAM_DEFEATED', 'ATTACK', 'DODGE', 'EXECUTE',
-          'CARD_ACTION_END', 'CARD_ACTION_START', 'ATTACK_WINDUP',
-          'PARTNER_LINK', 'TRAINER_COMMAND', 'TRAINER_COMMAND_PROMPT', 'TRAINER_COMMAND_END', 'INSIGHT_REVEAL',
-          'STAT_BUFF',
-        ];
-        if (renderEvents.includes(event.type)) {
-          ui.render(game.getState());
-        }
-        if (event.type === 'CARD_ACTION_START' || event.type === 'ATTACK_WINDUP') {
-          ui.renderBattleTimelinePanel?.(game.getState());
-        }
-
-        const fxEvents = [
-          'DAMAGE_TAKEN', 'HEAL', 'CRIT', 'SKILL_TRIGGER',
-          'STATUS_APPLIED', 'ATTACK', 'ATTACK_WINDUP', 'DODGE', 'EXECUTE', 'CARD_DEATH',
-          'CARD_ACTION_START',
-        ];
-        if (fxEvents.includes(event.type)) {
-          ui.handleBattleEvent(event);
+function initGameEngine() {
+  if (game) return;
+  game = new GameEngine(
+    (state) => {
+      ui?.render(state);
+      saveGameSession(game, lastGameOptions);
+      if (state.phase === 'ENDED') clearGameSession();
+    },
+    (event, engine) => {
+      ui.appendBattleLog(event);
+      if (event.type === 'BATTLE_START') ui.onBattleStart();
+      if (event.type === 'BATTLE_END') {
+        ui.render(game.getState());
+        const hr = game.lastHumanResult;
+        if (hr?.winner?.id === game.humanId) {
+          showToast(`胜利！${hr.turnCount} 回合`);
+        } else if (hr?.loser?.id === game.humanId) {
+          showToast(`战败，-${hr.damage} HP（${hr.turnCount} 回合）`);
+        } else if (hr?.type === 'DRAW') {
+          showToast(`平局，-${hr.damage} HP`);
         }
       }
-    );
 
-    game.onGameEnd = (result) => {
-      const { profile, expGain, rankResult } = onGameEnd(loadProfile(), result.finalRank, result.isRanked);
-      ui.setEndRewards({ expGain, rankResult, isRanked: result.isRanked });
-      refreshMenuProfile();
+      const renderEvents = [
+        'BATTLE_START', 'BATTLE_READY', 'BATTLE_END',
+        'DAMAGE_TAKEN', 'CARD_DEATH', 'TURN_START', 'TURN_END',
+        'HEAL', 'CRIT', 'SKILL_TRIGGER', 'STATUS_APPLIED',
+        'ELEMENT_EFFECT', 'CARD_REVIVED', 'TEAM_DEFEATED', 'ATTACK', 'DODGE', 'EXECUTE',
+        'CARD_ACTION_END', 'CARD_ACTION_START', 'ATTACK_WINDUP',
+        'PARTNER_LINK', 'TRAINER_COMMAND', 'TRAINER_COMMAND_PROMPT', 'TRAINER_COMMAND_END', 'INSIGHT_REVEAL',
+        'STAT_BUFF',
+      ];
+      if (renderEvents.includes(event.type)) {
+        ui.render(game.getState());
+      }
+      if (event.type === 'CARD_ACTION_START' || event.type === 'ATTACK_WINDUP') {
+        ui.renderBattleTimelinePanel?.(game.getState());
+      }
+
+      const fxEvents = [
+        'DAMAGE_TAKEN', 'HEAL', 'CRIT', 'SKILL_TRIGGER',
+        'STATUS_APPLIED', 'ATTACK', 'ATTACK_WINDUP', 'DODGE', 'EXECUTE', 'CARD_DEATH',
+        'CARD_ACTION_START',
+      ];
+      if (fxEvents.includes(event.type)) {
+        ui.handleBattleEvent(event);
+      }
+    }
+  );
+
+  game.onGameEnd = (result) => {
+    const { profile, expGain, rankResult } = onGameEnd(loadProfile(), result.finalRank, result.isRanked);
+    ui.setEndRewards({ expGain, rankResult, isRanked: result.isRanked });
+    refreshMenuProfile();
+  };
+
+  ui = new UI(game);
+}
+
+function init() {
+  try {
+    const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+    const debugBattle = new URLSearchParams(location.search).get('debug') === 'battle' && isLocal;
+    const debugSpire = new URLSearchParams(location.search).get('debug') === 'spire' && isLocal;
+
+    const afterAuth = () => {
+      initGameEngine();
+      enterMainMenu();
     };
 
-    ui = new UI(game);
-
-    const debugBattle = new URLSearchParams(location.search).get('debug') === 'battle'
-      && (location.hostname === '127.0.0.1' || location.hostname === 'localhost');
-    const debugSpire = new URLSearchParams(location.search).get('debug') === 'spire'
-      && (location.hostname === '127.0.0.1' || location.hostname === 'localhost');
     if (debugSpire) {
+      initGameEngine();
       initApp();
       appReady = true;
       startSpireRun(RUN_MODES.EXPEDITION);
-    } else if (debugBattle) {
-      runLocalBattleDebug();
-    } else {
-      initAuth(enterMainMenu);
+      hideBootError();
+      return;
     }
+    if (debugBattle) {
+      initGameEngine();
+      runLocalBattleDebug();
+      hideBootError();
+      return;
+    }
+
+    initAuth(afterAuth);
+    hideBootError();
   } catch (err) {
     console.error(err);
     if (window.__showBootError) window.__showBootError(err.message || String(err));
