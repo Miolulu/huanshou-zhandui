@@ -1,7 +1,6 @@
 {
   "scripts": {
-    "slice-art": "node scripts/slice-art.mjs",
-    "removebg-sprites": "node scripts/removebg-sprites.mjs"
+    "slice-art": "node scripts/slice-art.mjs"
   },
   "devDependencies": {
     "sharp": "^0.35.2"

@@ -1,13 +1,13 @@
 /**
  * 从 GPT 生成的 sprite sheet 裁切到 assets/
- * 精灵/图标抠图使用 remove.bg API（需 REMOVE_BG_API_KEY）
+ * 精灵/图标使用本地精细抠图（scripts/local-matte.mjs）
  * node scripts/slice-art.mjs
  */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import sharp from 'sharp';
-import { removeBackground, loadRemoveBgApiKey } from './removebg-api.mjs';
+import { matteSprite } from './local-matte.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -23,15 +23,6 @@ const SRC = path.join(
 
 const src = (name) => path.join(SRC, name);
 
-const REMOVEBG_DELAY_MS = 600;
-let lastRemoveBgAt = 0;
-
-async function waitRemoveBgSlot() {
-  const wait = REMOVEBG_DELAY_MS - (Date.now() - lastRemoveBgAt);
-  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-  lastRemoveBgAt = Date.now();
-}
-
 function shrinkRegion(region, px = 4) {
   const inset = Math.min(px, Math.floor(region.width / 8), Math.floor(region.height / 8));
   return {
@@ -40,18 +31,6 @@ function shrinkRegion(region, px = 4) {
     width: Math.max(8, region.width - inset * 2),
     height: Math.max(8, region.height - inset * 2),
   };
-}
-
-async function trimTransparent(input) {
-  const source = typeof input?.trim === 'function' ? input : sharp(input);
-  try {
-    const trimmed = source.trim({ threshold: 1 });
-    const meta = await trimmed.metadata();
-    if ((meta.width || 0) > 4 && (meta.height || 0) > 4) return trimmed;
-  } catch {
-    /* keep */
-  }
-  return source;
 }
 
 async function trimBlackEdges(input, threshold = 6) {
@@ -68,14 +47,6 @@ async function trimBlackEdges(input, threshold = 6) {
     /* keep source */
   }
   return source;
-}
-
-/** remove.bg 抠图（幻兽/敌人用 animal，小图标用 auto） */
-async function matteWithRemoveBg(input, { type = 'animal' } = {}) {
-  const buf = await (typeof input?.png === 'function' ? input.png() : sharp(input).png()).toBuffer();
-  await waitRemoveBgSlot();
-  const cut = await removeBackground(buf, { type });
-  return trimTransparent(sharp(cut));
 }
 
 /**
@@ -95,9 +66,7 @@ async function crop(outRel, file, region, { mode = 'card' } = {}) {
     } catch {
       /* keep extracted buffer */
     }
-    pipeline = await matteWithRemoveBg(sharp(buf), {
-      type: mode === 'icon' ? 'auto' : 'animal',
-    });
+    pipeline = await matteSprite(sharp(buf), { preset: mode === 'icon' ? 'icon' : 'sprite' });
   } else if (mode === 'card') {
     try {
       pipeline = await trimBlackEdges(pipeline, 5);
@@ -124,14 +93,7 @@ async function upscaleScene(outRel, inputRel) {
 }
 
 async function main() {
-  if (!loadRemoveBgApiKey()) {
-    console.error('缺少 REMOVE_BG_API_KEY。');
-    console.error('1. 打开 https://www.remove.bg/api 注册并复制 API Key');
-    console.error('2. 复制 .env.example 为 .env，填入密钥');
-    console.error('3. 重新运行 node scripts/slice-art.mjs');
-    process.exit(1);
-  }
-  console.log('抠图：remove.bg API');
+  console.log('抠图：本地精细算法 (Lab + 软 alpha + 去黑边)');
 
   const enemies = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-27e9f85b-370a-4105-b027-1f21f44101d7.png');
   const cards3 = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-d71b1849-1a0e-453e-93c5-cc6ee61fa800.png');
