@@ -387,9 +387,10 @@
   top: 0;
   margin: 0 !important;
   pointer-events: none !important;
-  transform-origin: center center;
+  transform-origin: top left;
   will-change: transform;
   z-index: 10050;
+  touch-action: none;
 }
 
 .purify-hand .Card[disabled],

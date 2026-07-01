@@ -537,7 +537,7 @@ export class SpireUI {
 
   setupCardDrag(c) {
     if (!this.el.combatBattle || !c || c.phase !== 'player' || this.combatBusy) return;
-    if (typeof window.gsap === 'undefined' || typeof window.Draggable === 'undefined') return;
+    if (typeof window.gsap === 'undefined') return;
 
     enableCardDrag(this.el.combatBattle, {
       getTargetIndex: () => this.run.getState().combat?.targetIndex ?? 0,

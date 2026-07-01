@@ -1,20 +1,15 @@
 /**
- * 净化远征 · 拖拽出牌（body 固定定位代理跟随指针，避免手牌区 overflow 裁切）
+ * 净化远征 · 拖拽出牌（pointer 事件 + 固定代理，按下即跟光标）
  */
 import { combatSounds } from './combatSounds.js';
 
-/** @type {import('gsap').Draggable[]} */
-let dragInstances = [];
+/** @type {Array<{ cleanup: () => void }>} */
+let dragBindings = [];
 
 const OVER_CLASS = 'is-dragOver';
 
-function ensureDragPlugin() {
-  const gsap = window.gsap;
-  const Draggable = window.Draggable;
-  if (gsap?.registerPlugin && Draggable) {
-    gsap.registerPlugin(Draggable);
-  }
-  return { gsap, Draggable };
+function gsap() {
+  return window.gsap;
 }
 
 function cardTargetType(cardType) {
@@ -48,25 +43,51 @@ function resolveTargetIndex(targetEl, fallbackIndex) {
   return fallbackIndex;
 }
 
-function hideProxy(gsap, proxy) {
+function hideProxy(proxy) {
   if (!proxy) return;
-  gsap.set(proxy, { visibility: 'hidden', opacity: 0, scale: 1, rotation: 0 });
+  const g = gsap();
+  if (g) {
+    g.set(proxy, { visibility: 'hidden', opacity: 0, scale: 1, rotation: 0, x: 0, y: 0 });
+  } else {
+    proxy.style.visibility = 'hidden';
+    proxy.style.opacity = '0';
+  }
+}
+
+function moveProxy(proxy, clientX, clientY, offsetX, offsetY) {
+  const x = clientX - offsetX;
+  const y = clientY - offsetY;
+  const g = gsap();
+  if (g) {
+    g.set(proxy, { x, y });
+  } else {
+    proxy.style.transform = `translate(${x}px, ${y}px)`;
+  }
+}
+
+function proxyHitsTarget(proxy, targetEl, threshold = 0.4) {
+  const pr = proxy.getBoundingClientRect();
+  const tr = targetEl.getBoundingClientRect();
+  const overlapX = Math.max(0, Math.min(pr.right, tr.right) - Math.max(pr.left, tr.left));
+  const overlapY = Math.max(0, Math.min(pr.bottom, tr.bottom) - Math.max(pr.top, tr.top));
+  const overlapArea = overlapX * overlapY;
+  const proxyArea = Math.max(1, pr.width * pr.height);
+  return overlapArea >= proxyArea * threshold;
 }
 
 export function destroyCardDrag() {
-  const { gsap } = ensureDragPlugin();
+  dragBindings.forEach((b) => b.cleanup());
+  dragBindings = [];
   document.querySelectorAll('.Card-drag-proxy').forEach((el) => el.remove());
-  dragInstances.forEach((d) => d.kill());
-  dragInstances = [];
   document.querySelectorAll('.is-dragOver').forEach((el) => el.classList.remove('is-dragOver'));
   document.querySelectorAll('#spire-hand .card-drag-source').forEach((el) => {
     el.classList.remove('card-drag-source', 'is-dragging');
   });
 }
 
-function updateDropHighlights(card, targets, draggable) {
+function updateDropHighlights(card, targets, proxy) {
   targets.forEach((targetEl) => {
-    if (draggable.hitTest(targetEl, '45%') && canDropOnTarget(card, targetEl)) {
+    if (proxyHitsTarget(proxy, targetEl) && canDropOnTarget(card, targetEl)) {
       targetEl.classList.add(OVER_CLASS);
     } else {
       targetEl.classList.remove(OVER_CLASS);
@@ -74,12 +95,20 @@ function updateDropHighlights(card, targets, draggable) {
   });
 }
 
+function findDropTarget(card, targets, proxy) {
+  for (const targetEl of targets) {
+    if (proxyHitsTarget(proxy, targetEl) && canDropOnTarget(card, targetEl)) {
+      return targetEl;
+    }
+  }
+  return null;
+}
+
 /**
  * @param {HTMLElement} root - .purify-battle
  */
 export function enableCardDrag(root, { getTargetIndex, onPlay }) {
-  const { gsap, Draggable } = ensureDragPlugin();
-  if (!gsap || !Draggable || !root) return;
+  if (!root) return;
 
   destroyCardDrag();
 
@@ -92,82 +121,86 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
     proxy.setAttribute('aria-hidden', 'true');
     proxy.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
     document.body.appendChild(proxy);
-    gsap.set(proxy, {
-      position: 'fixed',
-      left: 0,
-      top: 0,
-      margin: 0,
-      visibility: 'hidden',
-      opacity: 0,
-      zIndex: 10050,
-      pointerEvents: 'none',
-    });
+    hideProxy(proxy);
 
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
     let homeX = 0;
     let homeY = 0;
     let proxyW = 0;
     let proxyH = 0;
+    let activePointerId = null;
 
-    const draggable = Draggable.create(proxy, {
-      type: 'x,y',
-      trigger: card,
-      dragClickables: true,
-      allowNativeTouchScrolling: false,
-      minimumMovement: 3,
-      inertia: false,
-      cursor: 'inherit',
+    const showProxyAt = (clientX, clientY, rect) => {
+      homeX = rect.left;
+      homeY = rect.top;
+      proxyW = rect.width;
+      proxyH = rect.height;
+      offsetX = clientX - rect.left;
+      offsetY = clientY - rect.top;
 
-      onPress() {
-        if (card.classList.contains('disabled')) {
-          this.endDrag();
-          return;
-        }
-        combatSounds.selectCard();
-        const rect = card.getBoundingClientRect();
-        homeX = rect.left;
-        homeY = rect.top;
-        proxyW = rect.width;
-        proxyH = rect.height;
-        gsap.set(proxy, {
-          x: homeX,
-          y: homeY,
+      const g = gsap();
+      if (g) {
+        g.set(proxy, {
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          margin: 0,
           width: proxyW,
           height: proxyH,
+          zIndex: 10050,
+          pointerEvents: 'none',
           visibility: 'visible',
           opacity: 1,
           scale: 1.04,
           rotation: 0,
+          x: clientX - offsetX,
+          y: clientY - offsetY,
         });
-        card.classList.add('card-drag-source', 'is-dragging');
-        proxy.classList.add('is-dragging');
-      },
+      } else {
+        Object.assign(proxy.style, {
+          position: 'fixed',
+          left: '0',
+          top: '0',
+          margin: '0',
+          width: `${proxyW}px`,
+          height: `${proxyH}px`,
+          zIndex: '10050',
+          pointerEvents: 'none',
+          visibility: 'visible',
+          opacity: '1',
+        });
+        moveProxy(proxy, clientX, clientY, offsetX, offsetY);
+      }
 
-      onDrag() {
-        if (card.classList.contains('disabled')) {
-          this.endDrag();
-          return;
-        }
-        updateDropHighlights(card, targets, this);
-      },
+      card.classList.add('card-drag-source', 'is-dragging');
+      proxy.classList.add('is-dragging');
+    };
 
-      onRelease() {
-        card.classList.remove('is-dragging');
-        proxy.classList.remove('is-dragging');
-        targets.forEach((t) => t.classList.remove(OVER_CLASS));
+    const finishDrag = (clientX, clientY) => {
+      if (!dragging) return;
+      dragging = false;
+      activePointerId = null;
 
-        let hitEl = null;
-        for (const targetEl of targets) {
-          if (this.hitTest(targetEl, '45%')) {
-            hitEl = targetEl;
-            break;
-          }
-        }
+      card.classList.remove('is-dragging');
+      proxy.classList.remove('is-dragging');
+      targets.forEach((t) => t.classList.remove(OVER_CLASS));
 
-        if (canDropOnTarget(card, hitEl)) {
-          const targetIndex = resolveTargetIndex(hitEl, getTargetIndex?.() ?? 0);
-          const cx = window.innerWidth / 2 - proxyW / 2;
-          const cy = window.innerHeight * 0.34 - proxyH / 2;
-          gsap.to(proxy, {
+      const hitEl = findDropTarget(card, targets, proxy);
+      const g = gsap();
+
+      if (canDropOnTarget(card, hitEl)) {
+        const targetIndex = resolveTargetIndex(hitEl, getTargetIndex?.() ?? 0);
+        const cx = window.innerWidth / 2 - proxyW / 2;
+        const cy = window.innerHeight * 0.34 - proxyH / 2;
+        const afterPlay = () => {
+          card.classList.remove('card-drag-source');
+          hideProxy(proxy);
+          onPlay?.(card, targetIndex);
+        };
+        if (g) {
+          g.to(proxy, {
             x: cx,
             y: cy,
             scale: 0.5,
@@ -175,14 +208,18 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
             opacity: 0,
             duration: 0.3,
             ease: 'power2.in',
-            onComplete: () => {
-              card.classList.remove('card-drag-source');
-              hideProxy(gsap, proxy);
-              onPlay?.(card, targetIndex);
-            },
+            onComplete: afterPlay,
           });
         } else {
-          gsap.to(proxy, {
+          afterPlay();
+        }
+      } else {
+        const afterReturn = () => {
+          card.classList.remove('card-drag-source');
+          hideProxy(proxy);
+        };
+        if (g) {
+          g.to(proxy, {
             x: homeX,
             y: homeY,
             scale: 1,
@@ -190,16 +227,58 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
             opacity: 1,
             duration: 0.26,
             ease: 'power2.out',
-            onComplete: () => {
-              card.classList.remove('card-drag-source');
-              hideProxy(gsap, proxy);
-            },
+            onComplete: afterReturn,
           });
-          combatSounds.cardToHand();
+        } else {
+          afterReturn();
         }
-      },
-    })[0];
+        combatSounds.cardToHand();
+      }
+    };
 
-    dragInstances.push(draggable);
+    const onWindowPointerMove = (e) => {
+      if (!dragging || e.pointerId !== activePointerId) return;
+      e.preventDefault();
+      moveProxy(proxy, e.clientX, e.clientY, offsetX, offsetY);
+      updateDropHighlights(card, targets, proxy);
+    };
+
+    const onWindowPointerUp = (e) => {
+      if (!dragging || e.pointerId !== activePointerId) return;
+      e.preventDefault();
+      window.removeEventListener('pointermove', onWindowPointerMove);
+      window.removeEventListener('pointerup', onWindowPointerUp);
+      window.removeEventListener('pointercancel', onWindowPointerUp);
+      finishDrag(e.clientX, e.clientY);
+    };
+
+    const onPointerDown = (e) => {
+      if (card.classList.contains('disabled') || dragging) return;
+      if (e.button !== undefined && e.button !== 0) return;
+
+      e.preventDefault();
+      dragging = true;
+      activePointerId = e.pointerId;
+      combatSounds.selectCard();
+
+      const rect = card.getBoundingClientRect();
+      showProxyAt(e.clientX, e.clientY, rect);
+
+      window.addEventListener('pointermove', onWindowPointerMove, { passive: false });
+      window.addEventListener('pointerup', onWindowPointerUp, { passive: false });
+      window.addEventListener('pointercancel', onWindowPointerUp, { passive: false });
+    };
+
+    card.addEventListener('pointerdown', onPointerDown);
+
+    dragBindings.push({
+      cleanup: () => {
+        card.removeEventListener('pointerdown', onPointerDown);
+        window.removeEventListener('pointermove', onWindowPointerMove);
+        window.removeEventListener('pointerup', onWindowPointerUp);
+        window.removeEventListener('pointercancel', onWindowPointerUp);
+        proxy.remove();
+      },
+    });
   });
 }
