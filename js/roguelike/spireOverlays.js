@@ -8,6 +8,8 @@ export class SpireOverlays {
     this.onOpen = null;
     /** @type {(id: string) => void} */
     this.onModalEscape = null;
+    /** @type {(id: string) => void} */
+    this.onClose = null;
     this.bind();
   }
 
@@ -149,6 +151,7 @@ export class SpireOverlays {
     const el = document.getElementById(id);
     el?.classList.remove('is-open');
     if (this.openId === id) this.openId = null;
+    this.onClose?.(id);
   }
 
   closeCornerOverlays() {
@@ -161,8 +164,10 @@ export class SpireOverlays {
   }
 
   closeAll() {
+    const wasOpen = this.openId;
     this.root?.querySelectorAll('.Overlay.is-open').forEach((el) => el.classList.remove('is-open'));
     this.openId = null;
+    if (wasOpen) this.onClose?.(wasOpen);
   }
 
   closeModals() {

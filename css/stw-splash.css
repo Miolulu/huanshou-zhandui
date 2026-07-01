@@ -67,6 +67,20 @@
   margin: 0.35rem 0;
 }
 
+.spire-abandon-confirm.hidden {
+  display: none !important;
+}
+
+#spire-menu-actions.hidden {
+  display: none !important;
+}
+
+.spire-abandon-text {
+  margin: 0.25rem 0 0.75rem;
+  text-align: center;
+  line-height: 1.45;
+}
+
 .Options .Button u {
   text-decoration: underline;
   text-underline-offset: 2px;

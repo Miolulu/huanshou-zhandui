@@ -34,6 +34,9 @@ export class SpireUI {
     this.battleEffects = new PurifyBattleEffects();
     this.overlays = new SpireOverlays(document.getElementById('screen-spire'));
     this.overlays.onOpen = (id) => this.onOverlayOpen(id);
+    this.overlays.onClose = (id) => {
+      if (id === 'spire-overlay-menu') this.resetAbandonConfirm();
+    };
     this.overlays.onModalEscape = (id) => {
       if (id === 'spire-overlay-rest') showToast('请先选择调息或精研');
       else if (id === 'spire-overlay-end') showToast('请点击返回主页');
@@ -82,7 +85,13 @@ export class SpireUI {
 
   bindActions() {
     document.getElementById('btn-spire-back')?.addEventListener('click', () => {
-      if (confirm(TERMS.abandonConfirm)) this.finishRun(false);
+      this.showAbandonConfirm();
+    });
+    document.getElementById('btn-spire-abandon-confirm')?.addEventListener('click', () => {
+      this.finishRun(false);
+    });
+    document.getElementById('btn-spire-abandon-cancel')?.addEventListener('click', () => {
+      this.resetAbandonConfirm();
     });
     document.getElementById('btn-spire-end-turn')?.addEventListener('click', () => {
       if (this.combatBusy) return;
@@ -146,6 +155,21 @@ export class SpireUI {
   finishRun(victory) {
     this.recordRunEnd(victory);
     this.onBack?.();
+  }
+
+  showAbandonConfirm() {
+    const panel = document.getElementById('spire-abandon-confirm');
+    const actions = document.getElementById('spire-menu-actions');
+    const text = document.getElementById('spire-abandon-text');
+    if (!panel || !actions) return;
+    if (text) text.textContent = TERMS.abandonConfirm;
+    actions.classList.add('hidden');
+    panel.classList.remove('hidden');
+  }
+
+  resetAbandonConfirm() {
+    document.getElementById('spire-menu-actions')?.classList.remove('hidden');
+    document.getElementById('spire-abandon-confirm')?.classList.add('hidden');
   }
 
   afterCombatAction(result, stepAction) {

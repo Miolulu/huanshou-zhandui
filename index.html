@@ -448,9 +448,18 @@
           <button type="button" class="Overlay-close" data-overlay-close="spire-overlay-menu" aria-label="关闭">×</button>
           <h2 class="Title">净化远征</h2>
           <p class="Box-sub">幻兽净化师 · 单机净化</p>
-          <ul class="Options">
-            <li><button type="button" id="btn-spire-back" class="Button" danger>放弃远征</button></li>
-          </ul>
+          <div id="spire-menu-actions">
+            <ul class="Options">
+              <li><button type="button" id="btn-spire-back" class="Button" danger>放弃远征</button></li>
+            </ul>
+          </div>
+          <div id="spire-abandon-confirm" class="spire-abandon-confirm hidden" role="region" aria-label="放弃远征确认">
+            <p id="spire-abandon-text" class="Box-sub spire-abandon-text"></p>
+            <ul class="Options">
+              <li><button type="button" id="btn-spire-abandon-confirm" class="Button" danger>确认放弃</button></li>
+              <li><button type="button" id="btn-spire-abandon-cancel" class="Button">取消</button></li>
+            </ul>
+          </div>
           <p class="auth-hint">M 路线图 · D 秘典 · A 待启 · S 余韵 · J 日志</p>
         </div>
       </div>
@@ -616,6 +625,6 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/Draggable.min.js"></script>
-  <script type="module" src="js/main.js?v=20250702drag2"></script>
+  <script type="module" src="js/main.js?v=20250702menu"></script>
 </body>
 </html>

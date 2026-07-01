@@ -176,8 +176,10 @@
 .solo-start-btn,
 .solo-mode-btn {
   display: flex;
-  flex-flow: column;
+  flex-flow: row nowrap;
+  align-items: center;
   justify-content: center;
+  white-space: nowrap;
   text-align: center;
   width: 100%;
   font-size: 1rem;
