@@ -1,11 +1,27 @@
 import { setMenuError, showToast } from './appShell.js';
 import { loadProfile, saveProfile, checkDailyLogin, claimLoginReward, DAILY_TASKS, expForLevel, signOut } from './playerProfile.js';
 import { getCurrentUsername } from './auth.js';
-import { formatRank } from './rank.js';
 import { renderCompendiumPanel, renderPurifyRecords } from './compendiumUI.js';
 import { ensurePurifyProfile } from './roguelike/purifyProfile.js';
 
 let callbacks = {};
+
+function openCompendiumModal() {
+  const modal = document.getElementById('compendium-modal');
+  const panel = document.getElementById('compendium-panel');
+  if (!modal || !panel) return;
+  renderCompendiumPanel(panel);
+  modal.classList.remove('hidden');
+}
+
+function closeCompendiumModal() {
+  document.getElementById('compendium-modal')?.classList.add('hidden');
+}
+
+function isCompendiumOpen() {
+  const modal = document.getElementById('compendium-modal');
+  return modal && !modal.classList.contains('hidden');
+}
 
 export function initMenu(onSpireStart, onSpireTier, onSpireInfinite) {
   callbacks = { onSpireStart, onSpireTier, onSpireInfinite };
@@ -31,20 +47,19 @@ export function initMenu(onSpireStart, onSpireTier, onSpireInfinite) {
   });
 
   document.getElementById('btn-show-compendium')?.addEventListener('click', () => {
-    const panel = document.getElementById('compendium-panel');
-    panel?.classList.toggle('hidden');
-    if (panel && !panel.classList.contains('hidden')) {
-      renderCompendiumPanel(panel);
-    }
+    if (isCompendiumOpen()) closeCompendiumModal();
+    else openCompendiumModal();
   });
+
+  document.getElementById('btn-compendium-close')?.addEventListener('click', closeCompendiumModal);
+  document.getElementById('compendium-modal-backdrop')?.addEventListener('click', closeCompendiumModal);
 }
 
 export function refreshMenuProfile() {
   renderProfilePanel();
   renderPurifyRecords(document.getElementById('purify-records'));
-  const panel = document.getElementById('compendium-panel');
-  if (panel && !panel.classList.contains('hidden')) {
-    renderCompendiumPanel(panel);
+  if (isCompendiumOpen()) {
+    renderCompendiumPanel(document.getElementById('compendium-panel'));
   }
 }
 
@@ -58,17 +73,21 @@ function renderProfilePanel() {
   }
   const usernameEl = document.getElementById('profile-username');
   const nicknameEl = document.getElementById('profile-nickname');
+  const topNameEl = document.getElementById('menu-top-nickname');
   if (usernameEl) usernameEl.textContent = getCurrentUsername() || '-';
   if (nicknameEl) nicknameEl.textContent = p.nickname || '-';
-  document.getElementById('profile-rank').textContent = formatRank(p.rank);
-  document.getElementById('profile-level').textContent = p.level;
-  document.getElementById('profile-wins').textContent = p.stats?.wins || 0;
-  document.getElementById('profile-gold').textContent = p.gold || 0;
-  document.getElementById('profile-gems').textContent = p.gems || 0;
+  if (topNameEl) topNameEl.textContent = p.nickname || '净化师';
+  const levelEl = document.getElementById('profile-level');
+  const winsEl = document.getElementById('profile-wins');
+  if (levelEl) levelEl.textContent = p.level;
+  if (winsEl) winsEl.textContent = p.stats?.wins || 0;
   const max = expForLevel(p.level);
-  document.getElementById('profile-exp').textContent = p.exp;
-  document.getElementById('profile-exp-max').textContent = max;
-  document.getElementById('profile-exp-fill').style.width = `${Math.min(100, (p.exp / max) * 100)}%`;
+  const expEl = document.getElementById('profile-exp');
+  const expMaxEl = document.getElementById('profile-exp-max');
+  const expFillEl = document.getElementById('profile-exp-fill');
+  if (expEl) expEl.textContent = p.exp;
+  if (expMaxEl) expMaxEl.textContent = max;
+  if (expFillEl) expFillEl.style.width = `${Math.min(100, (p.exp / max) * 100)}%`;
 }
 
 function bindProfileEvents() {
@@ -97,5 +116,9 @@ function bindProfileEvents() {
       signOut();
       location.reload();
     }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isCompendiumOpen()) closeCompendiumModal();
   });
 }

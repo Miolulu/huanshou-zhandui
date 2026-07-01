@@ -10,7 +10,7 @@ export function renderCompendiumPanel(container) {
 
   container.innerHTML = `
     <div class="compendium-header">
-      <h3>怪物手册</h3>
+      <h3 id="compendium-modal-title">怪物手册</h3>
       <p class="hint">遭遇污化幻兽后解锁档案 · 未遇见过显示 ???</p>
     </div>
     <div class="compendium-grid">

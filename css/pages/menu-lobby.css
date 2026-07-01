@@ -356,33 +356,89 @@
   color: #e0e8c8;
 }
 
+.compendium-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog, 100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+}
+
+.compendium-modal.hidden {
+  display: none !important;
+}
+
+.compendium-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: rgba(46, 46, 46, 0.45);
+  cursor: pointer;
+}
+
+.compendium-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  max-height: min(85vh, 720px);
+  display: flex;
+  flex-direction: column;
+}
+
+.compendium-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--dark-text, #2E2E2E);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--dark-text, #2E2E2E);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--dark-text, #2E2E2E);
+}
+
+.compendium-modal-close:hover {
+  filter: brightness(0.96);
+}
+
 .compendium-panel {
-  margin-top: var(--sp-3);
-  max-height: 420px;
+  margin-top: 0;
+  max-height: min(85vh, 720px);
   overflow-y: auto;
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
-  background: rgba(8, 14, 8, 0.85);
-  border: 1px solid rgba(120, 160, 90, 0.3);
+  padding: var(--sp-5) var(--sp-4) var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--panel, rgba(255, 255, 255, 0.98));
+  border: 3px solid var(--dark-text, #2E2E2E);
+  box-shadow: 0 8px 0 var(--dark-text, #2E2E2E);
 }
 
 .compendium-header h3 {
-  color: #f0d878;
+  color: var(--dark-text, #2E2E2E);
   margin-bottom: 4px;
+  padding-right: 40px;
+  font-family: var(--font-display, inherit);
 }
 
 .compendium-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--sp-2);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-3);
   margin-top: var(--sp-3);
 }
 
 .compendium-card {
   padding: var(--sp-3);
   border-radius: var(--r-md);
-  border: 1px solid rgba(100, 130, 80, 0.3);
-  background: rgba(20, 30, 18, 0.6);
+  border: 2px solid rgba(46, 46, 46, 0.15);
+  background: var(--bg-2, #FFF8E1);
 }
 
 .compendium-card.locked {
@@ -396,7 +452,7 @@
 }
 
 .compendium-card h4 {
-  color: #e0e8c8;
+  color: var(--dark-text, #2E2E2E);
   margin-bottom: 6px;
 }
 
@@ -404,7 +460,7 @@
 .compendium-story,
 .compendium-weakness {
   font-size: 0.78rem;
-  color: var(--text-muted);
+  color: var(--text2, #5a5248);
   line-height: 1.45;
   margin-bottom: 4px;
 }
@@ -415,8 +471,9 @@
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.7rem;
-  background: rgba(80, 120, 60, 0.4);
-  color: #b8e8a0;
+  background: rgba(77, 173, 91, 0.2);
+  color: var(--grass-green, #4DAD5B);
+  border: 1px solid rgba(77, 173, 91, 0.35);
 }
 
 .compendium-card.seen .compendium-tag {

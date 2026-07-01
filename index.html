@@ -65,7 +65,6 @@
       <div class="menu-top-logo">幻兽战队</div>
       <div class="menu-top-user">
         <span id="menu-top-nickname" class="menu-top-name">净化师</span>
-        <span class="menu-top-rank" id="menu-top-rank">黑铁</span>
       </div>
     </header>
     <div class="menu-layout">
@@ -73,23 +72,17 @@
         <h3>净化师档案</h3>
         <p class="profile-account">账号 <strong id="profile-username">-</strong></p>
         <p class="profile-account">昵称 <strong id="profile-nickname">-</strong></p>
-        <div id="profile-rank" class="rank-badge">黑铁 III ★0</div>
         <div class="profile-stats">
           <span>Lv.<strong id="profile-level">1</strong></span>
           <span>胜场 <strong id="profile-wins">0</strong></span>
         </div>
         <div class="profile-exp-bar"><div id="profile-exp-fill" class="exp-fill"></div></div>
         <p class="profile-exp-text"><span id="profile-exp">0</span> / <span id="profile-exp-max">100</span> EXP</p>
-        <div class="profile-currency">
-          <span>💰 <strong id="profile-gold">500</strong></span>
-          <span>💎 <strong id="profile-gems">0</strong></span>
-        </div>
         <button id="btn-daily-login" class="btn-gold btn-small">每日签到</button>
         <button id="btn-show-compendium" class="btn-muted btn-small">怪物手册</button>
         <button id="btn-show-tasks" class="btn-muted btn-small">每日任务</button>
         <div id="purify-records" class="purify-records-panel"></div>
         <button id="btn-logout" class="btn-danger btn-small">退出登录</button>
-        <div id="compendium-panel" class="compendium-panel hidden"></div>
         <div id="tasks-panel" class="tasks-panel hidden"></div>
       </aside>
         <div class="menu-container">
@@ -113,6 +106,14 @@
 
           <p id="menu-error" class="error-msg"></p>
         </div>
+    </div>
+
+    <div id="compendium-modal" class="compendium-modal hidden" role="dialog" aria-modal="true" aria-labelledby="compendium-modal-title">
+      <button type="button" class="compendium-modal-backdrop" id="compendium-modal-backdrop" aria-label="关闭怪物手册"></button>
+      <div class="compendium-modal-dialog">
+        <button type="button" class="compendium-modal-close" id="btn-compendium-close" aria-label="关闭">×</button>
+        <div id="compendium-panel" class="compendium-panel"></div>
+      </div>
     </div>
   </div>
 
@@ -498,6 +499,6 @@
       }
     })();
   </script>
-  <script type="module" src="js/main.js?v=20250702poke"></script>
+  <script type="module" src="js/main.js?v=20250702menu"></script>
 </body>
 </html>
