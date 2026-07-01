@@ -2,6 +2,7 @@
 import { cardTypeLabel } from './cardPool.js';
 import { intentIcon, intentLabel } from './enemies.js';
 import { TERMS } from './lore.js';
+import { PLAYER_SPRITE, enemySpriteUrl } from './assetPaths.js';
 
 export function healthBarStw(current, max, block = 0) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
@@ -33,7 +34,7 @@ export function renderPlayerTarget(combat) {
   const p = combat.player;
   return `<div class="Target Target--player purify-self-zone" data-type="player">
     <header class="Target-header">
-      <div class="Target-sprite" aria-hidden="true">🌿</div>
+      <div class="Target-sprite" aria-hidden="true"><img src="${PLAYER_SPRITE}" alt=""></div>
       <h3 class="Target-intents">
         <span class="Target-name">${TERMS.playerRole}</span>
       </h3>
@@ -58,9 +59,14 @@ export function renderEnemyTarget(enemy, index, { targeted, showDesc }) {
     ? `<span class="Target-intent Target-intent--dead">已净化</span>`
     : `<span class="Target-intent">${intentIcon(enemy.intent)} ${intentLabel(enemy.intent)}</span>`;
 
+  const spriteSrc = enemySpriteUrl(enemy.id);
+  const spriteHtml = spriteSrc
+    ? `<img src="${spriteSrc}" alt="">`
+    : (enemy.icon || '👹');
+
   return `<div class="${cls}" data-type="enemy" data-target="${index}" role="button" tabindex="${dead ? -1 : 0}" ${dead ? 'aria-disabled="true"' : ''}>
     <header class="Target-header">
-      <div class="Target-sprite" aria-hidden="true">${enemy.icon || '👹'}</div>
+      <div class="Target-sprite Target-sprite--enemy" aria-hidden="true">${spriteHtml}</div>
       <h3 class="Target-intents">
         <span class="Target-name">${enemy.name}</span>
         ${intentHtml}

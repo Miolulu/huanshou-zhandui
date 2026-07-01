@@ -9,6 +9,7 @@ import { destroyCardDrag, enableCardDrag } from './cardDrag.js';
 import { SpireOverlays } from './spireOverlays.js';
 import { renderPlayerTarget, renderEnemyTarget } from './combatView.js';
 import { renderPileInto } from './pileOverlay.js';
+import { sceneBackgroundUrl } from './assetPaths.js';
 import { showToast } from '../appShell.js';
 
 function logLineClass(line) {
@@ -324,8 +325,9 @@ export class SpireUI {
 
   updateSceneBg(state) {
     if (!this.el.sceneBg) return;
-    const idx = Math.min(8, Math.max(0, (state.floor || 1) - 1));
+    const idx = Math.min(5, Math.max(0, (state.floor || 1) - 1));
     this.el.sceneBg.dataset.roomIndex = String(idx);
+    this.el.sceneBg.style.backgroundImage = `url('${sceneBackgroundUrl(idx)}')`;
   }
 
   onOverlayOpen(id) {

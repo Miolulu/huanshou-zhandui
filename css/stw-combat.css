@@ -115,9 +115,40 @@
 
 #screen-spire .Target-sprite {
   flex-shrink: 0;
-  font-size: 2.2rem;
-  line-height: 1;
+  width: 4.5rem;
+  height: 4.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+#screen-spire .Target-sprite img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+#screen-spire .Target--enemy .Target-sprite {
+  width: 5.5rem;
+  height: 5.5rem;
+}
+
+#screen-spire .Card-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: pixelated;
+  border-radius: 0.35rem;
+}
+
+#screen-spire .purify-intent-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  image-rendering: pixelated;
+  vertical-align: middle;
 }
 
 #screen-spire .Target-intents {

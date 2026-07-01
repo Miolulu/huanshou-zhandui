@@ -1,5 +1,6 @@
 /** 净化技法卡 · Slay the Web 风格卡牌 DOM */
 import { cardTypeClass, cardTypeLabel } from './cardPool.js';
+import { cardArtUrl } from './assetPaths.js';
 
 const ELEMENT_ART_CLASS = {
   fire: 'el-fire',
@@ -15,16 +16,19 @@ const ELEMENT_ART_CLASS = {
 
 export function renderPurifyCardHtml(card, { playable = true, extraClass = '', tag = 'button' } = {}) {
   const el = ELEMENT_ART_CLASS[card.element] || ELEMENT_ART_CLASS.neutral;
-  const disabled = playable ? '' : 'disabled';
   const typeAttr = tag === 'button' ? 'type="button"' : '';
   const disabledAttr = tag === 'button' && !playable ? 'disabled' : '';
+  const artSrc = cardArtUrl(card.id);
+  const artInner = artSrc
+    ? `<img class="Card-art-img" src="${artSrc}" alt="" loading="lazy" draggable="false">`
+    : `<div class="Card-art ${el}" role="img" aria-label="${card.name}"></div>`;
   return `<${tag} ${typeAttr}
     class="purify-card Card ${cardTypeClass(card.type)} ${el} ${extraClass} ${playable ? '' : 'disabled'}"
     data-uid="${card.uid}" data-card-id="${card.id}" data-card-type="${card.type}" ${disabledAttr}>
     <div class="Card-inner">
       <p class="Card-energy EnergyBadge" title="灵耗"><span>${card.cost}</span></p>
       <figure class="Card-media">
-        <div class="Card-art ${el}" role="img" aria-label="${card.name}"></div>
+        ${artInner}
       </figure>
       <p class="Card-type">${cardTypeLabel(card.type)}</p>
       <h3 class="Card-name">${card.name}</h3>

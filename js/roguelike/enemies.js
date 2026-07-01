@@ -251,21 +251,21 @@ export function intentLabel(intent) {
 
 export function intentIcon(intent) {
   const base = 'assets/intents';
-  let file = 'unknown.svg';
+  let file = 'unknown.png';
   switch (intent.intent) {
     case INTENTS.ATTACK:
     case INTENTS.STRONG_ATTACK:
     case INTENTS.ATTACK_DEFEND:
-      file = 'damage.svg';
+      file = 'damage.png';
       break;
     case INTENTS.DEFEND:
-      file = 'block.svg';
+      file = 'block.png';
       break;
     case INTENTS.BUFF:
-      file = 'buff.svg';
+      file = 'buff.png';
       break;
     case INTENTS.DEBUFF:
-      file = 'debuff.svg';
+      file = 'debuff.png';
       break;
     default:
       break;
