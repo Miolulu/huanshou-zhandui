@@ -169,13 +169,25 @@ export class RunEngine {
     if (this.phase !== RUN_PHASES.COMBAT || !this.combat) return { ok: false };
     const wasTutorial = this.isTutorialCombat;
     const r = this.combat.endTurn();
-    if (!deferNewTurn && r.needsNewTurn) {
+    if (!r.needsEnemySteps && !deferNewTurn && r.needsNewTurn) {
       const next = this.combat.beginPlayerTurn();
       if (next.ok) {
         r.events = [...(r.events || []), ...(next.events || [])];
       }
       delete r.needsNewTurn;
     }
+    if (this.combat?.phase === 'won') this.onCombatWon();
+    else if (this.combat?.phase === 'lost') this.onCombatLost();
+    if (wasTutorial && this.phase === RUN_PHASES.MAP) {
+      return { ...r, ok: r.ok !== false, tutorialFinished: true };
+    }
+    return r;
+  }
+
+  stepCombatEnemyTurn() {
+    if (this.phase !== RUN_PHASES.COMBAT || !this.combat) return { ok: false };
+    const wasTutorial = this.isTutorialCombat;
+    const r = this.combat.stepEnemyTurn();
     if (this.combat?.phase === 'won') this.onCombatWon();
     else if (this.combat?.phase === 'lost') this.onCombatLost();
     if (wasTutorial && this.phase === RUN_PHASES.MAP) {

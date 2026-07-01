@@ -12,6 +12,20 @@ function mkAttacker(id, atk) {
   return e;
 }
 
+function runEnemyPhase(c) {
+  let r = c.endTurn();
+  const allEvents = [...(r.events || [])];
+  while (!r.enemyPhaseComplete) {
+    r = c.stepEnemyTurn();
+    allEvents.push(...(r.events || []));
+  }
+  if (r.needsNewTurn) {
+    const next = c.beginPlayerTurn();
+    allEvents.push(...(next.events || []));
+  }
+  return { ...r, events: allEvents };
+}
+
 function testDualEnemyDamage() {
   const deck = [{ uid: '1', id: 'x', name: 'x', type: 'skill', cost: 1, block: 10 }];
   const c = new CombatEngine(deck, 'normal', {
@@ -23,8 +37,7 @@ function testDualEnemyDamage() {
   c.turn = 1;
   c.player.block = 0;
   const hp0 = c.player.hp;
-  const r = c.endTurn();
-  if (r.needsNewTurn) c.beginPlayerTurn();
+  const r = runEnemyPhase(c);
   const dmg = r.events.filter((e) => e.type === 'DAMAGE' && e.target === 'player');
   const lost = hp0 - c.player.hp;
   const ok = dmg.length === 2 && lost === 14;
@@ -43,8 +56,7 @@ function testBlockAbsorbsDuringEnemyTurn() {
   c.turn = 1;
   c.player.block = 10;
   const hp0 = c.player.hp;
-  const r = c.endTurn();
-  if (r.needsNewTurn) c.beginPlayerTurn();
+  const r = runEnemyPhase(c);
   const dmg = r.events.filter((e) => e.type === 'DAMAGE' && e.target === 'player');
   const lost = hp0 - c.player.hp;
   // 8 blocked fully, 6-2=4 hp lost
@@ -64,6 +76,7 @@ function testBlockClearsNextPlayerTurnNotBeforeEnemy() {
   c.turn = 1;
   c.player.block = 5;
   c.phase = 'enemy';
+  c.enemyTurnIndex = 0;
   c.enemyTurn();
   const blockAfterEnemy = c.player.block;
   c.startTurn();
@@ -73,10 +86,42 @@ function testBlockClearsNextPlayerTurnNotBeforeEnemy() {
   return ok;
 }
 
+function testSteppedEnemyTurn() {
+  const deck = [{ uid: '1', id: 'x', name: 'x', type: 'skill', cost: 1, block: 0 }];
+  const c = new CombatEngine(deck, 'normal', {
+    enemies: [mkAttacker('corrupted_wolf', 8), mkAttacker('corrupted_mushroom', 6)],
+    skipStartTurn: true,
+    startHp: 50,
+    maxHp: 50,
+  });
+  c.turn = 1;
+  const hp0 = c.player.hp;
+  const end = c.endTurn();
+  const step1 = c.stepEnemyTurn();
+  const hpAfterFirst = c.player.hp;
+  const step2 = c.stepEnemyTurn();
+  const step3 = c.stepEnemyTurn();
+  const ok = end.needsEnemySteps
+    && step1.hasMoreEnemySteps
+    && hpAfterFirst === hp0 - 8
+    && c.player.hp === hp0 - 14
+    && step2.hasMoreEnemySteps === false
+    && step3.enemyPhaseComplete
+    && step3.needsNewTurn;
+  console.log('stepped enemy:', ok ? '✓' : '✗', {
+    hpAfterFirst,
+    hpFinal: c.player.hp,
+    step1: step1.hasMoreEnemySteps,
+    step3: step3.enemyPhaseComplete,
+  });
+  return ok;
+}
+
 const results = [
   testDualEnemyDamage(),
   testBlockAbsorbsDuringEnemyTurn(),
   testBlockClearsNextPlayerTurnNotBeforeEnemy(),
+  testSteppedEnemyTurn(),
 ];
 const ok = results.every(Boolean);
 console.log(ok ? '✅ combat mechanics smoke passed' : '❌ combat mechanics smoke failed');

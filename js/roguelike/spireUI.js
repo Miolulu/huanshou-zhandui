@@ -239,19 +239,27 @@ export class SpireUI {
       await this.battleEffects.animateHandDiscard();
     }
 
-    this.render();
-    this.bindBattleEffectRefs();
+    if (result.needsEnemySteps) {
+      this.render();
+      this.bindBattleEffectRefs();
+      const turnEndEvents = (result.events || []).filter((e) => e.type === 'TURN_END');
+      await this.battleEffects.playSequence(turnEndEvents);
+      await this.playEnemySteps();
+    } else {
+      this.render();
+      this.bindBattleEffectRefs();
 
-    let events = (result.events || []).filter((e) => e.type !== 'HAND_DISCARDED');
-    if (result.needsNewTurn) {
-      events = events.filter((e) => e.type !== 'TURN_START');
-    }
-    await this.battleEffects.playSequence(events);
+      let events = (result.events || []).filter((e) => e.type !== 'HAND_DISCARDED');
+      if (result.needsNewTurn) {
+        events = events.filter((e) => e.type !== 'TURN_START');
+      }
+      await this.battleEffects.playSequence(events);
 
-    if (result.needsNewTurn) {
-      const next = this.run.beginCombatPlayerTurn();
-      if (next.ok) {
-        await this.battleEffects.playSequence(next.events || []);
+      if (result.needsNewTurn) {
+        const next = this.run.beginCombatPlayerTurn();
+        if (next.ok) {
+          await this.battleEffects.playSequence(next.events || []);
+        }
       }
     }
 
@@ -269,6 +277,30 @@ export class SpireUI {
       this.setupCardDrag(combat);
     }
     return result;
+  }
+
+  /** 敌方逐只行动：每次行动后刷新 UI，保证伤害与动画同步 */
+  async playEnemySteps() {
+    while (true) {
+      const step = this.run.stepCombatEnemyTurn();
+      if (!step?.ok) break;
+
+      this.render();
+      this.bindBattleEffectRefs();
+
+      const events = (step.events || []).filter((e) => e.type !== 'HAND_DISCARDED');
+      await this.battleEffects.playSequence(events);
+
+      if (step.enemyPhaseComplete) {
+        if (step.needsNewTurn) {
+          const next = this.run.beginCombatPlayerTurn();
+          if (next.ok) {
+            await this.battleEffects.playSequence(next.events || []);
+          }
+        }
+        break;
+      }
+    }
   }
 
   updateCombatChrome(c) {

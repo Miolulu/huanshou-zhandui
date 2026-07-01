@@ -46,6 +46,7 @@ export class CombatEngine {
       energy: BASE_ENERGY,
     };
     this.enemies = enemies || pickEncounter(floor, tier, rng);
+    this.enemyTurnIndex = 0;
     this.enemies.forEach((e) => {
       this.pushLog(`遭遇 ${e.name}`);
       if (e.desc) this.pushLog(e.desc);
@@ -286,19 +287,8 @@ export class CombatEngine {
     this.hand = [];
     this.emit({ type: COMBAT_EVENT.HAND_DISCARDED });
     this.phase = 'enemy';
-    this.enemyTurn();
-    if (this.player.hp <= 0) {
-      this.phase = 'lost';
-      this.pushLog(TERMS.logLose);
-      this.emit({ type: COMBAT_EVENT.COMBAT_LOST });
-      return { ok: true, events: this.drainEvents() };
-    }
-    if (!this.aliveEnemies.length) {
-      this.phase = 'won';
-      this.emit({ type: COMBAT_EVENT.COMBAT_WON });
-      return { ok: true, events: this.drainEvents() };
-    }
-    return { ok: true, events: this.drainEvents(), needsNewTurn: true };
+    this.enemyTurnIndex = 0;
+    return { ok: true, events: this.drainEvents(), needsEnemySteps: true };
   }
 
   /** 敌方回合结束后开启新玩家回合（对齐 Slay the Web：先怪物行动，再清护幕抽牌） */
@@ -312,20 +302,62 @@ export class CombatEngine {
     return { ok: true, events: this.drainEvents() };
   }
 
-  enemyTurn() {
-    for (const e of this.enemies) {
+  /** 逐步执行：每次只让一只存活敌人行动（供 UI 异步播放） */
+  stepEnemyTurn() {
+    this.beginAction();
+    if (this.phase !== 'enemy') return { ok: false, events: [] };
+
+    while (this.enemyTurnIndex < this.enemies.length) {
+      const e = this.enemies[this.enemyTurnIndex++];
       if (e.hp <= 0) continue;
+
       this.executeEnemyIntent(e);
+
       if (this.player.hp <= 0) {
         this.phase = 'lost';
-        return;
+        this.pushLog(TERMS.logLose);
+        this.emit({ type: COMBAT_EVENT.COMBAT_LOST });
+        return { ok: true, events: this.drainEvents(), enemyPhaseComplete: true };
       }
+
+      const hasMore = this.enemies.slice(this.enemyTurnIndex).some((x) => x.hp > 0);
+      return { ok: true, events: this.drainEvents(), hasMoreEnemySteps: hasMore };
     }
+
+    return this.finalizeEnemyPhase();
+  }
+
+  finalizeEnemyPhase() {
     if (this.weak > 0) this.weak -= 1;
     for (const e of this.enemies) {
       if (e.hp <= 0) continue;
       if (e.vulnerable > 0) e.vulnerable -= 1;
     }
+
+    if (this.player.hp <= 0) {
+      this.phase = 'lost';
+      this.pushLog(TERMS.logLose);
+      this.emit({ type: COMBAT_EVENT.COMBAT_LOST });
+      return { ok: true, events: this.drainEvents(), enemyPhaseComplete: true };
+    }
+    if (!this.aliveEnemies.length) {
+      this.phase = 'won';
+      this.pushLog(TERMS.logWin);
+      this.emit({ type: COMBAT_EVENT.COMBAT_WON });
+      return { ok: true, events: this.drainEvents(), enemyPhaseComplete: true };
+    }
+
+    return { ok: true, events: this.drainEvents(), enemyPhaseComplete: true, needsNewTurn: true };
+  }
+
+  /** 同步跑完整个敌方回合（测试 / 脚本用） */
+  enemyTurn() {
+    this.enemyTurnIndex = 0;
+    let last = { ok: true, enemyPhaseComplete: false };
+    while (this.phase === 'enemy' && !last.enemyPhaseComplete) {
+      last = this.stepEnemyTurn();
+    }
+    return last;
   }
 
   executeEnemyIntent(e) {
