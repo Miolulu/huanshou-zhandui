@@ -24,6 +24,7 @@ function defaultProfile() {
     tasks: { dailyProgress: {}, weeklyProgress: {}, achievements: {} },
     unlockedModes: ['ranked', 'casual', 'ai_battle', 'custom'],
     tutorialCompleted: false,
+    purify: null,
     settings: { aiDifficulty: 'normal' },
     lastGame: null,
   };

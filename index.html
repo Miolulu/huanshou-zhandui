@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>幻兽战队 - 策略卡牌自动战斗</title>
+  <title>幻兽战队 - 幻兽净化师</title>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/reset.css">
   <link rel="stylesheet" href="css/utilities.css">
@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="css/battle.css">
   <link rel="stylesheet" href="css/animation.css">
   <link rel="stylesheet" href="css/bg-layout.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/roguelike.css">
 </head>
 <body>
   <!-- ===== 登录 / 注册 ===== -->
@@ -62,13 +62,13 @@
     <header class="menu-top-bar u-glass">
       <div class="menu-top-logo">幻兽战队</div>
       <div class="menu-top-user">
-        <span id="menu-top-nickname" class="menu-top-name">训练师</span>
+        <span id="menu-top-nickname" class="menu-top-name">净化师</span>
         <span class="menu-top-rank" id="menu-top-rank">黑铁</span>
       </div>
     </header>
     <div class="menu-layout">
       <aside class="profile-panel">
-        <h3>训练师档案</h3>
+        <h3>净化师档案</h3>
         <p class="profile-account">账号 <strong id="profile-username">-</strong></p>
         <p class="profile-account">昵称 <strong id="profile-nickname">-</strong></p>
         <div id="profile-rank" class="rank-badge">黑铁 III ★0</div>
@@ -83,41 +83,63 @@
           <span>💎 <strong id="profile-gems">0</strong></span>
         </div>
         <button id="btn-daily-login" class="btn-gold btn-small">每日签到</button>
+        <button id="btn-show-compendium" class="btn-muted btn-small">怪物手册</button>
         <button id="btn-show-tasks" class="btn-muted btn-small">每日任务</button>
-        <button id="btn-tutorial" class="btn-muted btn-small">新手教程</button>
+        <button id="btn-tutorial" class="btn-muted btn-small">自走棋教程</button>
+        <div id="purify-records" class="purify-records-panel"></div>
         <button id="btn-logout" class="btn-danger btn-small">退出登录</button>
+        <div id="compendium-panel" class="compendium-panel hidden"></div>
         <div id="tasks-panel" class="tasks-panel hidden"></div>
       </aside>
-      <div class="menu-container">
-        <div class="menu-logo">
-          <h1>幻兽战队</h1>
-          <p>8人策略卡牌 · 属性克制 · 生态族群 · 融合觉醒 · 自动战斗</p>
-        </div>
-        <div class="menu-form">
-          <h3 class="section-label">选择模式</h3>
-          <div id="mode-grid" class="mode-grid"></div>
-          <div id="ai-difficulty-row" class="ai-difficulty-row hidden">
-            <label>AI 难度</label>
-            <select id="select-ai-difficulty">
-              <option value="easy">简单</option>
-              <option value="normal" selected>普通</option>
-              <option value="hard">困难</option>
-              <option value="nightmare">噩梦</option>
-            </select>
-          </div>
-          <div class="menu-actions">
-            <button id="btn-quick-start" class="btn-accent btn-lg hidden">立即开始</button>
-            <button id="btn-create-room" class="btn-accent btn-lg">创建房间</button>
-            <button id="btn-show-join" class="btn-gold btn-lg">加入房间</button>
-          </div>
-          <div id="join-panel" class="join-panel hidden">
-            <input id="input-room-code" type="text" maxlength="6" placeholder="房间号 6 位">
-            <button id="btn-join-room" class="btn-accent">加入</button>
-          </div>
+        <div class="menu-container">
+          <section class="solo-hero">
+            <span class="solo-badge">单机 · 无需联机</span>
+            <h1 class="solo-title">幻兽净化师</h1>
+            <p class="solo-desc">携带净化秘典深入污染地带，以技法驱散污秽，挽救失控幻兽</p>
+            <ul class="solo-features">
+              <li><strong>路线图</strong> 选择遭遇 / 深渊 / 驿站 / 源点</li>
+              <li><strong>调息战斗</strong> 消耗灵力打出攻型与守型技法</li>
+              <li><strong>怪物组合</strong> 固定怪物池 · 每层随机组合遭遇</li>
+              <li><strong>悟道入秘典</strong> 净化成功后领悟新技法</li>
+            </ul>
+            <div class="solo-mode-btns">
+              <button id="btn-quick-start" type="button" class="solo-start-btn">净化远征</button>
+              <button id="btn-tier-start" type="button" class="solo-mode-btn solo-mode-tier">阶层挑战 · 100 层</button>
+              <button id="btn-infinite-start" type="button" class="solo-mode-btn solo-mode-infinite">无限模式</button>
+            </div>
+            <p class="solo-hint">首次进入战斗时将进行实战引导 · 需登录账号保存图鉴与记录</p>
+          </section>
+
+          <details class="legacy-modes" id="legacy-modes">
+            <summary>经典自走棋（联机 / 人机，8 人对战）</summary>
+            <div class="legacy-modes-body">
+              <p class="hint">以下为旧版酒馆自走棋模式，支持创建房间与联机匹配。</p>
+              <h3 class="section-label">选择模式</h3>
+              <div id="mode-grid" class="mode-grid"></div>
+              <div id="ai-difficulty-row" class="ai-difficulty-row hidden">
+                <label>AI 难度</label>
+                <select id="select-ai-difficulty">
+                  <option value="easy">简单</option>
+                  <option value="normal" selected>普通</option>
+                  <option value="hard">困难</option>
+                  <option value="nightmare">噩梦</option>
+                </select>
+              </div>
+              <div class="menu-actions legacy-actions">
+                <button id="btn-legacy-start" type="button" class="btn-accent btn-lg hidden">立即开始</button>
+                <button id="btn-create-room" type="button" class="btn-accent btn-lg">创建房间</button>
+                <button id="btn-show-join" type="button" class="btn-gold btn-lg">加入房间</button>
+              </div>
+              <div id="join-panel" class="join-panel hidden">
+                <input id="input-room-code" type="text" maxlength="6" placeholder="房间号 6 位">
+                <button id="btn-join-room" type="button" class="btn-accent">加入</button>
+              </div>
+            </div>
+          </details>
+
           <p id="menu-error" class="error-msg"></p>
           <p id="session-recover-hint" class="hint hidden"></p>
         </div>
-      </div>
     </div>
   </div>
 
@@ -153,6 +175,7 @@
         <button id="btn-back-lobby" class="btn-muted btn-small">退出</button>
         <span id="turn-info" class="bg-round">R1</span>
         <span id="phase-info" class="bg-phase">准备</span>
+        <span id="prepare-timer-hud" class="bg-prepare-timer hidden" aria-live="polite">30s</span>
         <span id="streak-info" class="bg-streak"></span>
       </div>
       <div class="bg-hud-center">
@@ -186,6 +209,13 @@
       </aside>
 
       <main class="bg-board-area">
+        <section id="prepare-focus-bar" class="prepare-focus-bar hidden" aria-label="准备阶段提示">
+          <div class="prepare-focus-text">
+            <strong>准备阶段</strong>
+            <span>先从驿站收服幻兽，再调整下方战队栏位 · 满意后点「提前开战」</span>
+          </div>
+        </section>
+
         <section class="bg-arena-wrap battle-section">
           <div id="battle" class="bg-arena battle-app" role="application" aria-label="战斗场景">
             <div class="battle-bg battle-background-layer z-bg" aria-hidden="true"></div>
@@ -232,12 +262,20 @@
 
             <section class="battle-center battle-field z-gameplay">
               <div class="magic-circle" aria-hidden="true"></div>
+              <div id="prepare-rope-wrap" class="prepare-rope-wrap hidden" aria-hidden="true">
+                <div class="prepare-rope-track">
+                  <div id="prepare-rope-burn" class="prepare-rope-burn"></div>
+                </div>
+                <span id="prepare-rope-text" class="prepare-rope-text">30</span>
+              </div>
               <div class="effect-layer battle-effect-layer z-effects" id="battle-effect-layer"></div>
               <div class="floating-text-layer z-effects" id="floating-text-layer"></div>
               <div id="battle-idle-msg" class="battle-idle-msg">从左至右出战 · 研究出战技与站位搭配</div>
             </section>
 
             <section class="player-area battle-player-area z-gameplay" id="battle-player-area" aria-label="我方区域"></section>
+
+            <button type="button" id="btn-end-prepare-board" class="hs-end-turn-btn hidden" title="结束准备，开始匹配">提前开战</button>
           </div>
         </section>
 
@@ -268,10 +306,10 @@
         <div id="battle-log" class="battle-log"></div>
       </aside>
 
-      <section class="bg-tavern-section">
+      <section class="bg-tavern-section hs-hand-panel">
         <div class="bg-tavern-head">
           <h2>🌿 幻兽驿站</h2>
-          <span class="hint">点击收服 · 三只同种融合后野性邂逅</span>
+          <span class="hint">点击收服 · 拖入战队栏位 · 三只同种融合觉醒</span>
         </div>
         <div id="shop-tier-hint" class="hidden"></div>
         <div id="shop-cards" class="bg-shop-slots"></div>
@@ -297,16 +335,13 @@
         </button>
       </div>
       <div class="bg-action-center">
-        <div class="prepare-timer-panel" id="prepare-timer-panel">
-          <div class="prepare-timer-head">
-            <span>准备</span>
-            <strong id="prepare-timer-large">30</strong><span>秒</span>
-          </div>
-          <div class="prepare-timer-bar"><div id="prepare-timer-fill" class="prepare-timer-fill"></div></div>
-        </div>
         <button id="btn-end-prepare" class="btn-accent">提前开战</button>
+        <span id="prepare-timer-chip" class="prepare-timer-chip hidden" aria-hidden="true">
+          <span id="prepare-timer-large">30</span>s
+        </span>
         <span id="prepare-timer" class="hidden"></span>
         <span id="prepare-timer-box" class="hidden"></span>
+        <div id="prepare-timer-panel" class="hidden" aria-hidden="true"></div>
       </div>
       <div class="bg-action-right">
         <button id="btn-battle-speed" class="bg-speed-btn" title="战斗倍速">1×</button>
@@ -321,6 +356,88 @@
         </div>
       </div>
     </footer>
+  </div>
+
+  <!-- ===== 净化远征（单机） ===== -->
+  <div id="screen-spire" class="screen purify-screen">
+    <header class="purify-topbar">
+      <button type="button" id="btn-spire-back" class="purify-back">退出远征</button>
+      <div class="purify-brand">
+        <span class="purify-brand-mark" aria-hidden="true">✨</span>
+        <div>
+          <strong class="purify-brand-title">净化远征</strong>
+          <small class="purify-brand-sub"><span id="purify-mode-badge">单机</span> · 幻兽净化师</small>
+        </div>
+      </div>
+      <span id="purify-floor-badge" class="purify-floor-badge hidden"></span>
+      <div class="purify-resources">
+        <span id="spire-hp" class="purify-res purify-res-mind" title="心神">🌿 70/70</span>
+        <span id="spire-gold" class="purify-res purify-res-coin" title="探索币">💰 0</span>
+        <span id="spire-deck" class="purify-res purify-res-codex" title="净化秘典">📜 10</span>
+      </div>
+    </header>
+
+    <main class="purify-main">
+      <section id="spire-view-map" class="purify-pane">
+        <div class="purify-map-board">
+          <header class="purify-pane-head">
+            <h2 id="purify-map-title">污染地带路线图</h2>
+            <p id="purify-map-intro" class="purify-pane-desc">选择下一处净化点，深入污染地带</p>
+          </header>
+          <div id="spire-map-nodes" class="purify-path"></div>
+          <p id="purify-map-hint" class="purify-map-hint">✨ 遭遇污化幻兽 · ☠ 深渊级污染 · 🌿 幻兽驿站 · 👹 污染源点</p>
+        </div>
+      </section>
+
+      <section id="spire-view-combat" class="purify-pane hidden">
+        <div class="purify-battle">
+          <aside id="spire-combat-log" class="purify-journal" aria-label="净化日志"></aside>
+          <div class="purify-stage">
+            <div id="spire-enemy" class="purify-foe-zone"></div>
+            <div class="purify-action-bar">
+              <div class="purify-spirit-wrap">
+                <span class="purify-spirit-label">灵力</span>
+                <div id="spire-energy" class="purify-spirit-orbs"></div>
+              </div>
+              <button type="button" id="btn-spire-end-turn" class="purify-end-turn">收势</button>
+            </div>
+            <div id="spire-player" class="purify-self-zone"></div>
+          </div>
+          <div class="purify-hand-wrap">
+            <span class="purify-hand-label">当前技法</span>
+            <div id="spire-hand" class="purify-hand"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="spire-view-reward" class="purify-pane hidden">
+        <div class="purify-modal-card">
+          <h2 id="purify-reward-title">悟道 · 择一技法入秘典</h2>
+          <div id="spire-reward-cards" class="purify-reward-row"></div>
+          <button type="button" id="btn-spire-skip-reward" class="purify-text-btn">暂不入秘典</button>
+        </div>
+      </section>
+
+      <section id="spire-view-rest" class="purify-pane hidden">
+        <div class="purify-modal-card purify-rest-card">
+          <h2>🌿 幻兽驿站</h2>
+          <p id="purify-rest-hint" class="purify-pane-desc">调息恢复心神，或精研强化秘典中的技法</p>
+          <div class="purify-rest-actions">
+            <button type="button" id="btn-spire-rest-heal" class="purify-rest-btn purify-rest-heal">调息 · 恢复 20 心神</button>
+            <button type="button" id="btn-spire-rest-upgrade" class="purify-rest-btn purify-rest-upgrade">精研 · 强化秘典技法</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="spire-view-end" class="purify-pane hidden">
+        <div class="purify-modal-card purify-end-card">
+          <h2 id="spire-end-title">远征结束</h2>
+          <div id="spire-end-stats" class="purify-end-stats"></div>
+          <button type="button" id="btn-spire-end-continue" class="purify-start-btn">返回主页</button>
+        </div>
+      </section>
+    </main>
+    <div id="purify-tutorial-host" class="purify-tutorial-host hidden"></div>
   </div>
 
   <div id="dialog-root" class="dialog-root" aria-live="polite">

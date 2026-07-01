@@ -1,9 +1,22 @@
 /** 断线重连 / 对局会话缓存（静态页本地模拟） */
 const SESSION_KEY = 'hszd_game_session';
 
+function hasSessionStorage() {
+  return typeof sessionStorage !== 'undefined';
+}
+
 export function saveGameSession(engine, meta = {}) {
+  if (!hasSessionStorage()) return;
   if (!engine || engine.phase === 'ENDED' || engine.phase === 'INIT') {
     clearGameSession();
+    return;
+  }
+  // 仅缓存准备阶段，避免恢复时卡在匹配/战斗中间态
+  if (engine.phase !== 'PREPARE') {
+    return;
+  }
+  // 仅缓存准备阶段，避免刷新后卡在无引擎的匹配/战斗/结算态
+  if (engine.phase !== 'PREPARE') {
     return;
   }
   try {
@@ -36,6 +49,7 @@ export function saveGameSession(engine, meta = {}) {
 }
 
 export function loadGameSession() {
+  if (!hasSessionStorage()) return null;
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
@@ -51,6 +65,7 @@ export function loadGameSession() {
 }
 
 export function clearGameSession() {
+  if (!hasSessionStorage()) return;
   sessionStorage.removeItem(SESSION_KEY);
 }
 

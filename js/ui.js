@@ -57,6 +57,13 @@ export class UI {
       prepareTimerPanel: document.getElementById('prepare-timer-panel'),
       prepareTimerLarge: document.getElementById('prepare-timer-large'),
       prepareTimerFill: document.getElementById('prepare-timer-fill'),
+      prepareTimerHud: document.getElementById('prepare-timer-hud'),
+      prepareTimerChip: document.getElementById('prepare-timer-chip'),
+      prepareFocusBar: document.getElementById('prepare-focus-bar'),
+      prepareRopeWrap: document.getElementById('prepare-rope-wrap'),
+      prepareRopeBurn: document.getElementById('prepare-rope-burn'),
+      prepareRopeText: document.getElementById('prepare-rope-text'),
+      btnEndPrepareBoard: document.getElementById('btn-end-prepare-board'),
       tavernTier: document.getElementById('tavern-tier'),
       tavernCost: document.getElementById('tavern-cost'),
       teamCost: document.getElementById('team-cost'),
@@ -103,14 +110,21 @@ export class UI {
   }
 
   bindActions() {
-    document.getElementById('btn-end-prepare').onclick = () => {
+    const onEndPrepare = () => {
       if (this.game.phase !== 'PREPARE') return;
       this.game.endPreparePhase().then((r) => {
         if (r?.blocked || r?.reason === 'empty_team') {
           showToast('战队为空！请先从驿站收服幻兽');
+        } else if (r?.error) {
+          showToast(`战斗流程异常：${r.message || '请重试'}`);
         }
+      }).catch((err) => {
+        console.error(err);
+        showToast('开战失败，请刷新页面后重试');
       });
     };
+    document.getElementById('btn-end-prepare').onclick = onEndPrepare;
+    if (this.el.btnEndPrepareBoard) this.el.btnEndPrepareBoard.onclick = onEndPrepare;
     document.getElementById('btn-refresh').onclick = () => {
       this.game.refreshShopManual(this.game.getHuman());
     };
@@ -241,6 +255,12 @@ export class UI {
     if (state.phase === 'PREPARE') {
       this._shownTimeoutToast = false;
       this._shownEmptyTeamToast = false;
+      this._shownMatchToast = false;
+    }
+    if (state.phase === 'MATCH' && !this._shownMatchToast) {
+      this._shownMatchToast = true;
+      const opp = state.opponentPreview?.name || '未知对手';
+      showToast(`⚔ 匹配到 ${opp}，即将开战`);
     }
     this.renderPlayers(state);
     this.renderTavernControls(human, state);
@@ -272,6 +292,16 @@ export class UI {
     const map = { PREPARE: 'phase-prepare', MATCH: 'phase-match', BATTLE: 'phase-battle', SETTLE: 'phase-settle', ENDED: 'phase-ended' };
     const cls = map[state.phase];
     if (cls) screen.classList.add(cls);
+
+    if (state.phase === 'PREPARE' && !this._prepareScrolled) {
+      this._prepareScrolled = true;
+      requestAnimationFrame(() => {
+        document.querySelector('.bg-bench-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+    if (state.phase !== 'PREPARE') {
+      this._prepareScrolled = false;
+    }
   }
 
   showStartScreen() {
@@ -315,29 +345,27 @@ export class UI {
   renderPrepareTimer(state) {
     const inPrepare = state.phase === 'PREPARE';
     const left = state.prepareTimeLeft ?? 0;
-    const total = state.prepareTimeTotal || 1;
-    const pct = Math.max(0, Math.min(100, (left / total) * 100));
+    const urgent = left <= 5;
+    const total = state.prepareTimeTotal || CONFIG.PREPARE_TIME;
 
-    if (this.el.prepareTimerBox) {
-      this.el.prepareTimerBox.style.display = inPrepare ? '' : 'none';
-      if (inPrepare && this.el.prepareTimer) {
-        this.el.prepareTimer.textContent = `${left}s`;
-        this.el.prepareTimer.classList.toggle('urgent', left <= 5);
-      }
+    if (this.el.prepareRopeWrap) {
+      this.el.prepareRopeWrap.classList.toggle('hidden', !inPrepare);
+      this.el.prepareRopeWrap.classList.toggle('urgent', inPrepare && urgent);
     }
-    if (this.el.prepareTimerPanel) {
-      this.el.prepareTimerPanel.classList.toggle('hidden', !inPrepare);
-      if (inPrepare) {
-        if (this.el.prepareTimerLarge) {
-          this.el.prepareTimerLarge.textContent = String(left);
-          this.el.prepareTimerLarge.classList.toggle('urgent', left <= 5);
-        }
-        if (this.el.prepareTimerFill) {
-          this.el.prepareTimerFill.style.width = `${pct}%`;
-          this.el.prepareTimerFill.classList.toggle('urgent', left <= 5);
-        }
-      }
+    if (inPrepare && this.el.prepareRopeBurn) {
+      const pct = total > 0 ? left / total : 0;
+      this.el.prepareRopeBurn.style.transform = `scaleX(${pct})`;
     }
+    if (inPrepare && this.el.prepareRopeText) {
+      this.el.prepareRopeText.textContent = String(left);
+    }
+    if (this.el.btnEndPrepareBoard) {
+      this.el.btnEndPrepareBoard.classList.toggle('hidden', !inPrepare);
+    }
+
+    if (this.el.prepareTimerHud) this.el.prepareTimerHud.classList.add('hidden');
+    if (this.el.prepareTimerChip) this.el.prepareTimerChip.classList.add('hidden');
+    if (this.el.prepareFocusBar) this.el.prepareFocusBar.classList.add('hidden');
   }
 
   renderTavernControls(human, state) {
@@ -434,11 +462,13 @@ export class UI {
       const star = card.star ?? card.upgradeTier ?? 1;
       const starCls = star >= 3 ? 'star-3' : star >= 2 ? 'star-2' : 'star-1';
       const rallyTag = card.trainerRally ? `<span class="trainer-tag">战意+${card.trainerRally.attack}</span>` : '';
+      const initial = (card.name || '?').charAt(0);
       return `
         <div class="slot filled ${RARITY_CLASS[card.rarity]} ${starCls} ${partnerCls} ${rallyCls} ${boostCls} ${this.selectedTeamPos === i ? 'selected' : ''}"
           data-pos="${i}" draggable="${this.game.phase === 'PREPARE' ? 'true' : 'false'}">
           <span class="slot-pos">${i + 1}</span>
           ${rallyTag}
+          <div class="slot-portrait el-${card.element}" aria-hidden="true">${initial}</div>
           <div class="card-head">
             <div class="card-name">${card.name}</div>
             <div class="card-badges">${tribeBadgeHtml(card.tribe || 'neutral')}${elementBadgeHtml(card.element)}</div>
@@ -729,6 +759,18 @@ export class UI {
     this.renderTeam(human);
   }
 
+  getScoutBoardCards(opp, scoutLevel) {
+    const cards = opp.team.cards.filter((c, i) => c && i < (opp.team.maxSize ?? 7));
+    if (scoutLevel <= SCOUT_LEVEL.FOOTPRINT) return [];
+    if (scoutLevel <= SCOUT_LEVEL.SILHOUETTE) {
+      return cards.map((c) => ({
+        ...c,
+        name: `${ELEMENT_NAMES[c.element] || '?'}幻兽`,
+      }));
+    }
+    return cards;
+  }
+
   renderOpponent(state) {
     const opp = state.scoutedOpponent || state.opponentPreview;
     const level = state.scoutLevel ?? 1;
@@ -768,6 +810,7 @@ export class UI {
     const isPrepare = state.phase === 'PREPARE';
 
     document.getElementById('btn-end-prepare').disabled = !isPrepare;
+    if (this.el.btnEndPrepareBoard) this.el.btnEndPrepareBoard.disabled = !isPrepare;
     document.getElementById('btn-refresh').disabled = !isPrepare || human.gold < CONFIG.REFRESH_COST;
     document.getElementById('btn-freeze').disabled = !isPrepare;
     document.getElementById('btn-upgrade-tavern').disabled =
@@ -786,23 +829,27 @@ export class UI {
   renderBattleHUD(state, human) {
     const phaseNames = { PREPARE: '准备', MATCH: '匹配', BATTLE: '战斗中', SETTLE: '结算', ENDED: '结束' };
     const inBattle = state.phase === 'BATTLE' || state.phase === 'SETTLE';
+    const inPrepare = state.phase === 'PREPARE';
     const round = String(state.turn || 1).padStart(2, '0');
 
     if (this.el.battleHudRound) this.el.battleHudRound.textContent = round;
     if (this.el.battleHudPhase) this.el.battleHudPhase.textContent = phaseNames[state.phase] || state.phase;
 
-    const opp = state.opponentPreview;
+    const opp = state.scoutedOpponent || state.opponentPreview;
     if (this.el.battleHudOpponent) {
       if (inBattle && this.game.currentBattle) {
         const eng = this.game.currentBattle;
-        const humanSide = eng.playerA?.isHuman ? eng.playerB : eng.playerA;
+        const humanSide = eng.playerA?.id === this.game.humanId ? eng.playerB : eng.playerA;
         this.el.battleHudOpponent.textContent = (humanSide?.name || '对手').slice(0, 8);
+      } else if (inBattle && state.lastHumanResult) {
+        const hr = state.lastHumanResult;
+        const humanSide = hr.teamA?.playerId === this.game.humanId ? hr.teamB : hr.teamA;
+        this.el.battleHudOpponent.textContent = (humanSide?.playerName || '对手').slice(0, 8);
       } else {
         this.el.battleHudOpponent.textContent = (opp?.name || '—').slice(0, 8);
       }
     }
 
-    const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
     const links = summarizePartnerLinks(human.team, human.team.maxSize);
     if (this.el.battleHudCombo) {
       this.el.battleHudCombo.textContent = links.length
@@ -814,11 +861,12 @@ export class UI {
     let energyPct = 0;
     if (inBattle && engine) {
       energyPct = Math.min(100, Math.round((engine.turn / CONFIG.MAX_TURNS_PER_BATTLE) * 100));
-    } else if (state.phase === 'PREPARE' && state.prepareTimeLeft != null) {
-      const total = state.prepareTimeTotal || CONFIG.PREPARE_TIME;
-      energyPct = Math.round((1 - state.prepareTimeLeft / total) * 100);
     }
-    if (this.el.battleHudEnergy) this.el.battleHudEnergy.style.width = `${energyPct}%`;
+    if (this.el.battleHudEnergy) {
+      this.el.battleHudEnergy.style.width = inPrepare ? '0%' : `${energyPct}%`;
+    }
+
+    if (inPrepare) return;
 
     this.renderBattleTimelinePanel(state);
   }
@@ -838,16 +886,65 @@ export class UI {
 
   renderBattleField(state) {
     const human = state.human;
+
+    if (state.phase === 'PREPARE') {
+      this.renderBattleHUD(state, human);
+      const opp = state.scoutedOpponent || state.opponentPreview;
+      const scoutLevel = state.scoutLevel ?? 1;
+
+      if (this.el.battleIdleMsg) this.el.battleIdleMsg.style.display = 'none';
+      if (this.el.battlePlayerArea) this.el.battlePlayerArea.innerHTML = '';
+
+      if (this.el.battleEnemyArea) {
+        if (!opp) {
+          this.el.battleEnemyArea.innerHTML =
+            '<span class="battle-area-label">下轮对手 · 等待窥探</span><span class="hint">使用训练师「足迹延伸」查看对手</span>';
+        } else {
+          const boardCards = this.getScoutBoardCards(opp, scoutLevel);
+          const tier = opp.tavernTier || 1;
+          const label = scoutLevel <= SCOUT_LEVEL.FOOTPRINT
+            ? `👤 ${opp.name} · ${opp.hp}HP · 探索${tier}级`
+            : `👤 ${opp.name} · ${opp.hp}HP · 探索${tier}级`;
+          this.el.battleEnemyArea.innerHTML = boardCards.length
+            ? renderHeroCardRow(boardCards, 'enemy', label)
+            : `<span class="battle-area-label">${label}</span><span class="hint">仅见足迹 · 升级窥探可见轮廓</span>`;
+        }
+      }
+      return;
+    }
+
     this.renderBattleHUD(state, human);
 
     const inBattle = state.phase === 'BATTLE' || state.phase === 'SETTLE';
+    const inMatch = state.phase === 'MATCH';
+
     if (this.el.battleIdleMsg) {
       this.el.battleIdleMsg.style.display = inBattle ? 'none' : 'block';
       if (!inBattle) {
-        this.el.battleIdleMsg.textContent = state.phase === 'PREPARE'
-          ? '👇 下方幻兽驿站收服幻兽 · 战队栏位调整站位 · 准备好后点「提前开战」'
-          : '等待战斗开始…';
+        const idleText = {
+          PREPARE: '👇 下方幻兽驿站收服幻兽 · 战队栏位调整站位 · 准备好后点「提前开战」',
+          MATCH: '⚔ 正在匹配对手，请稍候…',
+          SETTLE: '📊 战斗结算中…',
+        };
+        this.el.battleIdleMsg.textContent = idleText[state.phase] || '等待战斗开始…';
       }
+    }
+
+    if (inMatch) {
+      const opp = state.opponentPreview;
+      if (this.el.battleEnemyArea) {
+        const cards = opp?.team?.cards?.filter((c, i) => c && i < (opp.team?.maxSize ?? 7)) ?? [];
+        this.el.battleEnemyArea.innerHTML = cards.length
+          ? renderHeroCardRow(cards, 'enemy', `即将对战 · ${opp?.name || '对手'}`)
+          : '<span class="area-label">敌方战队</span><span class="hint">匹配中…</span>';
+      }
+      if (this.el.battlePlayerArea) {
+        const cards = human.team.cards.filter((c, i) => c && i < human.team.maxSize);
+        this.el.battlePlayerArea.innerHTML = cards.length
+          ? renderHeroCardRow(cards, 'player', '我方战队')
+          : '<span class="area-label">我方战队</span><span class="hint">暂无出战幻兽</span>';
+      }
+      return;
     }
 
     if (!inBattle) {
@@ -864,11 +961,21 @@ export class UI {
     }
 
     const engine = this.game.currentBattle;
-    if (!engine) return;
+    const hr = state.lastHumanResult;
+    let playerTeam;
+    let enemyTeam;
 
-    const isHumanA = engine.playerA?.isHuman;
-    const playerTeam = isHumanA ? engine.teamA : engine.teamB;
-    const enemyTeam = isHumanA ? engine.teamB : engine.teamA;
+    if (engine) {
+      const isHumanA = engine.playerA?.id === this.game.humanId;
+      playerTeam = isHumanA ? engine.teamA : engine.teamB;
+      enemyTeam = isHumanA ? engine.teamB : engine.teamA;
+    } else if (hr?.teamA && hr?.teamB) {
+      const isHumanA = hr.teamA.playerId === this.game.humanId;
+      playerTeam = isHumanA ? hr.teamA : hr.teamB;
+      enemyTeam = isHumanA ? hr.teamB : hr.teamA;
+    } else {
+      return;
+    }
 
     const playerCards = playerTeam.cards.filter(Boolean);
     const enemyCards = enemyTeam.cards.filter(Boolean);
@@ -942,7 +1049,11 @@ export class UI {
       case 'TRAINER_COMMAND': return `🎯 训练师【${e.label}】`;
       case 'TRAINER_COMMAND_PROMPT': return `🎯 训练师指令可用（本回合）`;
       case 'INSIGHT_REVEAL': return '👁 战术洞察：敌方阵容已暴露';
-      case 'BATTLE_END': return '🏁 战斗结束';
+      case 'BATTLE_END': {
+        const label = { NORMAL: '胜负已分', DRAW: '平局', TIMEOUT: '超时判定' }[e.outcome] || '战斗结束';
+        const turns = e.turnCount ? ` · ${e.turnCount}回合` : '';
+        return `🏁 ${label}${turns}`;
+      }
       default: return null;
     }
   }
@@ -1008,5 +1119,7 @@ export class UI {
     this.clearBattleLog();
     this.hideTrainerBattlePanel();
     if (this.battleEffects?.layer) this.battleEffects.layer.innerHTML = '';
+    this.el.battleArena?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.querySelector('.bg-arena-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 }

@@ -22,6 +22,7 @@ import {
 } from './trainerCommands.js';
 import { BattleEngine } from './battleEngine.js';
 import { runAIDecisions } from './ai.js';
+import { clearGameSession } from './session.js';
 
 function deepClone(obj) {
   return JSON.parse(JSON.stringify(obj));
@@ -107,19 +108,24 @@ export class GameEngine {
     this.prepareTimedOut = false;
     this.prepareTimeTotal = this.getPrepareTimeSeconds();
     this.prepareTimeLeft = this.prepareTimeTotal;
+    this.notify();
 
-    this._prepareTimer = setInterval(() => {
-      if (this.phase !== 'PREPARE') {
-        this.clearPrepareTimer();
-        return;
-      }
-      this.prepareTimeLeft = Math.max(0, this.prepareTimeLeft - 1);
-      this.notify();
-      if (this.prepareTimeLeft <= 0) {
-        this.clearPrepareTimer();
-        this.endPreparePhase(true);
-      }
-    }, 1000);
+    // 先渲染驿站/栏位，再启动倒计时，避免「中间大倒计时、还选不了卡」的错觉
+    const startTick = () => {
+      this._prepareTimer = setInterval(() => {
+        if (this.phase !== 'PREPARE') {
+          this.clearPrepareTimer();
+          return;
+        }
+        this.prepareTimeLeft = Math.max(0, this.prepareTimeLeft - 1);
+        this.notify();
+        if (this.prepareTimeLeft <= 0) {
+          this.clearPrepareTimer();
+          this.endPreparePhase(true);
+        }
+      }, 1000);
+    };
+    setTimeout(startTick, 400);
   }
 
   initPool() {
@@ -147,6 +153,7 @@ export class GameEngine {
   }
 
   startGame(playerConfigs, options = {}) {
+    clearGameSession();
     this.gameModeId = options.modeId || 'ranked';
     this.isRanked = options.isRanked === true;
     this.gameOptions = options;
@@ -684,50 +691,82 @@ export class GameEngine {
       p.lastRoundTeam = deepClone(p.team);
     }
 
-    await this.delay(800);
-    this.matchPlayers();
-    this.notify();
+    try {
+      await this.delay(500);
+      this.matchPlayers();
+      this.notify();
 
-    await this.delay(800);
-    await this.runBattles();
+      await this.delay(400);
+      await this.runBattles();
+    } catch (err) {
+      console.error('endPreparePhase failed:', err);
+      this.currentBattle = null;
+      this.phase = 'PREPARE';
+      this._endingPrepare = false;
+      this.startPrepareTimer();
+      this.notify();
+      return { error: true, message: err?.message || String(err) };
+    }
   }
 
   async runBattles() {
-    this.phase = 'BATTLE';
     this.battleResults = [];
-    this.notify();
+    const instantPace = { turnDelay: 0, actionDelay: 0, lungeDelay: 0, startPause: 0 };
+    const pairs = [...this.matchPairs];
+    const humanIdx = pairs.findIndex(
+      (p) => p.playerA.id === this.humanId || p.playerB.id === this.humanId,
+    );
+    const humanPair = humanIdx >= 0 ? pairs.splice(humanIdx, 1)[0] : null;
+    const aiPairs = pairs;
 
-    for (const pair of this.matchPairs) {
-      const isHumanBattle = pair.playerA.id === this.humanId || pair.playerB.id === this.humanId;
-      const engine = new BattleEngine(pair.playerA, pair.playerB, (evt) => {
-        if (isHumanBattle) this.onBattleEvent?.(evt, engine);
-      }, {
-        isHumanBattle,
+    // 其余 AI 对战瞬间结算，避免玩家卡在「战斗中」看空白屏
+    for (const pair of aiPairs) {
+      const engine = new BattleEngine(pair.playerA, pair.playerB, () => {}, {
+        isHumanBattle: false,
         humanPlayerId: this.humanId,
-        battleSpeed: this.battleSpeed,
       });
-
-      if (isHumanBattle) {
-        this.currentBattle = engine;
-        this.notify();
-      }
-      const pace = isHumanBattle ? {
-        turnDelay: Math.max(300, CONFIG.TURN_INTERVAL / (this.battleSpeed || 1)),
-        actionDelay: Math.max(200, CONFIG.ACTION_INTERVAL_MS / (this.battleSpeed || 1)),
-        lungeDelay: Math.max(180, CONFIG.ATTACK_LUNGE_MS / (this.battleSpeed || 1)),
-        startPause: Math.max(250, CONFIG.BATTLE_START_PAUSE_MS / (this.battleSpeed || 1)),
-      } : { turnDelay: 0, actionDelay: 0, lungeDelay: 0, startPause: 0 };
-      const result = await engine.runBattle(pace);
+      const result = await engine.runBattle(instantPace);
       this.battleResults.push({ pair, result });
-
-      if (isHumanBattle) {
-        this.lastHumanResult = result;
-        this.currentBattle = engine;
-        this.notify();
-      }
     }
 
+    if (!humanPair) {
+      this.currentBattle = null;
+      await this.settlePhase();
+      return;
+    }
+
+    this.phase = 'BATTLE';
+    this.notify();
+
+    const isHumanBattle = true;
+    const speed = this.battleSpeed || 1;
+    const paceMul = this.gameModeId === 'ai_battle' ? 0.7 : 1;
+    const pace = {
+      turnDelay: Math.max(200, (CONFIG.TURN_INTERVAL * paceMul) / speed),
+      actionDelay: Math.max(120, (CONFIG.ACTION_INTERVAL_MS * paceMul) / speed),
+      lungeDelay: Math.max(100, (CONFIG.ATTACK_LUNGE_MS * paceMul) / speed),
+      startPause: Math.max(180, (CONFIG.BATTLE_START_PAUSE_MS * paceMul) / speed),
+    };
+
+    const engine = new BattleEngine(humanPair.playerA, humanPair.playerB, (evt) => {
+      this.onBattleEvent?.(evt, engine);
+    }, {
+      isHumanBattle,
+      humanPlayerId: this.humanId,
+      battleSpeed: speed,
+    });
+
+    this.currentBattle = engine;
+    this.notify();
+
+    const result = await engine.runBattle(pace);
+    this.battleResults.push({ pair: humanPair, result });
+    this.lastHumanResult = result;
+    this.currentBattle = engine;
+    this.notify();
+
     this.currentBattle = null;
+    this._endingPrepare = false;
     await this.settlePhase();
   }
 
@@ -849,10 +888,17 @@ export class GameEngine {
         recalculateCardStats(c, true);
       }
     }
+    if (this.phase === 'MATCH' || this.phase === 'BATTLE' || this.phase === 'SETTLE') {
+      this.phase = 'PREPARE';
+      this.currentBattle = null;
+      this.matchPairs = [];
+      this.prepareTimeLeft = this.prepareTimeTotal || this.getPrepareTimeSeconds();
+    }
     if (this.phase === 'PREPARE') {
       if (this.prepareTimeLeft <= 0) {
-        this.prepareTimeLeft = this.prepareTimeTotal;
+        this.prepareTimeLeft = this.prepareTimeTotal || this.getPrepareTimeSeconds();
       }
+      this._endingPrepare = false;
       this.startPrepareTimer();
     } else {
       this.clearPrepareTimer();

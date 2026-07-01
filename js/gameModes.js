@@ -2,6 +2,14 @@
 import { CONFIG } from './config.js';
 
 export const GAME_MODES = {
+  spire: {
+    id: 'spire', name: '净化远征', desc: '单机 · 幻兽净化师 · 选路净化污化幻兽',
+    minPlayers: 1, maxPlayers: 1, aiCount: 0, aiDifficulty: null,
+    isRanked: false, soloOnly: true, features: ['roguelike'],
+    unlock: { type: 'none' },
+    prepareTime: 0, turnInterval: 0,
+    economy: null,
+  },
   ranked: {
     id: 'ranked', name: '经典排位', desc: '标准8人对战，争夺段位',
     minPlayers: 1, maxPlayers: 8, aiCount: 2, aiDifficulty: 'normal',
@@ -44,7 +52,8 @@ export const GAME_MODES = {
   },
 };
 
-export const MODE_LIST = ['ranked', 'casual', 'ai_battle', 'quick', 'custom'];
+export const MODE_LIST = ['spire', 'ranked', 'casual', 'ai_battle', 'quick', 'custom'];
+export const LEGACY_MODE_LIST = MODE_LIST.filter((id) => id !== 'spire');
 
 export function getGameMode(id) {
   return GAME_MODES[id] || GAME_MODES.ranked;

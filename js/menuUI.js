@@ -1,25 +1,59 @@
 import { peekRoom } from './roomManager.js';
 import { showScreen, getNickname, setMenuError, showToast } from './appShell.js';
-import { MODE_LIST, getGameMode, isModeUnlocked, buildPlayerConfigsForMode } from './gameModes.js';
+import { LEGACY_MODE_LIST, getGameMode, isModeUnlocked, buildPlayerConfigsForMode } from './gameModes.js';
 import { loadProfile, saveProfile, checkDailyLogin, claimLoginReward, DAILY_TASKS, expForLevel, signOut } from './playerProfile.js';
 import { getCurrentUsername } from './auth.js';
 import { formatRank } from './rank.js';
 import { startTutorial, shouldAutoStartTutorial } from './tutorial.js';
 import { hasRecoverableSession } from './session.js';
+import { renderCompendiumPanel, renderPurifyRecords } from './compendiumUI.js';
+import { ensurePurifyProfile } from './roguelike/purifyProfile.js';
 
-let selectedModeId = 'ranked';
+let selectedModeId = 'ai_battle';
 let callbacks = {};
 
-export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSession) {
-  callbacks = { onCreateRoom, onJoinRoom, onQuickStart, onRecoverSession };
+export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSession, onSpireStart, onSpireTier, onSpireInfinite) {
+  callbacks = {
+    onCreateRoom, onJoinRoom, onQuickStart, onRecoverSession,
+    onSpireStart, onSpireTier, onSpireInfinite,
+  };
   renderProfilePanel();
   renderModeGrid();
+  renderPurifyRecords(document.getElementById('purify-records'));
   bindProfileEvents();
   bindModeEvents();
 
   checkDailyLogin(loadProfile());
 
-  document.getElementById('btn-create-room').onclick = () => {
+  document.getElementById('btn-quick-start')?.addEventListener('click', () => {
+    setMenuError('');
+    callbacks.onSpireStart?.();
+  });
+
+  document.getElementById('btn-tier-start')?.addEventListener('click', () => {
+    setMenuError('');
+    callbacks.onSpireTier?.();
+  });
+
+  document.getElementById('btn-infinite-start')?.addEventListener('click', () => {
+    setMenuError('');
+    callbacks.onSpireInfinite?.();
+  });
+
+  document.getElementById('btn-show-compendium')?.addEventListener('click', () => {
+    const panel = document.getElementById('compendium-panel');
+    panel?.classList.toggle('hidden');
+    if (panel && !panel.classList.contains('hidden')) {
+      renderCompendiumPanel(panel);
+    }
+  });
+
+  document.getElementById('btn-legacy-start')?.addEventListener('click', () => {
+    setMenuError('');
+    startLegacyQuick();
+  });
+
+  document.getElementById('btn-create-room')?.onclick = () => {
     setMenuError('');
     if (selectedModeId === 'ai_battle') {
       setMenuError('人机对战请使用「立即开始」');
@@ -50,24 +84,10 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
     }
   };
 
-  document.getElementById('btn-quick-start').onclick = () => {
-    setMenuError('');
-    const diff = document.getElementById('select-ai-difficulty').value;
-    const configs = buildPlayerConfigsForMode(selectedModeId, getNickname(), diff);
-    const mode = getGameMode(selectedModeId);
-    callbacks.onQuickStart?.(configs, {
-      modeId: selectedModeId,
-      isRanked: mode.isRanked,
-      aiDifficulty: diff,
-      economy: mode.economy,
-      turnInterval: mode.turnInterval,
-      prepareTime: mode.prepareTime,
-    });
-  };
-
   const params = new URLSearchParams(location.search);
   const roomCode = params.get('room');
   if (roomCode) {
+    document.getElementById('legacy-modes')?.setAttribute('open', '');
     document.getElementById('join-panel').classList.remove('hidden');
     document.getElementById('input-room-code').value = roomCode;
     if (peekRoom(roomCode)) {
@@ -78,7 +98,7 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
   if (hasRecoverableSession()) {
     const hint = document.getElementById('session-recover-hint');
     hint.classList.remove('hidden');
-    hint.innerHTML = '检测到未结束的对局。<button type="button" id="btn-recover-session" class="btn-small btn-accent">继续对局</button>';
+    hint.innerHTML = '检测到未结束的自走棋对局。<button type="button" id="btn-recover-session" class="btn-small btn-accent">继续对局</button>';
     document.getElementById('btn-recover-session').onclick = () => {
       callbacks.onRecoverSession?.();
     };
@@ -92,10 +112,21 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
 export function refreshMenuProfile() {
   renderProfilePanel();
   renderModeGrid();
+  renderPurifyRecords(document.getElementById('purify-records'));
+  const panel = document.getElementById('compendium-panel');
+  if (panel && !panel.classList.contains('hidden')) {
+    renderCompendiumPanel(panel);
+  }
 }
 
 function renderProfilePanel() {
-  const p = loadProfile();
+  let p = loadProfile();
+  if (!p.purify) {
+    p = ensurePurifyProfile(p);
+    saveProfile(p);
+  } else {
+    p = ensurePurifyProfile(p);
+  }
   const usernameEl = document.getElementById('profile-username');
   const nicknameEl = document.getElementById('profile-nickname');
   if (usernameEl) usernameEl.textContent = getCurrentUsername() || '-';
@@ -114,7 +145,8 @@ function renderProfilePanel() {
 function renderModeGrid() {
   const profile = loadProfile();
   const grid = document.getElementById('mode-grid');
-  grid.innerHTML = MODE_LIST.map(id => {
+  if (!grid) return;
+  grid.innerHTML = LEGACY_MODE_LIST.map(id => {
     const m = getGameMode(id);
     const locked = !isModeUnlocked(id, profile);
     const active = id === selectedModeId ? 'active' : '';
@@ -139,12 +171,27 @@ function updateModeUI() {
   const mode = getGameMode(selectedModeId);
   const isSolo = selectedModeId === 'ai_battle' || selectedModeId === 'quick';
   document.getElementById('ai-difficulty-row').classList.toggle('hidden', !isSolo && mode.aiDifficulty !== 'selectable');
-  document.getElementById('btn-quick-start').classList.toggle('hidden', !isSolo);
+  document.getElementById('btn-legacy-start').classList.toggle('hidden', !isSolo);
   document.getElementById('btn-create-room').classList.toggle('hidden', isSolo);
+  document.getElementById('btn-show-join').classList.remove('hidden');
   const diffSelect = document.getElementById('select-ai-difficulty');
   if (mode.aiDifficulty !== 'selectable') {
     diffSelect.value = mode.aiDifficulty === 'selectable' ? 'normal' : (mode.aiDifficulty || 'normal');
   }
+}
+
+function startLegacyQuick() {
+  const diff = document.getElementById('select-ai-difficulty').value;
+  const configs = buildPlayerConfigsForMode(selectedModeId, getNickname(), diff);
+  const mode = getGameMode(selectedModeId);
+  callbacks.onQuickStart?.(configs, {
+    modeId: selectedModeId,
+    isRanked: mode.isRanked,
+    aiDifficulty: diff,
+    economy: mode.economy,
+    turnInterval: mode.turnInterval,
+    prepareTime: mode.prepareTime,
+  });
 }
 
 function bindModeEvents() {

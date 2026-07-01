@@ -82,6 +82,12 @@ export function startTutorial(force = false) {
   return true;
 }
 
+export function dismissTutorial() {
+  overlayEl?.classList.add('hidden');
+  highlightTarget(null);
+  stepIndex = 0;
+}
+
 export function shouldAutoStartTutorial() {
   return !loadProfile().tutorialCompleted;
 }

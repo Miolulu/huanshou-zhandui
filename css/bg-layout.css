@@ -1,5 +1,5 @@
-/* ===== 幻兽战队 — 对战布局 ===== */
-.bg-screen {
+/* ===== 幻兽战队 — 对战布局（仅 active 时显示） ===== */
+#screen-game.active.bg-screen {
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -93,8 +93,7 @@
   gap: 8px;
   padding: 8px;
   min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .bg-side-panel {
@@ -146,35 +145,448 @@
 }
 
 .bg-arena-wrap {
-  flex: 1 1 auto;
-  min-height: 160px;
-  max-height: min(42vh, 360px);
+  flex: 0 0 auto;
+  min-height: 0;
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid rgba(180, 130, 60, 0.25);
   box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
 }
 
-/* 准备阶段：缩小战场，突出驿站与战队栏位 */
+.bg-prepare-timer {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffd76a;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+}
+.bg-prepare-timer.urgent {
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.45);
+  animation: timerPulse 0.8s ease infinite;
+}
+
+.prepare-timer-chip {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e8c468;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(180, 130, 60, 0.3);
+}
+.prepare-timer-chip.urgent { color: #ff6b6b; }
+
+.prepare-focus-bar {
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(60, 42, 22, 0.95), rgba(35, 24, 12, 0.9));
+  border: 2px solid rgba(201, 162, 39, 0.45);
+  box-shadow: 0 0 16px rgba(255, 215, 106, 0.12);
+}
+.prepare-focus-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text2, #c9b896);
+}
+.prepare-focus-text strong {
+  color: #ffd76a;
+  font-size: 0.95rem;
+}
+
+/* ===== 炉石式准备阶段 — 紧凑战场 + 可见战队/驿站 ===== */
+.screen-game.phase-prepare .bg-body {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.screen-game.phase-prepare .bg-board-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .screen-game.phase-prepare .bg-arena-wrap {
   flex: 0 0 auto;
-  min-height: 140px;
-  max-height: 200px;
+  height: clamp(96px, 14vh, 148px);
+  max-height: 148px;
 }
 
 .screen-game.phase-prepare #battle {
-  min-height: 140px !important;
-  grid-template-rows: 52px 28px 1fr 72px 72px !important;
+  height: 100%;
+  min-height: 0 !important;
+  padding: 6px 10px;
+  gap: 4px;
+  grid-template-rows: 32px minmax(0, 1fr) auto 0 !important;
+  overflow: hidden;
 }
 
-.screen-game.phase-prepare .bg-tavern-section {
-  border-color: #c9a227;
-  box-shadow: 0 0 18px rgba(255, 215, 106, 0.18);
+.screen-game.phase-prepare .battle-hud {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 8px;
+}
+
+.screen-game.phase-prepare .battle-hud .hud-center {
+  display: none;
+}
+
+.screen-game.phase-prepare .battle-timeline,
+.screen-game.phase-prepare #trainer-battle-panel,
+.screen-game.phase-prepare .battle-player-area,
+.screen-game.phase-prepare .prepare-focus-bar {
+  display: none !important;
+}
+
+.screen-game.phase-prepare .battle-idle-msg {
+  display: none !important;
+}
+
+.screen-game.phase-prepare .battle-enemy-area {
+  min-height: 0;
+  padding: 2px 4px 0;
+  align-items: center;
+  overflow: hidden;
+}
+
+.screen-game.phase-prepare .battle-center.battle-field {
+  min-height: 0;
+  flex: 0 0 auto;
+  padding: 0;
+}
+
+.screen-game.phase-prepare .prepare-rope-wrap {
+  position: static;
+  left: auto;
+  right: auto;
+  top: auto;
+  width: 100%;
+  padding: 0 4px;
+}
+
+.screen-game.phase-prepare .prepare-rope-text {
+  font-size: 0.95rem;
+}
+
+.screen-game.phase-prepare .hs-end-turn-btn {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  width: 64px;
+  height: 64px;
+  font-size: 0.68rem;
+  z-index: 30;
+}
+
+/* 准备阶段战场内：迷你随从 */
+.screen-game.phase-prepare .battle-enemy-area .hero-card {
+  width: clamp(52px, 7vw, 72px);
+  min-height: clamp(68px, 9vh, 92px);
+  padding: 4px;
+}
+
+.screen-game.phase-prepare .battle-enemy-area .hero-card__portrait {
+  width: clamp(28px, 4vw, 36px);
+  height: clamp(28px, 4vw, 36px);
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+
+.screen-game.phase-prepare .battle-enemy-area .hero-card__name {
+  font-size: 0.55rem;
+  margin-bottom: 2px;
+}
+
+.screen-game.phase-prepare .battle-enemy-area .hero-card__bars,
+.screen-game.phase-prepare .battle-enemy-area .hero-card__hp-text,
+.screen-game.phase-prepare .battle-enemy-area .hero-card__footer {
+  display: none;
+}
+
+.screen-game.phase-prepare .battle-enemy-area .hero-card__header {
+  min-height: 12px;
+  margin-bottom: 0;
+}
+
+.screen-game.phase-prepare .battle-enemy-area .hero-card__tribe {
+  font-size: 0.65rem;
+}
+
+.screen-game.phase-prepare .battle-enemy-area .hero-card-row {
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+  padding-bottom: 2px;
+}
+
+.screen-game.phase-prepare .battle-enemy-area .battle-area-label {
+  position: static;
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 0.68rem;
+  margin-bottom: 2px;
+  opacity: 0.85;
+}
+
+.screen-game.phase-prepare .bg-bench-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+  padding: 6px 8px;
+  background: rgba(20, 14, 8, 0.85);
+  border-color: rgba(180, 130, 60, 0.4);
+}
+
+.screen-game.phase-prepare .bg-bench-section .bench-head {
+  margin-bottom: 4px;
+}
+
+.screen-game.phase-prepare .bg-bench-section .bench-head .hint {
+  display: none;
+}
+
+.screen-game.phase-prepare .bg-bench {
+  flex: 1 1 auto;
+  align-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: clamp(4px, 1vw, 8px);
+  padding: 2px 0;
+  scrollbar-width: thin;
+}
+
+.screen-game.phase-prepare .bg-bench .slot {
+  width: clamp(88px, 11vw, 108px);
+  min-height: clamp(96px, 12vh, 118px);
+  flex-shrink: 0;
+}
+
+.screen-game.phase-prepare .bg-tavern-section.hs-hand-panel {
+  grid-area: tavern;
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 6px 10px 10px;
+  min-height: clamp(128px, 16vh, 152px);
+  background: linear-gradient(180deg, rgba(25, 18, 10, 0.6) 0%, rgba(15, 10, 6, 0.98) 40%);
+  border: 2px solid rgba(201, 162, 39, 0.55);
+  border-radius: 12px 12px 8px 8px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.screen-game.phase-prepare .bg-tavern-head {
+  margin-bottom: 4px;
+}
+
+.screen-game.phase-prepare .bg-tavern-head .hint {
+  display: none;
+}
+
+.screen-game.phase-prepare .bg-shop-slots {
+  min-height: clamp(108px, 13vh, 128px);
+  align-items: flex-end;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: clamp(6px, 1.2vw, 12px);
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.screen-game.phase-prepare .bg-shop-card {
+  width: clamp(80px, 10vw, 104px);
+  min-height: clamp(100px, 12vh, 116px);
+  flex-shrink: 0;
+  transform-origin: bottom center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.screen-game.phase-prepare .bg-shop-card:hover:not(.sold-out):not(.disabled) {
+  transform: translateY(-8px) scale(1.04);
+  z-index: 2;
+}
+
+/* 炉石「绳子」倒计时 */
+.prepare-rope-wrap {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 42%;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.prepare-rope-track {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #3a2818, #1a1208);
+  border: 1px solid rgba(120, 80, 40, 0.8);
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.prepare-rope-burn {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: linear-gradient(90deg, #ff6b2b, #ffd76a 40%, #ffb347 70%, transparent);
+  box-shadow: 0 0 12px rgba(255, 120, 40, 0.6);
+  transition: transform 1s linear;
+}
+
+.prepare-rope-wrap.urgent .prepare-rope-burn {
+  background: linear-gradient(90deg, #ff3355, #ff8844 50%, transparent);
+  animation: ropeFlicker 0.5s ease infinite alternate;
+}
+
+.prepare-rope-text {
+  min-width: 2.2em;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffd76a;
+  text-shadow: 0 0 8px rgba(255, 140, 40, 0.5);
+}
+
+.prepare-rope-wrap.urgent .prepare-rope-text {
+  color: #ff6b6b;
+}
+
+@keyframes ropeFlicker {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.35); }
+}
+
+/* 炉石「结束回合」 */
+.hs-end-turn-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 28%;
+  z-index: 6;
+  padding: 14px 18px;
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  border: 3px solid #ffe08a;
+  background: radial-gradient(circle at 35% 30%, #ffe566, #e8a020 55%, #b86a08);
+  color: #3a2200;
+  font-weight: 800;
+  font-size: 0.72rem;
+  line-height: 1.15;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 20px rgba(255, 200, 60, 0.35);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.hs-end-turn-btn:hover:not(:disabled) {
+  transform: scale(1.06);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5), 0 0 28px rgba(255, 220, 80, 0.5);
+}
+
+.hs-end-turn-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.screen-game.phase-prepare .bg-action-center #btn-end-prepare {
+  display: none;
+}
+
+.screen-game.phase-prepare .magic-circle {
+  display: none;
+}
+
+.screen-game.phase-prepare .bg-bench .slot .card-name {
+  font-size: clamp(0.62rem, 1.8vw, 0.78rem);
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screen-game.phase-prepare .bg-bench .slot .card-stats {
+  font-size: clamp(0.55rem, 1.5vw, 0.65rem);
+}
+
+.screen-game.phase-prepare .bg-bench .slot .card-meta {
+  font-size: clamp(0.52rem, 1.4vw, 0.62rem);
+}
+
+.screen-game.phase-prepare .bg-bench .slot .slot-portrait {
+  width: 100%;
+  height: clamp(36px, 5vh, 48px);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  font-weight: 800;
+  margin: 2px 0 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.screen-game.phase-prepare .bg-bench .slot .card-badges {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1280px) {
+  .screen-game.phase-prepare .bg-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "main"
+      "tavern";
+  }
+
+  .screen-game.phase-prepare .bg-side-panel,
+  .screen-game.phase-prepare .bg-log-panel {
+    display: none;
+  }
 }
 
 .screen-game.phase-battle .bg-arena-wrap,
-.screen-game.phase-settle .bg-arena-wrap {
-  max-height: min(50vh, 420px);
+.screen-game.phase-settle .bg-arena-wrap,
+.screen-game.phase-match .bg-arena-wrap {
+  flex: 1 1 auto;
+  max-height: min(58vh, 480px);
+  min-height: clamp(200px, 32vh, 360px);
+}
+.screen-game.phase-battle .hs-end-turn-btn,
+.screen-game.phase-settle .hs-end-turn-btn,
+.screen-game.phase-match .hs-end-turn-btn {
+  display: none !important;
+}
+
+.screen-game.phase-battle .prepare-rope-wrap,
+.screen-game.phase-settle .prepare-rope-wrap,
+.screen-game.phase-match .prepare-rope-wrap {
+  display: none !important;
+}
+
+.screen-game.phase-battle #battle,
+.screen-game.phase-settle #battle {
+  min-height: 280px !important;
+}
+
+.screen-game.phase-battle .bg-tavern-section,
+.screen-game.phase-settle .bg-tavern-section {
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .bg-bench-section {
@@ -206,6 +618,7 @@
 }
 
 .bg-tavern-section {
+  grid-area: tavern;
   padding: 10px 14px 12px;
   background:
     linear-gradient(180deg, rgba(60, 42, 22, 0.95), rgba(35, 24, 12, 0.98));
@@ -235,11 +648,15 @@
   justify-content: center;
   gap: 12px;
   min-height: 120px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
 }
 
 .bg-shop-card {
   width: 104px;
   min-height: 116px;
+  flex-shrink: 0;
   border-radius: 10px;
   border: 3px solid #8b949e;
   background: linear-gradient(180deg, #2a2018 0%, #1a1410 100%);
@@ -671,22 +1088,100 @@
 @media (max-width: 1100px) {
   .bg-body {
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(200px, auto) auto minmax(100px, 180px);
+    grid-template-rows: minmax(0, 1fr) auto auto;
     grid-template-areas:
-      "side"
       "main"
       "tavern"
-      "log";
+      "side";
+    overflow-y: auto;
   }
-  .bg-side-panel,
+
   .bg-log-panel {
+    display: none;
+  }
+
+  .bg-side-panel {
     grid-row: auto;
-    max-height: none;
+    max-height: 140px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow-x: auto;
   }
-  .bg-arena-wrap {
-    max-height: min(36vh, 280px);
+
+  .bg-side-panel .trait-sub,
+  .bg-side-panel .players-list,
+  .bg-side-panel .scout-box,
+  .bg-side-panel .opponent-box {
+    display: none;
   }
+
+  .screen-game.phase-prepare .bg-body {
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "main"
+      "tavern";
+    overflow: hidden;
+  }
+
+  .screen-game.phase-prepare .bg-side-panel {
+    display: none;
+  }
+
   .screen-game.phase-prepare .bg-arena-wrap {
-    max-height: 180px;
+    height: clamp(88px, 12vh, 120px);
+    max-height: 120px;
+  }
+}
+
+@media (max-width: 720px) {
+  .bg-hud-center .bg-income-hint {
+    display: none;
+  }
+
+  .bg-hud-right .bg-odds-list {
+    display: none;
+  }
+
+  .screen-game.phase-prepare .bg-bench .slot {
+    width: clamp(76px, 22vw, 96px);
+    min-height: clamp(88px, 14vh, 108px);
+  }
+
+  .screen-game.phase-prepare .bg-shop-card {
+    width: clamp(72px, 20vw, 92px);
+    min-height: clamp(92px, 14vh, 108px);
+  }
+
+  .screen-game.phase-prepare .hs-end-turn-btn {
+    display: none !important;
+  }
+
+  .screen-game.phase-prepare .bg-action-center #btn-end-prepare {
+    display: inline-flex;
+  }
+
+  .bg-action-bar {
+    flex-wrap: wrap;
+    padding: 6px 8px;
+  }
+
+  .trainer-prepare-bar {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-height: 700px) {
+  .screen-game.phase-prepare .bg-arena-wrap {
+    height: 80px;
+    max-height: 80px;
+  }
+
+  .screen-game.phase-prepare .bg-tavern-section.hs-hand-panel {
+    min-height: 112px;
+  }
+
+  .screen-game.phase-prepare .bg-shop-slots {
+    min-height: 96px;
   }
 }
