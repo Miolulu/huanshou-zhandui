@@ -1,11 +1,13 @@
 /**
  * 从 GPT 生成的 sprite sheet 裁切到 assets/
+ * 精灵/图标抠图使用 remove.bg API（需 REMOVE_BG_API_KEY）
  * node scripts/slice-art.mjs
  */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import sharp from 'sharp';
+import { removeBackground, loadRemoveBgApiKey } from './removebg-api.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -21,6 +23,15 @@ const SRC = path.join(
 
 const src = (name) => path.join(SRC, name);
 
+const REMOVEBG_DELAY_MS = 600;
+let lastRemoveBgAt = 0;
+
+async function waitRemoveBgSlot() {
+  const wait = REMOVEBG_DELAY_MS - (Date.now() - lastRemoveBgAt);
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  lastRemoveBgAt = Date.now();
+}
+
 function shrinkRegion(region, px = 4) {
   const inset = Math.min(px, Math.floor(region.width / 8), Math.floor(region.height / 8));
   return {
@@ -31,126 +42,16 @@ function shrinkRegion(region, px = 4) {
   };
 }
 
-function colorDist(r, g, b, r2, g2, b2) {
-  return Math.sqrt((r - r2) ** 2 + (g - g2) ** 2 + (b - b2) ** 2);
-}
-
-function sampleEdgeBackground(data, width, height) {
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  let n = 0;
-  const stepX = Math.max(1, Math.floor(width / 24));
-  const stepY = Math.max(1, Math.floor(height / 24));
-
-  for (let x = 0; x < width; x += stepX) {
-    for (const y of [0, height - 1]) {
-      const i = (y * width + x) * 4;
-      if (data[i + 3] < 8) continue;
-      r += data[i];
-      g += data[i + 1];
-      b += data[i + 2];
-      n += 1;
-    }
-  }
-  for (let y = 0; y < height; y += stepY) {
-    for (const x of [0, width - 1]) {
-      const i = (y * width + x) * 4;
-      if (data[i + 3] < 8) continue;
-      r += data[i];
-      g += data[i + 1];
-      b += data[i + 2];
-      n += 1;
-    }
-  }
-
-  if (!n) return [12, 14, 28];
-  return [Math.round(r / n), Math.round(g / n), Math.round(b / n)];
-}
-
-function floodFillMatte(data, width, height, bg, threshold = 52) {
-  const total = width * height;
-  const visited = new Uint8Array(total);
-  const queue = new Int32Array(total);
-  let head = 0;
-  let tail = 0;
-
-  const tryPush = (idx) => {
-    if (idx < 0 || idx >= total || visited[idx]) return;
-    const i = idx * 4;
-    const dist = colorDist(data[i], data[i + 1], data[i + 2], bg[0], bg[1], bg[2]);
-    if (dist > threshold) return;
-    visited[idx] = 1;
-    queue[tail++] = idx;
-  };
-
-  for (let x = 0; x < width; x++) {
-    tryPush(x);
-    tryPush((height - 1) * width + x);
-  }
-  for (let y = 0; y < height; y++) {
-    tryPush(y * width);
-    tryPush(y * width + width - 1);
-  }
-
-  while (head < tail) {
-    const idx = queue[head++];
-    const i = idx * 4;
-    data[i + 3] = 0;
-    const x = idx % width;
-    const y = (idx / width) | 0;
-    if (x > 0) tryPush(idx - 1);
-    if (x < width - 1) tryPush(idx + 1);
-    if (y > 0) tryPush(idx - width);
-    if (y < height - 1) tryPush(idx + width);
-  }
-
-  // 羽化边缘，去掉深色硬边
-  const alphaCopy = new Uint8Array(total);
-  for (let idx = 0; idx < total; idx++) alphaCopy[idx] = data[idx * 4 + 3];
-
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = y * width + x;
-      const i = idx * 4;
-      if (alphaCopy[idx] > 0) continue;
-      let near = 0;
-      for (const n of [idx - 1, idx + 1, idx - width, idx + width]) {
-        if (alphaCopy[n] > 0) near += 1;
-      }
-      if (!near) continue;
-      const dist = colorDist(data[i], data[i + 1], data[i + 2], bg[0], bg[1], bg[2]);
-      if (dist < threshold + 18) data[i + 3] = 0;
-      else if (dist < threshold + 36) {
-        const t = (dist - threshold - 18) / 18;
-        data[i + 3] = Math.round(255 * Math.min(1, Math.max(0, t)));
-      }
-    }
-  }
-}
-
-async function matteSprite(input) {
-  const source = typeof input?.ensureAlpha === 'function' ? input : sharp(input);
-  const { data, info } = await source
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  const bg = sampleEdgeBackground(data, info.width, info.height);
-  const threshold = info.width > 200 ? 58 : 52;
-  floodFillMatte(data, info.width, info.height, bg, threshold);
-
-  let result = sharp(data, {
-    raw: { width: info.width, height: info.height, channels: 4 },
-  });
-
+async function trimTransparent(input) {
+  const source = typeof input?.trim === 'function' ? input : sharp(input);
   try {
-    result = result.trim({ threshold: 1 });
+    const trimmed = source.trim({ threshold: 1 });
+    const meta = await trimmed.metadata();
+    if ((meta.width || 0) > 4 && (meta.height || 0) > 4) return trimmed;
   } catch {
     /* keep */
   }
-
-  return result;
+  return source;
 }
 
 async function trimBlackEdges(input, threshold = 6) {
@@ -167,6 +68,14 @@ async function trimBlackEdges(input, threshold = 6) {
     /* keep source */
   }
   return source;
+}
+
+/** remove.bg 抠图（幻兽/敌人用 animal，小图标用 auto） */
+async function matteWithRemoveBg(input, { type = 'animal' } = {}) {
+  const buf = await (typeof input?.png === 'function' ? input.png() : sharp(input).png()).toBuffer();
+  await waitRemoveBgSlot();
+  const cut = await removeBackground(buf, { type });
+  return trimTransparent(sharp(cut));
 }
 
 /**
@@ -186,7 +95,9 @@ async function crop(outRel, file, region, { mode = 'card' } = {}) {
     } catch {
       /* keep extracted buffer */
     }
-    pipeline = await matteSprite(sharp(buf));
+    pipeline = await matteWithRemoveBg(sharp(buf), {
+      type: mode === 'icon' ? 'auto' : 'animal',
+    });
   } else if (mode === 'card') {
     try {
       pipeline = await trimBlackEdges(pipeline, 5);
@@ -213,6 +124,15 @@ async function upscaleScene(outRel, inputRel) {
 }
 
 async function main() {
+  if (!loadRemoveBgApiKey()) {
+    console.error('缺少 REMOVE_BG_API_KEY。');
+    console.error('1. 打开 https://www.remove.bg/api 注册并复制 API Key');
+    console.error('2. 复制 .env.example 为 .env，填入密钥');
+    console.error('3. 重新运行 node scripts/slice-art.mjs');
+    process.exit(1);
+  }
+  console.log('抠图：remove.bg API');
+
   const enemies = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-27e9f85b-370a-4105-b027-1f21f44101d7.png');
   const cards3 = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-d71b1849-1a0e-453e-93c5-cc6ee61fa800.png');
   const cards2 = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-fd42ae59-27e1-49ab-bb1a-da2b73fb590e.png');
