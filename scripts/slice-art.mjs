@@ -62,13 +62,7 @@ async function crop(outRel, file, region, { mode = 'card' } = {}) {
   let pipeline = sharp(file).extract(shrinkRegion(region, inset));
 
   if (mode === 'sprite' || mode === 'icon') {
-    let buf = await pipeline.png().toBuffer();
-    try {
-      buf = await (await trimBlackEdges(sharp(buf), mode === 'icon' ? 10 : 8)).png().toBuffer();
-    } catch {
-      /* keep extracted buffer */
-    }
-    pipeline = await matteSprite(sharp(buf), { preset: mode === 'icon' ? 'icon' : 'sprite' });
+    pipeline = await matteSprite(pipeline, { preset: mode === 'icon' ? 'icon' : 'sprite' });
   } else if (mode === 'card') {
     try {
       pipeline = await trimBlackEdges(pipeline, 5);
