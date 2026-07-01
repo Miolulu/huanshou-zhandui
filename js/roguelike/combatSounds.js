@@ -78,4 +78,7 @@ export const combatSounds = {
   startTurn() {
     noise(0.12, 0.06, 800);
   },
+  cardToHand() {
+    beep(261.63, 0.06, 0.08, 'triangle');
+  },
 };

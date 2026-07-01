@@ -22,93 +22,86 @@
   <link rel="stylesheet" href="css/bg-layout.css">
   <link rel="stylesheet" href="css/roguelike.css">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/slaytheweb-theme.css">
   <link rel="stylesheet" href="css/slaytheweb-ui.css">
   <link rel="stylesheet" href="css/combat-fx.css">
 </head>
 <body>
   <!-- ===== 登录 / 注册 ===== -->
-  <div id="screen-auth" class="screen menu-bg active">
-    <div class="auth-container">
-      <div class="auth-logo">
-        <h1>幻兽战队</h1>
-        <p>注册账号以保存净化远征进度、怪物手册与成长记录</p>
+  <div id="screen-auth" class="screen App active">
+    <div class="App-background App-background--auth" aria-hidden="true"></div>
+    <article class="Container Container--vcenter">
+      <div class="Box Box--auth auth-container">
+        <h1 class="Title">幻兽战队</h1>
+        <p class="Box-sub auth-logo p">注册账号以保存净化远征进度、怪物手册与成长记录</p>
+        <ul class="Options Options--tabs auth-tabs">
+          <li><button type="button" id="tab-login" class="Button active">登录</button></li>
+          <li><button type="button" id="tab-register" class="Button">注册</button></li>
+        </ul>
+        <form id="form-login" class="auth-form Form">
+          <label>账号<input id="auth-login-username" type="text" maxlength="16" placeholder="3-16 位字符" required autocomplete="username"></label>
+          <label>密码<input id="auth-login-password" type="password" maxlength="32" placeholder="至少 6 位" required autocomplete="current-password"></label>
+          <p id="auth-login-error" class="error-msg"></p>
+          <ul class="Options"><li><button type="submit" class="Button primary btn-accent btn-lg">登录</button></li></ul>
+        </form>
+        <form id="form-register" class="auth-form Form hidden">
+          <label>账号<input id="auth-reg-username" type="text" maxlength="16" placeholder="用于登录" required autocomplete="username"></label>
+          <label>昵称<input id="auth-reg-nickname" type="text" maxlength="12" placeholder="游戏中显示" required autocomplete="nickname"></label>
+          <label>密码<input id="auth-reg-password" type="password" maxlength="32" placeholder="至少 6 位" required autocomplete="new-password"></label>
+          <label>确认<input id="auth-reg-password2" type="password" maxlength="32" placeholder="再次输入" required autocomplete="new-password"></label>
+          <p id="auth-register-error" class="error-msg"></p>
+          <ul class="Options"><li><button type="submit" class="Button primary btn-accent btn-lg">注册并进入</button></li></ul>
+        </form>
+        <p class="auth-hint">数据保存在本浏览器本地。换设备需重新注册。</p>
       </div>
-      <div class="auth-tabs">
-        <button type="button" id="tab-login" class="active">登录</button>
-        <button type="button" id="tab-register">注册</button>
-      </div>
-      <form id="form-login" class="auth-form">
-        <label>账号</label>
-        <input id="auth-login-username" type="text" maxlength="16" placeholder="3-16 位字符" required autocomplete="username">
-        <label>密码</label>
-        <input id="auth-login-password" type="password" maxlength="32" placeholder="至少 6 位" required autocomplete="current-password">
-        <p id="auth-login-error" class="error-msg"></p>
-        <button type="submit" class="btn-accent btn-lg">登录</button>
-      </form>
-      <form id="form-register" class="auth-form hidden">
-        <label>账号</label>
-        <input id="auth-reg-username" type="text" maxlength="16" placeholder="用于登录，不可重复" required autocomplete="username">
-        <label>昵称</label>
-        <input id="auth-reg-nickname" type="text" maxlength="12" placeholder="游戏中显示的名称" required autocomplete="nickname">
-        <label>密码</label>
-        <input id="auth-reg-password" type="password" maxlength="32" placeholder="至少 6 位" required autocomplete="new-password">
-        <label>确认密码</label>
-        <input id="auth-reg-password2" type="password" maxlength="32" placeholder="再次输入密码" required autocomplete="new-password">
-        <p id="auth-register-error" class="error-msg"></p>
-        <button type="submit" class="btn-accent btn-lg">注册并进入</button>
-      </form>
-      <p class="auth-hint">数据保存在本浏览器本地。换设备需重新注册。</p>
-    </div>
+    </article>
   </div>
 
-  <!-- ===== 主界面（Vol.4 左档案 + 右内容） ===== -->
-  <div id="screen-menu" class="screen menu-bg">
-    <header class="menu-top-bar u-glass">
-      <div class="menu-top-logo">幻兽战队</div>
-      <div class="menu-top-user">
-        <span id="menu-top-nickname" class="menu-top-name">净化师</span>
-      </div>
-    </header>
-    <div class="menu-layout">
-      <aside class="profile-panel">
-        <h3>净化师档案</h3>
-        <p class="profile-account">账号 <strong id="profile-username">-</strong></p>
-        <p class="profile-account">昵称 <strong id="profile-nickname">-</strong></p>
-        <div class="profile-stats">
-          <span>Lv.<strong id="profile-level">1</strong></span>
-          <span>胜场 <strong id="profile-wins">0</strong></span>
-        </div>
-        <div class="profile-exp-bar"><div id="profile-exp-fill" class="exp-fill"></div></div>
-        <p class="profile-exp-text"><span id="profile-exp">0</span> / <span id="profile-exp-max">100</span> EXP</p>
-        <button id="btn-daily-login" class="btn-gold btn-small">每日签到</button>
-        <button id="btn-show-compendium" class="btn-muted btn-small">怪物手册</button>
-        <button id="btn-show-tasks" class="btn-muted btn-small">每日任务</button>
-        <div id="purify-records" class="purify-records-panel"></div>
-        <button id="btn-logout" class="btn-danger btn-small">退出登录</button>
-        <div id="tasks-panel" class="tasks-panel hidden"></div>
-      </aside>
-        <div class="menu-container">
-          <section class="solo-hero">
-            <span class="solo-badge">单机 · 无需联机</span>
-            <h1 class="solo-title">幻兽净化师</h1>
-            <p class="solo-desc">携带净化秘典深入污染地带，以技法驱散污秽，挽救失控幻兽</p>
-            <ul class="solo-features">
-              <li><strong>路线图</strong> 选择遭遇 / 深渊 / 驿站 / 源点</li>
-              <li><strong>调息战斗</strong> 消耗灵力打出攻型与守型技法</li>
-              <li><strong>怪物组合</strong> 固定怪物池 · 每层随机组合遭遇</li>
-              <li><strong>悟道入秘典</strong> 净化成功后领悟新技法</li>
-            </ul>
-            <div class="solo-mode-btns">
-              <button id="btn-quick-start" type="button" class="solo-start-btn">净化远征</button>
-              <button id="btn-tier-start" type="button" class="solo-mode-btn solo-mode-tier">阶层挑战 · 100 层</button>
-              <button id="btn-infinite-start" type="button" class="solo-mode-btn solo-mode-infinite">无限模式</button>
-            </div>
-            <p class="auth-hint">首次进入战斗时将进行实战引导 · 需登录账号保存图鉴与记录</p>
-          </section>
-
+  <!-- ===== 主界面 ===== -->
+  <div id="screen-menu" class="screen App menu-bg">
+    <div class="App-background" aria-hidden="true"></div>
+    <article class="Container menu-container-stw">
+      <div class="menu-stw-grid">
+        <aside class="Box Box--profile profile-panel">
+          <h3>净化师档案</h3>
+          <p class="profile-account">账号 <strong id="profile-username">-</strong></p>
+          <p class="profile-account">昵称 <strong id="profile-nickname">-</strong></p>
+          <span id="menu-top-nickname" class="hidden" aria-hidden="true">净化师</span>
+          <div class="profile-stats">
+            <span>Lv.<strong id="profile-level">1</strong></span>
+            <span>胜场 <strong id="profile-wins">0</strong></span>
+          </div>
+          <div class="profile-exp-bar"><div id="profile-exp-fill" class="exp-fill"></div></div>
+          <p class="profile-exp-text"><span id="profile-exp">0</span> / <span id="profile-exp-max">100</span> EXP</p>
+          <ul class="Options">
+            <li><button id="btn-daily-login" type="button" class="Button btn-gold btn-small">每日签到</button></li>
+            <li><button id="btn-show-compendium" type="button" class="Button btn-muted btn-small">怪物手册</button></li>
+            <li><button id="btn-show-tasks" type="button" class="Button btn-muted btn-small">每日任务</button></li>
+            <li><button id="btn-logout" type="button" class="Button btn-danger btn-small" danger>退出登录</button></li>
+          </ul>
+          <div id="purify-records" class="purify-records-panel"></div>
+          <div id="tasks-panel" class="tasks-panel hidden"></div>
+        </aside>
+        <div class="Box Box--main menu-container solo-hero">
+          <span class="solo-badge">单机 · 无需联机</span>
+          <h1 class="Title solo-title">幻兽净化师</h1>
+          <p class="solo-desc">携带净化秘典深入污染地带，以技法驱散污秽，挽救失控幻兽</p>
+          <ul class="solo-features">
+            <li><strong>路线图</strong> 选择遭遇 / 深渊 / 驿站 / 源点</li>
+            <li><strong>调息战斗</strong> 消耗灵力打出攻型与守型技法</li>
+            <li><strong>怪物组合</strong> 固定怪物池 · 每层随机组合遭遇</li>
+            <li><strong>悟道入秘典</strong> 净化成功后领悟新技法</li>
+          </ul>
+          <ul class="Options solo-mode-btns">
+            <li><button id="btn-quick-start" type="button" class="Button primary solo-start-btn">净化远征</button></li>
+            <li><button id="btn-tier-start" type="button" class="Button solo-mode-btn solo-mode-tier">阶层挑战 · 100 层</button></li>
+            <li><button id="btn-infinite-start" type="button" class="Button solo-mode-btn solo-mode-infinite">无限模式</button></li>
+          </ul>
+          <p class="auth-hint">首次进入战斗时将进行实战引导 · 拖拽或点击技法出牌</p>
           <p id="menu-error" class="error-msg"></p>
         </div>
-    </div>
+      </div>
+    </article>
 
     <div id="compendium-modal" class="compendium-modal hidden" role="dialog" aria-modal="true" aria-labelledby="compendium-modal-title">
       <button type="button" class="compendium-modal-backdrop" id="compendium-modal-backdrop" aria-label="关闭怪物手册"></button>
@@ -370,7 +363,8 @@
         <div class="purify-battle">
           <aside id="spire-combat-log" class="purify-journal" aria-label="净化日志"></aside>
           <div id="spire-combat-stage" class="purify-stage">
-            <div id="spire-enemy" class="purify-foe-zone"></div>
+            <div class="purify-play-zone" aria-hidden="true" title="拖入守型/秘法技法"></div>
+            <div id="spire-enemy" class="purify-foe-zone Targets"></div>
             <div id="purify-action-bar" class="purify-action-bar">
               <div class="purify-spirit-wrap">
                 <span class="purify-spirit-label">灵力</span>
@@ -381,9 +375,9 @@
             <div id="spire-player" class="purify-self-zone"></div>
           </div>
           <aside id="spire-piles" class="purify-piles-bar" aria-label="牌堆"></aside>
-          <div class="purify-hand-wrap">
-            <span class="purify-hand-label">当前技法</span>
-            <div id="spire-hand" class="purify-hand"></div>
+          <div class="purify-hand-wrap Hand">
+            <span class="purify-hand-label">当前技法 · 拖拽至目标出牌</span>
+            <div id="spire-hand" class="purify-hand Cards"></div>
           </div>
           <div id="spire-effect-layer" aria-hidden="true"></div>
           <div id="purify-tutorial-host" class="purify-tutorial-host hidden" aria-live="polite"></div>
@@ -391,29 +385,29 @@
       </section>
 
       <section id="spire-view-reward" class="purify-pane hidden">
-        <div class="purify-modal-card">
+        <div class="purify-modal-card Box RewardsBox">
           <h2 id="purify-reward-title">悟道 · 择一技法入秘典</h2>
-          <div id="spire-reward-cards" class="purify-reward-row"></div>
-          <button type="button" id="btn-spire-skip-reward" class="purify-text-btn">暂不入秘典</button>
+          <div id="spire-reward-cards" class="purify-reward-row Cards"></div>
+          <ul class="Options"><li><button type="button" id="btn-spire-skip-reward" class="Button purify-text-btn">暂不入秘典</button></li></ul>
         </div>
       </section>
 
       <section id="spire-view-rest" class="purify-pane hidden">
-        <div class="purify-modal-card purify-rest-card">
+        <div class="purify-modal-card Box purify-rest-card">
           <h2>🌿 幻兽驿站</h2>
           <p id="purify-rest-hint" class="purify-pane-desc">调息恢复心神，或精研强化秘典中的技法</p>
-          <div class="purify-rest-actions">
-            <button type="button" id="btn-spire-rest-heal" class="purify-rest-btn purify-rest-heal">调息 · 恢复 20 心神</button>
-            <button type="button" id="btn-spire-rest-upgrade" class="purify-rest-btn purify-rest-upgrade">精研 · 强化秘典技法</button>
-          </div>
+          <ul class="Options purify-rest-actions">
+            <li><button type="button" id="btn-spire-rest-heal" class="Button purify-rest-btn purify-rest-heal">调息 · 恢复 20 心神</button></li>
+            <li><button type="button" id="btn-spire-rest-upgrade" class="Button purify-rest-btn purify-rest-upgrade">精研 · 强化秘典技法</button></li>
+          </ul>
         </div>
       </section>
 
       <section id="spire-view-end" class="purify-pane hidden">
-        <div class="purify-modal-card purify-end-card">
+        <div class="purify-modal-card Box purify-end-card">
           <h2 id="spire-end-title">远征结束</h2>
           <div id="spire-end-stats" class="purify-end-stats"></div>
-          <button type="button" id="btn-spire-end-continue" class="purify-start-btn">返回主页</button>
+          <ul class="Options"><li><button type="button" id="btn-spire-end-continue" class="Button primary purify-start-btn">返回主页</button></li></ul>
         </div>
       </section>
     </main>
@@ -504,6 +498,8 @@
       }
     })();
   </script>
-  <script type="module" src="js/main.js?v=20250702menu"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/Draggable.min.js"></script>
+  <script type="module" src="js/main.js?v=20250702drag"></script>
 </body>
 </html>

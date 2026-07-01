@@ -364,6 +364,57 @@
   transform: none !important;
 }
 
+.purify-hand .Card.is-dragging,
+.purify-hand .purify-card.is-dragging {
+  cursor: grabbing;
+  box-shadow: 0 0 1.2em gold !important;
+  z-index: 50 !important;
+}
+
+.purify-hand .Card[disabled],
+.purify-hand .purify-card.disabled {
+  cursor: not-allowed;
+}
+
+.Target.is-dragOver .Healthbar,
+.purify-foe-card.is-dragOver .Healthbar {
+  transition-duration: 100ms;
+  box-shadow:
+    1em 0 2em var(--stw-gold),
+    3px 3px 1px black,
+    0 0 30px 20px rgba(255, 255, 255, 0.35);
+}
+
+.purify-self-zone.is-dragOver,
+.purify-play-zone.is-dragOver {
+  outline: 2px dashed var(--stw-gold);
+  outline-offset: 4px;
+  background: rgba(255, 193, 7, 0.08);
+}
+
+.purify-play-zone {
+  position: absolute;
+  inset: 12% 8% 38%;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 0.75rem;
+  transition: background 0.15s, outline 0.15s;
+}
+
+.purify-stage {
+  position: relative;
+}
+
+.purify-foe-zone {
+  position: relative;
+  z-index: 1;
+}
+
+.purify-self-zone {
+  position: relative;
+  z-index: 1;
+}
+
 .purify-hand .purify-card:first-child {
   margin-left: 0;
 }

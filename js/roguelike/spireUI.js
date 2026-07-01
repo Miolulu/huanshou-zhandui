@@ -6,6 +6,7 @@ import { intentIcon, intentLabel } from './enemies.js';
 import { TERMS } from './lore.js';
 import { CombatTutorial } from './combatTutorial.js';
 import { PurifyBattleEffects } from './purifyBattleEffects.js';
+import { destroyCardDrag, enableCardDrag } from './cardDrag.js';
 import { showToast } from '../appShell.js';
 
 function hpBarHtml(current, max, label = 'HP', color = 'hsl(120, 45%, 42%)', block = 0) {
@@ -66,6 +67,7 @@ export class SpireUI {
       effectLayer: document.getElementById('spire-effect-layer'),
       combatStage: document.getElementById('spire-combat-stage'),
       actionBar: document.getElementById('purify-action-bar'),
+      combatBattle: document.querySelector('#spire-view-combat .purify-battle'),
       rewardCards: document.getElementById('spire-reward-cards'),
       endTitle: document.getElementById('spire-end-title'),
       endStats: document.getElementById('spire-end-stats'),
@@ -132,11 +134,12 @@ export class SpireUI {
     });
   }
 
-  async performCombatAction(actionFn, stepAction, { cardEl } = {}) {
+  async performCombatAction(actionFn, stepAction, { cardEl, fromDrag = false } = {}) {
     if (this.combatBusy) return null;
     this.combatBusy = true;
+    destroyCardDrag();
 
-    if (cardEl) await this.battleEffects.animateCardPlay(cardEl);
+    if (cardEl && !fromDrag) await this.battleEffects.animateCardPlay(cardEl);
 
     const result = actionFn();
     if (!result?.ok) {
@@ -223,6 +226,7 @@ export class SpireUI {
 
     if (state.phase !== RUN_PHASES.COMBAT || !state.combat) {
       this.clearTutorialOverlay();
+      destroyCardDrag();
     }
 
     switch (state.phase) {
@@ -377,7 +381,7 @@ export class SpireUI {
       const dead = e.hp <= 0;
       const targeted = i === c.targetIndex && !dead;
       return `
-      <button type="button" class="purify-foe-card ${dead ? 'dead' : ''} ${targeted ? 'targeted' : ''}"
+      <button type="button" class="purify-foe-card Target ${dead ? 'Target--isDead dead' : ''} ${targeted ? 'targeted' : ''}"
         data-target="${i}" ${dead ? 'disabled' : ''}>
         <div class="purify-foe-icon">${e.icon || '👹'}</div>
         <div class="purify-foe-name">${e.name}</div>
@@ -441,6 +445,8 @@ export class SpireUI {
       };
     });
 
+    this.setupCardDrag(c);
+
     this.updateCombatChrome(c);
 
     if (this.el.combatLog) {
@@ -456,6 +462,34 @@ export class SpireUI {
     }
 
     this.renderTutorialOverlay(this.tutorial);
+  }
+
+  setupCardDrag(c) {
+    if (!this.el.combatBattle || c.phase !== 'player' || this.combatBusy) return;
+    if (typeof window.gsap === 'undefined' || typeof window.Draggable === 'undefined') return;
+
+    enableCardDrag(this.el.combatBattle, {
+      getTargetIndex: () => c.targetIndex,
+      onPlay: (cardEl, targetIndex) => {
+        if (this.combatBusy) return;
+        const card = c.hand.find((x) => x.uid === cardEl.dataset.uid);
+        if (!card) return;
+        const tutorialOk = !this.tutorial?.active || this.tutorial.canPlayCard(card, c);
+        if (!tutorialOk) {
+          showToast('请按引导步骤操作');
+          this.render();
+          return;
+        }
+        this.performCombatAction(
+          () => this.run.playCard(cardEl.dataset.uid, targetIndex),
+          () => {
+            if (card?.type === 'attack') this.tutorial?.onAction('play_attack');
+            else if (card?.type === 'skill') this.tutorial?.onAction('play_skill');
+          },
+          { cardEl, fromDrag: true },
+        );
+      },
+    });
   }
 
   renderTutorialOverlay(tutorial) {
