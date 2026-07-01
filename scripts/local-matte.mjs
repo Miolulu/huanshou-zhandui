@@ -1,9 +1,9 @@
 /**
- * 保守抠图：只去掉贴边黑底，保留角色身上所有黑色细节（眼窝/轮廓/阴影）
+ * 保守抠图 v3：缩小本体保护范围，更彻底去掉贴边黑底
  *
- * 思路：
- * 1. 从彩色像素向外扩张，把与角色相邻的黑色像素都标为「本体」
- * 2. 仅删除从画布边缘连通的、且不在本体保护范围内的近黑像素
+ * 1. 仅从「明显彩色」像素出发，向相邻的极暗像素扩张 2 层（描边/阴影）
+ * 2. 边缘洪水删除暗色背景
+ * 3. 删除与透明区相邻、且不含彩色的孤立暗色块
  */
 import sharp from 'sharp';
 
@@ -11,20 +11,29 @@ function maxChannel(r, g, b) {
   return Math.max(r, g, b);
 }
 
-/** 明显属于角色的彩色像素（非暗色背景） */
-function isColorPixel(r, g, b, minBright = 38) {
+function colorDist(a, b) {
+  return Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]), Math.abs(a[2] - b[2]));
+}
+
+/** 角色彩色像素（较高阈值，避免把背景噪点/光晕算进种子） */
+function isColorPixel(r, g, b, minBright = 42) {
   return maxChannel(r, g, b) > minBright;
 }
 
-/** 可删除的暗色背景（含 JPEG 压缩后的近黑底） */
-function isRemovableBg(r, g, b, maxBright = 34) {
+/** 可删除的暗色背景 */
+function isRemovableBg(r, g, b, maxBright = 36) {
+  return maxChannel(r, g, b) <= maxBright;
+}
+
+/** 扩张时可纳入保护的极暗描边像素 */
+function isProtectableDark(r, g, b, maxBright = 26) {
   return maxChannel(r, g, b) <= maxBright;
 }
 
 /**
- * 扩张本体遮罩：与彩色像素相邻的黑色像素一律保留
+ * 从彩色种子扩张：只向极暗邻居扩散，层数少
  */
-function buildForegroundMask(data, width, height, { minBright = 38, dilatePasses = 6 } = {}) {
+function buildForegroundMask(data, width, height, { minBright = 42, dilatePasses = 2, darkMax = 26 } = {}) {
   const total = width * height;
   const fg = new Uint8Array(total);
 
@@ -43,6 +52,7 @@ function buildForegroundMask(data, width, height, { minBright = 38, dilatePasses
         if (fg[idx]) continue;
         const i = idx * 4;
         if (data[i + 3] < 8) continue;
+        if (!isProtectableDark(data[i], data[i + 1], data[i + 2], darkMax)) continue;
         const neighbors = [
           x > 0 ? idx - 1 : -1,
           x < width - 1 ? idx + 1 : -1,
@@ -65,8 +75,8 @@ function buildForegroundMask(data, width, height, { minBright = 38, dilatePasses
   return fg;
 }
 
-/** 从四边删除连通的暗色背景，但跳过本体遮罩内的像素 */
-function floodRemoveBackground(data, width, height, fg, maxBright = 34) {
+/** 从四边洪水删除暗色背景 */
+function floodRemoveBackground(data, width, height, fg, maxBright = 36) {
   const total = width * height;
   const visited = new Uint8Array(total);
   const queue = new Int32Array(total);
@@ -103,7 +113,56 @@ function floodRemoveBackground(data, width, height, fg, maxBright = 34) {
   }
 }
 
-/** 清理边缘半透明脏像素，但不侵蚀本体内部 */
+/**
+ * 彩色核心：只从角色主体彩色像素扩张有限层，用于裁掉远处孤立黑块
+ */
+function buildCoreMask(data, width, height, { minBright = 45, dilatePasses = 4 } = {}) {
+  const total = width * height;
+  const core = new Uint8Array(total);
+
+  for (let idx = 0; idx < total; idx++) {
+    const i = idx * 4;
+    if (data[i + 3] < 8) continue;
+    if (isColorPixel(data[i], data[i + 1], data[i + 2], minBright)) core[idx] = 1;
+  }
+
+  for (let pass = 0; pass < dilatePasses; pass++) {
+    const next = new Uint8Array(core);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = y * width + x;
+        if (core[idx]) continue;
+        const i = idx * 4;
+        if (data[i + 3] < 8) continue;
+        const neighbors = [
+          x > 0 ? idx - 1 : -1,
+          x < width - 1 ? idx + 1 : -1,
+          y > 0 ? idx - width : -1,
+          y < height - 1 ? idx + width : -1,
+        ];
+        for (const n of neighbors) {
+          if (n >= 0 && core[n]) {
+            next[idx] = 1;
+            break;
+          }
+        }
+      }
+    }
+    core.set(next);
+  }
+
+  return core;
+}
+
+/** 删除核心遮罩外的所有像素（去掉远离本体的黑块/光晕） */
+function cullOutsideCore(data, width, height, core) {
+  const total = width * height;
+  for (let idx = 0; idx < total; idx++) {
+    if (core[idx]) continue;
+    data[idx * 4 + 3] = 0;
+  }
+}
+
 function cleanEdgeAlpha(data, width, height, fg) {
   const total = width * height;
   for (let idx = 0; idx < total; idx++) {
@@ -112,15 +171,69 @@ function cleanEdgeAlpha(data, width, height, fg) {
     if (a === 0 || a === 255) continue;
 
     if (fg[idx]) {
-      // 本体上的半透明像素（抗锯齿）保留为不透明
       data[i + 3] = 255;
       continue;
     }
 
-    // 背景缘的半透明晕边直接去掉
-    if (isRemovableBg(data[i], data[i + 1], data[i + 2], 40)) {
+    if (isRemovableBg(data[i], data[i + 1], data[i + 2], 42)) {
       data[i + 3] = 0;
     }
+  }
+}
+
+/** 按四角采样估计背景色，删除与背景色接近的贴边连通区 */
+function floodRemoveTintedBg(data, width, height, fg, cornerSamples = 4) {
+  const samples = [];
+  const corners = [
+    [0, 0],
+    [width - 1, 0],
+    [0, height - 1],
+    [width - 1, height - 1],
+  ];
+  for (const [cx, cy] of corners) {
+    const i = (cy * width + cx) * 4;
+    if (data[i + 3] > 8) samples.push([data[i], data[i + 1], data[i + 2]]);
+  }
+  if (!samples.length) return;
+
+  const bg = samples[0];
+  const tolerance = 22;
+
+  const isBgLike = (r, g, b) => colorDist([r, g, b], bg) <= tolerance;
+
+  const total = width * height;
+  const visited = new Uint8Array(total);
+  const queue = new Int32Array(total);
+  let head = 0;
+  let tail = 0;
+
+  const tryPush = (idx) => {
+    if (idx < 0 || idx >= total || visited[idx] || fg[idx]) return;
+    const i = idx * 4;
+    if (data[i + 3] < 8) return;
+    if (!isBgLike(data[i], data[i + 1], data[i + 2])) return;
+    visited[idx] = 1;
+    queue[tail++] = idx;
+  };
+
+  for (let x = 0; x < width; x++) {
+    tryPush(x);
+    tryPush((height - 1) * width + x);
+  }
+  for (let y = 0; y < height; y++) {
+    tryPush(y * width);
+    tryPush(y * width + width - 1);
+  }
+
+  while (head < tail) {
+    const idx = queue[head++];
+    data[idx * 4 + 3] = 0;
+    const x = idx % width;
+    const y = (idx / width) | 0;
+    if (x > 0) tryPush(idx - 1);
+    if (x < width - 1) tryPush(idx + 1);
+    if (y > 0) tryPush(idx - width);
+    if (y < height - 1) tryPush(idx + width);
   }
 }
 
@@ -134,12 +247,16 @@ export async function matteSprite(input, { preset = 'sprite' } = {}) {
   const { width, height } = info;
 
   const isIcon = preset === 'icon';
-  const minBright = isIcon ? 32 : 38;
-  const maxBright = isIcon ? 36 : 34;
-  const dilatePasses = isIcon ? 4 : 6;
+  const minBright = isIcon ? 38 : 42;
+  const maxBright = isIcon ? 34 : 36;
+  const dilatePasses = isIcon ? 2 : 2;
+  const darkMax = isIcon ? 28 : 26;
 
-  const fg = buildForegroundMask(data, width, height, { minBright, dilatePasses });
+  const fg = buildForegroundMask(data, width, height, { minBright, dilatePasses, darkMax });
+  const core = buildCoreMask(data, width, height, { minBright: minBright + 3, dilatePasses: isIcon ? 5 : 4 });
+  floodRemoveTintedBg(data, width, height, fg);
   floodRemoveBackground(data, width, height, fg, maxBright);
+  cullOutsideCore(data, width, height, core);
   cleanEdgeAlpha(data, width, height, fg);
 
   let result = sharp(data, {
