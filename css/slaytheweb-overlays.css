@@ -2,10 +2,10 @@
  * Slay the Web 风格 Overlay 面板 + 自定义光标
  */
 :root {
-  --cursor-default: url('assets/cursors/default.svg') 2 2, auto;
-  --cursor-point: url('assets/cursors/point.svg') 10 2, pointer;
-  --cursor-grab: url('assets/cursors/grab-open.svg') 10 2, grab;
-  --cursor-grabbing: url('assets/cursors/grab-closed.svg') 10 2, grabbing;
+  --cursor-default: url('../assets/cursors/default.svg') 2 2, auto;
+  --cursor-point: url('../assets/cursors/point.svg') 10 2, pointer;
+  --cursor-grab: url('../assets/cursors/grab-open.svg') 10 2, grab;
+  --cursor-grabbing: url('../assets/cursors/grab-closed.svg') 10 2, grabbing;
 }
 
 html {
