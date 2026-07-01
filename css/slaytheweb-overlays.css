@@ -106,6 +106,7 @@ button:not(:disabled),
 #screen-spire .Overlay-toggle {
   position: absolute;
   z-index: 40;
+  pointer-events: auto;
   font-size: 0.88rem;
   padding: 0.55rem 0.75rem;
   user-select: none;
