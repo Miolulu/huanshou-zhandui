@@ -2,7 +2,7 @@
 import { cardTypeLabel } from './cardPool.js';
 import { intentIcon, intentLabel } from './enemies.js';
 import { TERMS } from './lore.js';
-import { PLAYER_SPRITE, enemySpriteUrl } from './assetPaths.js';
+import { enemySpriteUrl, playerSpriteUrl } from './assetPaths.js';
 
 export function healthBarStw(current, max, block = 0) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
@@ -41,7 +41,7 @@ export function renderPlayerTarget(combat) {
   const p = combat.player;
   return `<div class="Target Target--player purify-self-zone" data-type="player">
     <div class="Target-figure">
-      <div class="Target-sprite Target-sprite--hero" aria-hidden="true"><img src="${PLAYER_SPRITE}" alt=""></div>
+      <div class="Target-sprite Target-sprite--hero" aria-hidden="true"><img src="${playerSpriteUrl()}" alt=""></div>
       <div class="Target-info">
         <p class="Target-name Target-name--hero">${TERMS.playerRole}</p>
         ${healthBarStw(p.hp, p.maxHp, p.block || 0)}

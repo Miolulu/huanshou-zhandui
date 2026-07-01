@@ -1,5 +1,12 @@
 /** 像素美术资源路径（由 scripts/slice-art.mjs 生成） */
 
+/** 素材版本：抠图/换图后递增，避免浏览器缓存旧 PNG */
+export const ASSET_VER = '20260715';
+
+function withVer(path) {
+  return path ? `${path}?v=${ASSET_VER}` : null;
+}
+
 export const CARD_ART = {
   purify_strike: 'assets/cards/purify_strike.png',
   holy_barrier: 'assets/cards/holy_barrier.png',
@@ -46,11 +53,19 @@ export const SCENE_BACKGROUNDS = [
 export const MAIN_BACKGROUND = 'assets/scenes/main-bg.jpg';
 
 export function cardArtUrl(cardId) {
-  return CARD_ART[cardId] || null;
+  return withVer(CARD_ART[cardId] || null);
 }
 
 export function enemySpriteUrl(enemyId) {
-  return ENEMY_SPRITES[enemyId] || null;
+  return withVer(ENEMY_SPRITES[enemyId] || null);
+}
+
+export function playerSpriteUrl() {
+  return withVer(PLAYER_SPRITE);
+}
+
+export function playerPortraitUrl() {
+  return withVer(PLAYER_PORTRAIT);
 }
 
 export function sceneBackgroundUrl(index) {

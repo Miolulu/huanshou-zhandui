@@ -1,5 +1,5 @@
 /**
- * 恢复原始素材 → 重抠 → 逐张验收
+ * 保守抠图 v6：贴边洪水去底，不做圆形/椭圆几何裁切
  * node scripts/verify-all-matte.mjs
  */
 import fs from 'fs';

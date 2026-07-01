@@ -1,5 +1,5 @@
 /**
- * 保守抠图 v5：贴边去底 + 外接圆裁切（圆必须包住全部角色像素，不裁切本体）
+ * 保守抠图 v6：仅贴边洪水去底，不做圆形/椭圆几何裁切
  */
 import sharp from 'sharp';
 
@@ -66,48 +66,6 @@ function buildForegroundMask(data, width, height, { minBright = 42, dilatePasses
   }
 
   return fg;
-}
-
-/**
- * 外接圆：圆心取不透明区域包围盒中心，半径覆盖全部不透明像素 + 边距
- * 只去掉圆外画布角，不会切到角色任何部分
- */
-function applyContainingCircleCrop(data, width, height, pad = 12) {
-  const points = [];
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4;
-      if (data[i + 3] > 16) points.push([x, y]);
-    }
-  }
-  if (points.length < 16) return;
-
-  let minX = width;
-  let minY = height;
-  let maxX = 0;
-  let maxY = 0;
-  for (const [x, y] of points) {
-    minX = Math.min(minX, x);
-    minY = Math.min(minY, y);
-    maxX = Math.max(maxX, x);
-    maxY = Math.max(maxY, y);
-  }
-
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
-  let radius = 0;
-  for (const [x, y] of points) {
-    radius = Math.max(radius, Math.hypot(x - cx, y - cy));
-  }
-  radius += pad;
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4;
-      if (data[i + 3] === 0) continue;
-      if (Math.hypot(x - cx, y - cy) > radius) data[i + 3] = 0;
-    }
-  }
 }
 
 /** 从四边洪水删除暗色背景 */
@@ -242,11 +200,6 @@ export async function matteSprite(input, { preset = 'sprite' } = {}) {
   floodRemoveTintedBg(data, width, height, fg);
   floodRemoveBackground(data, width, height, fg, maxBright);
   cleanEdgeAlpha(data, width, height, fg);
-
-  // 敌人：外接圆裁切（圆包住全部不透明像素，不切角色）；玩家保留完整画布
-  if (preset !== 'player') {
-    applyContainingCircleCrop(data, width, height, isIcon ? 8 : 14);
-  }
 
   let result = sharp(data, {
     raw: { width, height, channels: 4 },
