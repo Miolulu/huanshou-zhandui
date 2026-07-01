@@ -39,7 +39,7 @@
   flex-flow: column nowrap;
   justify-content: flex-end;
   padding: 0 0.5rem 0.25rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 #screen-spire .StwCombat .Targets {
@@ -498,8 +498,8 @@
 
 /* ===== Hand + Cards ===== */
 #screen-spire .StwCombat .Hand {
-  margin-top: 0.5rem;
-  transform: translateY(1rem);
+  margin-top: 0;
+  transform: none;
   position: relative;
   z-index: 4;
   flex-shrink: 0;
@@ -510,14 +510,15 @@
   flex-flow: row nowrap;
   justify-content: center;
   align-items: flex-end;
-  min-height: var(--card-height);
-  padding-left: 3rem;
-  padding-right: 3rem;
+  min-height: 0;
+  padding: 0 3rem;
 }
 
 #screen-spire .StwCombat .Cards.Cards--fan {
-  perspective: 1000px;
-  perspective-origin: 50% 135%;
+  perspective: 1200px;
+  perspective-origin: 50% 120%;
+  /* 顶部留出扇形抬升与旋转所需的空间，避免卡牌被裁切 */
+  padding-top: 2.75rem;
   padding-bottom: 0.35rem;
 }
 
@@ -531,7 +532,7 @@
   touch-action: none;
   -webkit-user-drag: none;
   user-select: none;
-  transform-origin: 50% 118%;
+  transform-origin: 50% 130%;
   transform: rotate(var(--fan-rot, 0deg)) translateY(var(--fan-y, 0px)) rotateX(var(--fan-tilt, 0deg));
   z-index: var(--fan-z, 1);
   transition:
@@ -589,24 +590,27 @@
   margin: 0;
   border-bottom: none;
   background: transparent;
-  flex-shrink: 0;
+  flex: 0 0 48%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 #screen-spire .Card-art {
-  height: 9rem;
-  min-height: 9rem;
+  height: 100%;
+  min-height: 0;
 }
 
 #screen-spire .Card-art-img {
-  display: block;
-  min-height: 9rem;
+  height: 100%;
+  min-height: 0;
 }
 
 #screen-spire .Card-name {
-  padding: 0.45rem 0.2rem 0.1rem;
+  padding: 0.35rem 0.2rem 0.05rem;
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.2;
+  font-size: 0.92rem;
+  line-height: 1.15;
+  flex-shrink: 0;
 }
 
 #screen-spire .Card-type {
@@ -633,15 +637,17 @@
 }
 
 #screen-spire .Card-description {
-  font-size: 0.78rem;
-  padding: 0.15rem 0.35rem 0.5rem;
+  font-size: 0.74rem;
+  padding: 0.1rem 0.3rem 0.4rem;
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.28;
   flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
   word-break: break-word;
 }
 
@@ -803,18 +809,9 @@
     font-size: 0.72rem;
   }
 
-  #screen-spire .Card-art {
-    height: 5.1rem;
-    min-height: 5.1rem;
-  }
-
-  #screen-spire .Card-art-img {
-    min-height: 5.1rem;
-  }
-
   #screen-spire .Card-name {
-    font-size: 0.74rem;
-    padding-top: 0.28rem;
+    font-size: 0.72rem;
+    padding-top: 0.24rem;
   }
 
   #screen-spire .Card-type {
@@ -823,15 +820,16 @@
 
   #screen-spire .Card-description {
     font-size: 0.58rem;
-    -webkit-line-clamp: 2;
   }
 
   #screen-spire .StwCombat .Cards {
-    min-height: 10.8rem;
+    min-height: 0;
     padding-left: 0.4rem;
     padding-right: 0.4rem;
-    overflow-x: auto;
-    justify-content: flex-start;
+  }
+
+  #screen-spire .StwCombat .Cards.Cards--fan {
+    padding-top: 1.75rem;
   }
 
   #screen-spire .StwCombat .Hand .Card {
