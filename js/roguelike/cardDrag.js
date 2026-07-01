@@ -7,22 +7,32 @@ import { combatSounds } from './combatSounds.js';
 /** @type {import('gsap').Draggable[]} */
 let dragInstances = [];
 
-function cardNeedsEnemyTarget(cardType) {
-  return cardType === 'attack';
+const OVER_CLASS = 'is-dragOver';
+
+function cardTargetType(cardType) {
+  if (cardType === 'attack') return 'enemy';
+  return 'player';
 }
 
-function canDropOn(cardEl, targetEl) {
+function getTargetStringFromElement(el) {
+  if (!el?.dataset?.type) return '';
+  const idx = el.dataset.target ?? '0';
+  return `${el.dataset.type}${idx}`;
+}
+
+function cardHasValidTarget(cardTarget, targetQuery) {
+  return (
+    (cardTarget === 'player' && targetQuery.includes('player'))
+    || (cardTarget === 'enemy' && targetQuery.includes('enemy'))
+  );
+}
+
+function canDropOnTarget(cardEl, targetEl) {
   if (!targetEl || !cardEl) return false;
-  const type = cardEl.dataset.cardType;
-  if (cardNeedsEnemyTarget(type)) {
-    return targetEl.classList.contains('Target')
-      && targetEl.dataset.type === 'enemy'
-      && !targetEl.classList.contains('Target--isDead');
-  }
-  return targetEl.dataset.type === 'player'
-    || targetEl.classList.contains('Target--player')
-    || targetEl.classList.contains('purify-play-zone')
-    || targetEl.classList.contains('StwCombat');
+  const cardTarget = cardEl.dataset.cardTarget || cardTargetType(cardEl.dataset.cardType);
+  const targetQuery = getTargetStringFromElement(targetEl);
+  const targetIsDead = targetEl.classList.contains('Target--isDead');
+  return cardHasValidTarget(cardTarget, targetQuery) && !targetIsDead;
 }
 
 function resolveTargetIndex(targetEl, fallbackIndex) {
@@ -54,37 +64,33 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
 
   destroyCardDrag();
 
-  const dropTargets = root.querySelectorAll('.Target[data-type], .purify-play-zone, .StwCombat');
+  const targets = root.querySelectorAll('.Target[data-type]');
   const cards = root.querySelectorAll('#spire-hand .Card:not(.disabled)');
 
   cards.forEach((card) => {
     const draggable = Draggable.create(card, {
       type: 'x,y',
       zIndexBoost: true,
-      dragClickables: true,
-      allowEventDefault: true,
-
-      onPress() {
-        combatSounds.selectCard();
-      },
+      minimumMovement: 8,
 
       onDragStart() {
         gsap.killTweensOf(this.target);
-        this.startX = this.x;
-        this.startY = this.y;
+        this.startX = 0;
+        this.startY = 0;
         card.classList.add('is-dragging');
+        combatSounds.selectCard();
       },
 
       onDrag() {
-        if (card.disabled) {
+        if (card.disabled || card.classList.contains('disabled')) {
           this.endDrag();
           return;
         }
-        dropTargets.forEach((targetEl) => {
-          if (this.hitTest(targetEl, '40%') && canDropOn(card, targetEl)) {
-            targetEl.classList.add('is-dragOver');
+        targets.forEach((targetEl) => {
+          if (this.hitTest(targetEl, '40%') && canDropOnTarget(card, targetEl)) {
+            targetEl.classList.add(OVER_CLASS);
           } else {
-            targetEl.classList.remove('is-dragOver');
+            targetEl.classList.remove(OVER_CLASS);
           }
         });
       },
@@ -92,15 +98,15 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
       onRelease() {
         card.classList.remove('is-dragging');
         let hitEl = null;
-        for (const targetEl of dropTargets) {
+        for (const targetEl of targets) {
           if (this.hitTest(targetEl, '40%')) {
             hitEl = targetEl;
             break;
           }
         }
-        dropTargets.forEach((t) => t.classList.remove('is-dragOver'));
+        targets.forEach((t) => t.classList.remove(OVER_CLASS));
 
-        if (canDropOn(card, hitEl)) {
+        if (canDropOnTarget(card, hitEl)) {
           const targetIndex = resolveTargetIndex(hitEl, getTargetIndex?.() ?? 0);
           gsap.to(card, {
             duration: 0.35,

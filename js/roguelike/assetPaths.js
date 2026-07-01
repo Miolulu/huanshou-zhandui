@@ -6,6 +6,19 @@ export const CARD_ART = {
   beast_pact: 'assets/cards/beast_pact.png',
   flame_purify: 'assets/cards/flame_purify.png',
   thunder_purify: 'assets/cards/thunder_purify.png',
+  vine_lash: 'assets/cards/vine_lash.png',
+  twin_purify: 'assets/cards/twin_purify.png',
+  life_drain: 'assets/cards/life_drain.png',
+  heavy_purify: 'assets/cards/heavy_purify.png',
+  poison_fang: 'assets/cards/poison_fang.png',
+  wind_cut: 'assets/cards/wind_cut.png',
+  ice_shell: 'assets/cards/ice_shell.png',
+  heal_bloom: 'assets/cards/heal_bloom.png',
+  iron_aegis: 'assets/cards/iron_aegis.png',
+  meditate: 'assets/cards/meditate.png',
+  quick_guard: 'assets/cards/quick_guard.png',
+  barrier: 'assets/cards/barrier.png',
+  rage: 'assets/cards/rage.png',
 };
 
 export const ENEMY_SPRITES = {

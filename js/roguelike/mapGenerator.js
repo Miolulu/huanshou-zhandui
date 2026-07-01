@@ -90,11 +90,16 @@ export function selectNode(map, nodeId) {
   const node = getNode(map, nodeId);
   if (!node || !node.available) return false;
 
+  const previousId = map.currentNodeId;
   map.rows[node.row].forEach((n) => {
     if (n.id !== nodeId) {
       n.available = false;
     }
   });
+
+  if (previousId && previousId !== nodeId) {
+    node.parentId = previousId;
+  }
 
   node.cleared = true;
   map.currentNodeId = nodeId;

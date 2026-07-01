@@ -430,11 +430,12 @@
   position: relative;
   display: flex;
   padding: 0;
-  border: 0.45rem ridge #53b5a8;
+  border: 3px solid #53b5a8;
   border-radius: 0.35rem;
   background: transparent;
   text-align: center;
   overflow: visible;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .Card-inner {
@@ -442,24 +443,36 @@
   flex: 1;
   display: flex;
   flex-flow: column nowrap;
-  background: #2a3335;
+  background: hsl(191, 18%, 22%);
   color: var(--stw-text);
-  border-radius: 0.15rem;
+  border-radius: 0.25rem;
   overflow: hidden;
 }
 
 .Card-media {
   margin: 0;
-  border-bottom: 2px solid #1a2022;
-  background: #111;
-  min-height: 7rem;
+  border-bottom: none;
+  background: hsl(200, 15%, 12%);
+  min-height: 8rem;
+  flex-shrink: 0;
 }
 
 .Card-art {
   width: 100%;
-  height: 7rem;
+  height: 8rem;
+  min-height: 8rem;
   background-size: cover;
   background-position: center top;
+}
+
+.Card-art-img {
+  width: 100%;
+  height: 8rem;
+  min-height: 8rem;
+  object-fit: cover;
+  object-position: center top;
+  image-rendering: auto;
+  display: block;
 }
 
 .Card-art.el-fire { background: linear-gradient(160deg, #4a1810 0%, #ff6b35 40%, #2a1010 100%); }

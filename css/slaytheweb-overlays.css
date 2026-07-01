@@ -245,12 +245,18 @@ button:not(:disabled),
 }
 
 #screen-spire .PileCards .Card.PileCard {
-  width: 7rem;
-  height: 11.5rem;
+  width: 7.5rem;
+  height: 12.5rem;
   flex-shrink: 0;
   pointer-events: none;
   transform: none !important;
   margin: 0 !important;
+}
+
+#screen-spire .PileCards .Card.PileCard .Card-art,
+#screen-spire .PileCards .Card.PileCard .Card-art-img {
+  height: 5.5rem;
+  min-height: 5.5rem;
 }
 
 #screen-spire .PileCards-empty {
@@ -309,12 +315,130 @@ button:not(:disabled),
 #screen-spire .purify-map-board {
   width: 100%;
   min-height: 320px;
+  max-height: 70vh;
+  overflow-y: auto;
   padding: 1.25rem 0.75rem 1.5rem;
   background: hsl(120, 17.5%, 19%);
   border: 2px groove chocolate;
   outline: 1px solid chocolate;
   outline-offset: -0.5rem;
   border-radius: 0.75rem;
+}
+
+/* ===== StW 风格路线图 SlayMap ===== */
+.SlayMap {
+  --pathColor: chocolate;
+  --pathWidth: 2px;
+  --highlight: gold;
+  --nodeSize: 1.5em;
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0 auto;
+  min-height: 480px;
+  padding: 1em 0.5em 2em;
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+}
+
+.SlayMap-row {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 2), 1fr);
+  align-items: center;
+  justify-items: center;
+  min-height: 4.5rem;
+  padding: 0.75rem 0;
+  position: relative;
+  z-index: 2;
+}
+
+.SlayMap-row--single {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.SlayMap-row--single .SlayMap-node {
+  grid-column: 3 / 5;
+}
+
+.SlayMap svg.SlayMap-paths {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.SlayMap svg.SlayMap-paths line {
+  stroke: var(--pathColor);
+  stroke-width: var(--pathWidth);
+  stroke-dasharray: 0.35em;
+}
+
+.SlayMap svg.SlayMap-paths line[data-kind="taken"] {
+  stroke: hsl(35, 70%, 55%);
+  stroke-width: 2.5px;
+  opacity: 0.85;
+}
+
+.SlayMap svg.SlayMap-paths line[data-kind="available"] {
+  stroke: var(--highlight);
+  stroke-width: 2px;
+  opacity: 0.9;
+}
+
+#screen-spire .SlayMap-node.purify-node {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  border: 3px dashed transparent;
+  position: relative;
+  z-index: 2;
+  transition: opacity 250ms, border-color 250ms, transform 150ms;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+#screen-spire .SlayMap-node.purify-node.has-type,
+#screen-spire .SlayMap-node.purify-node[data-linked="true"],
+#screen-spire .SlayMap-node.purify-node.current,
+#screen-spire .SlayMap-node.purify-node.cleared {
+  opacity: 1;
+  visibility: visible;
+}
+
+#screen-spire .SlayMap-node.purify-node.current {
+  border-color: var(--highlight);
+  box-shadow: 0 0 12px rgba(255, 193, 7, 0.45);
+}
+
+#screen-spire .SlayMap-node.purify-node.can-visit,
+#screen-spire .SlayMap-node.purify-node[data-can-visit="true"] {
+  pointer-events: auto;
+  opacity: 1;
+  cursor: var(--cursor-point, pointer);
+}
+
+#screen-spire .SlayMap-node.purify-node.can-visit:hover,
+#screen-spire .SlayMap-node.purify-node[data-can-visit="true"]:hover {
+  border-color: var(--highlight);
+  transform: scale(1.08);
+}
+
+#screen-spire .SlayMap-node.purify-node.can-visit:hover > .purify-node-icon,
+#screen-spire .SlayMap-node.purify-node[data-can-visit="true"]:hover > .purify-node-icon {
+  transform: scale(1.25);
+}
+
+#screen-spire .SlayMap-node.purify-node.cleared {
+  opacity: 0.55;
+}
+
+#screen-spire .SlayMap-node.purify-node .purify-node-icon {
+  transition: transform 150ms ease;
 }
 
 #screen-spire .purify-node.boss-node,

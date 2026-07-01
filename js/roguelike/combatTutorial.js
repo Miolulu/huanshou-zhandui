@@ -10,7 +10,7 @@ export const COMBAT_TUTORIAL_STEPS = [
   {
     id: 'attack',
     title: '打出攻型技法',
-    text: '点击「净化冲击」消耗 1 点灵力，对选中的污化幻兽造成净化伤害。',
+    text: '将「净化冲击」拖向污化幻兽，消耗 1 点灵力造成净化伤害。',
     highlight: '.purify-card.card-attack',
     action: 'play_attack',
     cardType: 'attack',
@@ -18,7 +18,7 @@ export const COMBAT_TUTORIAL_STEPS = [
   {
     id: 'barrier',
     title: '展开护幕',
-    text: '敌人即将攻击。打出「圣光护幕」获得护幕，抵御部分伤害。',
+    text: '敌人即将攻击。将「圣光护幕」拖向净化师自身，获得护幕抵御伤害。',
     highlight: '.purify-card.card-skill',
     action: 'play_skill',
     cardType: 'skill',

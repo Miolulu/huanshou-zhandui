@@ -14,17 +14,23 @@ const ELEMENT_ART_CLASS = {
   neutral: 'el-neutral',
 };
 
+function cardDragTarget(type) {
+  if (type === 'attack') return 'enemy';
+  return 'player';
+}
+
 export function renderPurifyCardHtml(card, { playable = true, extraClass = '', tag = 'button' } = {}) {
   const el = ELEMENT_ART_CLASS[card.element] || ELEMENT_ART_CLASS.neutral;
   const typeAttr = tag === 'button' ? 'type="button"' : '';
   const disabledAttr = tag === 'button' && !playable ? 'disabled' : '';
+  const dragTarget = cardDragTarget(card.type);
   const artSrc = cardArtUrl(card.id);
   const artInner = artSrc
     ? `<img class="Card-art-img" src="${artSrc}" alt="" loading="lazy" draggable="false">`
     : `<div class="Card-art ${el}" role="img" aria-label="${card.name}"></div>`;
   return `<${tag} ${typeAttr}
     class="purify-card Card ${cardTypeClass(card.type)} ${el} ${extraClass} ${playable ? '' : 'disabled'}"
-    data-uid="${card.uid}" data-card-id="${card.id}" data-card-type="${card.type}" ${disabledAttr}>
+    data-uid="${card.uid}" data-card-id="${card.id}" data-card-type="${card.type}" data-card-target="${dragTarget}" ${disabledAttr}>
     <div class="Card-inner">
       <p class="Card-energy EnergyBadge" title="灵耗"><span>${card.cost}</span></p>
       <figure class="Card-media">

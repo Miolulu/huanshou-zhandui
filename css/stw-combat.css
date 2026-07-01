@@ -108,7 +108,7 @@
   min-height: 1.4em;
   margin: 0 0.25rem 0.35rem;
   padding: 0.15em 0.5em;
-  background: linear-gradient(10deg, black -80%, transparent 80%);
+  background: linear-gradient(10deg, rgba(0, 0, 0, 0.55) -80%, transparent 80%);
   border-top-left-radius: 0.5em;
   border-top-right-radius: 0.5em;
 }
@@ -139,9 +139,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
-  image-rendering: pixelated;
-  border-radius: 0.35rem;
+  object-position: center top;
+  image-rendering: auto;
+  border-radius: 0.2rem;
 }
 
 #screen-spire .purify-intent-icon {
@@ -266,7 +266,7 @@
   background: darkslategrey;
   color: var(--stw-text-inverse, rgba(0, 0, 0, 0.95));
   transition: box-shadow 400ms;
-  border: 3px solid rgba(0, 0, 0, 0.85);
+  border: 2px solid rgba(83, 181, 168, 0.45);
   border-radius: 0.5rem;
   min-height: 2rem;
 }
@@ -346,7 +346,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 3px solid rgba(0, 0, 0, 0.85);
+  border: 2px solid rgba(83, 181, 168, 0.6);
   transform: rotate(45deg);
   background-color: var(--stw-teal, #116f54);
   box-shadow: 0 0 0.1em var(--stw-lightblue);
@@ -368,11 +368,11 @@
 #screen-spire .Actions .Button.EndTurn {
   font-size: 1rem;
   padding: 0.45em 1rem;
-  border: 3px solid rgba(0, 0, 0, 0.85);
+  border: 2px solid rgba(83, 181, 168, 0.55);
   border-radius: 0.4em;
   background: hsl(194.7, 53.3%, 79%);
   color: rgba(0, 0, 0, 0.95);
-  box-shadow: 0 0.2em rgba(0, 0, 0, 0.85);
+  box-shadow: 0 0.15em rgba(0, 0, 0, 0.45);
   cursor: var(--cursor-point, pointer);
   font-family: 'ZCOOL KuaiLe', cursive, sans-serif;
 }
@@ -435,12 +435,11 @@
 #screen-spire .Card {
   position: relative;
   display: flex;
-  border: 0.5em ridge #53b5a8;
-  border-width: 0.5rem;
-  border-radius: 0.15rem;
+  border: 3px solid #53b5a8;
+  border-radius: 0.35rem;
   background: transparent;
   padding: 0;
-  image-rendering: pixelated;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 #screen-spire .Card-inner {
@@ -448,22 +447,29 @@
   flex: 1;
   display: flex;
   flex-flow: column nowrap;
-  background: #2a3335;
+  background: hsl(191, 18%, 22%);
   color: var(--stw-text);
   text-align: center;
   user-select: none;
-  border-radius: 0.1rem;
+  border-radius: 0.25rem;
   overflow: hidden;
 }
 
 #screen-spire .Card-media {
   margin: 0;
-  border-bottom: 2px solid #2a3335;
-  background: #111;
+  border-bottom: none;
+  background: hsl(200, 15%, 12%);
+  flex-shrink: 0;
 }
 
 #screen-spire .Card-art {
-  height: 7.5rem;
+  height: 9rem;
+  min-height: 9rem;
+}
+
+#screen-spire .Card-art-img {
+  display: block;
+  min-height: 9rem;
 }
 
 #screen-spire .Card-name {

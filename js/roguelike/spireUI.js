@@ -6,6 +6,7 @@ import { TERMS } from './lore.js';
 import { CombatTutorial } from './combatTutorial.js';
 import { PurifyBattleEffects } from './purifyBattleEffects.js';
 import { destroyCardDrag, enableCardDrag } from './cardDrag.js';
+import { mountExpeditionMap } from './expeditionMapView.js';
 import { SpireOverlays } from './spireOverlays.js';
 import { renderPlayerTarget, renderEnemyTarget } from './combatView.js';
 import { renderPileInto } from './pileOverlay.js';
@@ -429,25 +430,7 @@ export class SpireUI {
   }
 
   renderExpeditionMap(state, container, interactive = true) {
-    const rows = state.map.rows;
-    container.innerHTML = rows.map((row, ri) => {
-      const nodes = row.map((n) => {
-        const cls = [
-          'purify-node',
-          n.type === 'boss' ? 'boss-node' : '',
-          n.cleared ? 'cleared' : '',
-          n.available ? 'available' : '',
-          n.id === state.map.currentNodeId ? 'current' : '',
-        ].filter(Boolean).join(' ');
-        const disabled = !interactive || !n.available || n.cleared;
-        return `<button type="button" class="${cls}" data-type="${n.type || ''}" data-node="${n.id}" ${disabled ? 'disabled' : ''}>
-          <span class="purify-node-icon">${n.icon}</span>
-          <span class="purify-node-label">${n.label}</span>
-        </button>`;
-      }).join('');
-      return `<div class="purify-path-row" data-row="${ri}">${nodes}</div>`;
-    }).join('');
-
+    mountExpeditionMap(container, state, interactive);
     if (interactive) this.bindMapNodeClicks(container);
   }
 
@@ -503,21 +486,6 @@ export class SpireUI {
       const playable = energyOk && tutorialOk;
       return renderPurifyCardHtml(card, { playable });
     }).join('');
-
-    this.el.hand.querySelectorAll('.purify-card:not(.disabled)').forEach((btn) => {
-      btn.onclick = () => {
-        if (this.combatBusy) return;
-        const card = c.hand.find((x) => x.uid === btn.dataset.uid);
-        this.performCombatAction(
-          () => this.run.playCard(btn.dataset.uid, c.targetIndex),
-          () => {
-            if (card?.type === 'attack') this.tutorial?.onAction('play_attack');
-            else if (card?.type === 'skill') this.tutorial?.onAction('play_skill');
-          },
-          { cardEl: btn },
-        );
-      };
-    });
 
     this.setupCardDrag(c);
 
