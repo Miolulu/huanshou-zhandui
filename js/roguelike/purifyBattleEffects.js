@@ -269,7 +269,7 @@ export class PurifyBattleEffects {
   }
 
   pulsePlayerBarrier() {
-    const bar = this.playerArea?.querySelector('.Healthbar-blockBar')
+    const bar = this.playerArea?.querySelector('.BlockBadge')
       || this.playerArea?.querySelector('.Healthbar');
     bar?.classList.add('stat-pulse');
     setTimeout(() => bar?.classList.remove('stat-pulse'), 400);

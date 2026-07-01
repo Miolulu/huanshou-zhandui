@@ -185,7 +185,17 @@ function smoothAlphaEdges(data, width, height) {
  * @param {{ preset?: 'sprite'|'icon' }} opts
  */
 export async function matteSprite(input, { preset = 'sprite' } = {}) {
-  const source = typeof input?.ensureAlpha === 'function' ? input : sharp(input);
+  let source = typeof input?.ensureAlpha === 'function' ? input : sharp(input);
+  if (preset === 'sprite' || preset === 'icon') {
+    const meta = await source.metadata();
+    const w = meta.width || 64;
+    const h = meta.height || 64;
+    source = source.resize({
+      width: w * 2,
+      height: h * 2,
+      kernel: sharp.kernel.lanczos3,
+    });
+  }
   const { data, info } = await source.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width, height } = info;
 

@@ -43,61 +43,95 @@
 }
 
 #screen-spire .StwCombat .Targets {
+  position: relative;
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  align-items: stretch;
-  padding-top: 3.4rem;
+  min-height: 46vh;
+  overflow: visible;
+  display: block;
+  padding: 2.5rem 0 0;
   animation: stw-fade-in 800ms var(--stw-easing) 200ms both;
 }
 
 #screen-spire .StwCombat .Targets-group {
+  position: absolute;
+  bottom: 6%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: stretch;
-  gap: 0.75rem;
+  justify-content: flex-end;
+  align-items: center;
+  width: 46%;
   min-width: 0;
 }
 
+#screen-spire .StwCombat .Targets-group:first-child {
+  left: 5%;
+}
+
 #screen-spire .StwCombat .Targets-group--enemies {
-  align-items: center;
+  right: 3%;
+  width: 48%;
 }
 
 #screen-spire .StwCombat .Target-host--enemies {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.75rem;
+  align-items: flex-end;
+  gap: 1.25rem;
   width: 100%;
 }
 
 /* ===== Target（player.js） ===== */
 #screen-spire .Target {
   position: relative;
-  margin-top: 0.5rem;
-  padding: 2em 0.75em 1.2em;
-  flex: 1;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
   display: flex;
   flex-flow: column;
-  justify-content: center;
-  max-width: 20rem;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: none;
+  width: 100%;
   user-select: none;
   transition: opacity 200ms, box-shadow 200ms;
   border-radius: 0.5rem;
+  background: transparent;
+}
+
+#screen-spire .Target-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 0.35rem;
+}
+
+#screen-spire .Target-info {
+  width: min(100%, 14rem);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
 }
 
 #screen-spire .Target--player {
-  margin-right: auto;
-  max-width: 18rem;
+  margin-right: 0;
+  max-width: none;
 }
 
 #screen-spire .Target--enemy {
   cursor: var(--cursor-point, pointer);
-  max-width: 16rem;
+  max-width: min(100%, 16rem);
+}
+
+#screen-spire .Target-intent-badge {
+  margin-bottom: 0.15rem;
+  min-height: 1.5rem;
+}
+
+#screen-spire .Target-intent-badge .Target-intent {
+  justify-content: center;
 }
 
 #screen-spire .Target-header {
@@ -115,8 +149,8 @@
 
 #screen-spire .Target-sprite {
   flex-shrink: 0;
-  width: 4.5rem;
-  height: 4.5rem;
+  width: min(36vw, 14rem);
+  height: min(40vh, 16rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -125,21 +159,29 @@
 }
 
 #screen-spire .Target-sprite img {
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  object-position: center bottom;
   image-rendering: auto;
 }
 
 #screen-spire .Target-sprite--enemy img,
 #screen-spire .Target--player .Target-sprite img {
   mix-blend-mode: normal;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.35));
 }
 
 #screen-spire .Target--enemy .Target-sprite {
-  width: 5.5rem;
-  height: 5.5rem;
+  width: min(32vw, 12.5rem);
+  height: min(36vh, 14rem);
+}
+
+#screen-spire .Target-sprite--hero {
+  width: min(38vw, 15rem);
+  height: min(42vh, 17rem);
 }
 
 #screen-spire .Card-art-img {
@@ -152,10 +194,12 @@
 }
 
 #screen-spire .purify-intent-icon {
-  width: 1.35rem;
-  height: 1.35rem;
-  image-rendering: pixelated;
+  width: 1.65rem;
+  height: 1.65rem;
+  object-fit: contain;
+  image-rendering: auto;
   vertical-align: middle;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
 }
 
 #screen-spire .Target-intents {
@@ -288,11 +332,54 @@
   min-height: 2rem;
 }
 
-#screen-spire .Healthbar--hasBlock .Healthbar-blockBar {
-  background: #afafff;
+/* ===== Healthbar + 护幕盾徽 ===== */
+#screen-spire .Healthbar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
 }
 
-#screen-spire .Healthbar-label {
+#screen-spire .Healthbar-row .Healthbar {
+  flex: 1;
+  min-width: 0;
+}
+
+#screen-spire .BlockBadge {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.65rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#screen-spire .BlockBadge-shield {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(165deg, #ececff 0%, #8f8fe8 48%, #4f4fa8 100%);
+  clip-path: polygon(50% 0%, 91% 14%, 91% 54%, 50% 100%, 9% 54%, 9% 14%);
+  box-shadow:
+    inset 0 2px 5px rgba(255, 255, 255, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+#screen-spire .BlockBadge-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0.3rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+#screen-spire .Healthbar {
   position: relative;
   z-index: 1;
   margin: 0.35em 0;
@@ -582,36 +669,45 @@
   }
 
   #screen-spire .StwCombat .Targets {
-    grid-template-columns: 0.9fr 1.1fr;
-    gap: 0.25rem;
-    padding-top: 2.4rem;
+    min-height: 40vh;
+    padding-top: 1.5rem;
   }
 
-  #screen-spire .Target--player {
-    max-width: 10rem;
-    margin-right: 0;
+  #screen-spire .StwCombat .Targets-group {
+    width: 48%;
+    bottom: 4%;
   }
 
-  #screen-spire .Targets-group--enemies {
-    align-items: end;
+  #screen-spire .StwCombat .Targets-group:first-child {
+    left: 2%;
+  }
+
+  #screen-spire .StwCombat .Targets-group--enemies {
+    right: 1%;
   }
 
   #screen-spire .Target {
-    padding: 1.25em 0.35em 0.65em;
-    margin-top: 0;
+    padding: 0;
   }
 
-  #screen-spire .Target-header {
-    flex-direction: column;
-    gap: 0.2rem;
-    margin: 0 0 0.25rem;
-    padding: 0.05rem 0.2rem;
+  #screen-spire .Target-info {
+    width: min(100%, 9rem);
   }
 
   #screen-spire .Target-sprite,
-  #screen-spire .Target--enemy .Target-sprite {
-    width: 3.2rem;
-    height: 3.2rem;
+  #screen-spire .Target--enemy .Target-sprite,
+  #screen-spire .Target-sprite--hero {
+    width: min(42vw, 8rem);
+    height: min(34vh, 9rem);
+  }
+
+  #screen-spire .BlockBadge {
+    width: 2.2rem;
+    height: 2.5rem;
+  }
+
+  #screen-spire .BlockBadge-value {
+    font-size: 0.82rem;
   }
 
   #screen-spire .Target-name,

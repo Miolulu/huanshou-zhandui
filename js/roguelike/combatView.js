@@ -6,12 +6,18 @@ import { PLAYER_SPRITE, enemySpriteUrl } from './assetPaths.js';
 
 export function healthBarStw(current, max, block = 0) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
-  const blockPct = max > 0 && block > 0 ? Math.min(100 - pct, (block / max) * 100) : 0;
-  const blockWidth = Math.min(100, pct + blockPct);
-  return `<div class="Healthbar ${block > 0 ? 'Healthbar--hasBlock' : ''}" role="progressbar" aria-valuenow="${current}" aria-valuemax="${max}">
-    <p class="Healthbar-label"><span>${current}/${max}</span></p>
-    <div class="Healthbar-bar" style="width:${pct}%"></div>
-    <div class="Healthbar-bar Healthbar-blockBar" style="width:${blockWidth}%">${block > 0 ? block : ''}</div>
+  const blockBadge = block > 0
+    ? `<div class="BlockBadge" title="护幕" aria-label="护幕 ${block}">
+        <span class="BlockBadge-shield" aria-hidden="true"></span>
+        <span class="BlockBadge-value">${block}</span>
+      </div>`
+    : '';
+  return `<div class="Healthbar-row">
+    <div class="Healthbar" role="progressbar" aria-valuenow="${current}" aria-valuemax="${max}">
+      <p class="Healthbar-label"><span>${current}/${max}</span></p>
+      <div class="Healthbar-bar" style="width:${pct}%"></div>
+    </div>
+    ${blockBadge}
   </div>`;
 }
 
@@ -33,14 +39,14 @@ function renderPowers(combat, enemy = null) {
 export function renderPlayerTarget(combat) {
   const p = combat.player;
   return `<div class="Target Target--player purify-self-zone" data-type="player">
-    <header class="Target-header">
-      <div class="Target-sprite" aria-hidden="true"><img src="${PLAYER_SPRITE}" alt=""></div>
-      <h3 class="Target-intents">
-        <span class="Target-name">${TERMS.playerRole}</span>
-      </h3>
-    </header>
-    ${healthBarStw(p.hp, p.maxHp, p.block || 0)}
-    ${renderPowers(combat)}
+    <div class="Target-figure">
+      <div class="Target-sprite Target-sprite--hero" aria-hidden="true"><img src="${PLAYER_SPRITE}" alt=""></div>
+      <div class="Target-info">
+        <p class="Target-name Target-name--hero">${TERMS.playerRole}</p>
+        ${healthBarStw(p.hp, p.maxHp, p.block || 0)}
+        ${renderPowers(combat)}
+      </div>
+    </div>
     <div class="Target-combatText Split" aria-hidden="true"></div>
     <p class="Target-stat-label">${TERMS.mind}</p>
   </div>`;
@@ -65,16 +71,16 @@ export function renderEnemyTarget(enemy, index, { targeted, showDesc }) {
     : (enemy.icon || '👹');
 
   return `<div class="${cls}" data-type="enemy" data-target="${index}" role="button" tabindex="${dead ? -1 : 0}" ${dead ? 'aria-disabled="true"' : ''}>
-    <header class="Target-header">
+    <div class="Target-figure">
+      <div class="Target-intent-badge">${intentHtml}</div>
       <div class="Target-sprite Target-sprite--enemy" aria-hidden="true">${spriteHtml}</div>
-      <h3 class="Target-intents">
-        <span class="Target-name">${enemy.name}</span>
-        ${intentHtml}
-      </h3>
-    </header>
-    ${showDesc && enemy.desc ? `<p class="Target-desc">${enemy.desc}</p>` : ''}
-    ${healthBarStw(enemy.hp, enemy.maxHp, enemy.block || 0)}
-    ${renderPowers(null, enemy)}
+      <div class="Target-info">
+        <p class="Target-name">${enemy.name}</p>
+        ${showDesc && enemy.desc ? `<p class="Target-desc">${enemy.desc}</p>` : ''}
+        ${healthBarStw(enemy.hp, enemy.maxHp, enemy.block || 0)}
+        ${renderPowers(null, enemy)}
+      </div>
+    </div>
     <div class="Target-combatText Split" aria-hidden="true"></div>
     <p class="Target-stat-label">${TERMS.taint}</p>
   </div>`;

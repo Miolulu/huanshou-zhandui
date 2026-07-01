@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 import { matteSprite } from './local-matte.mjs';
 import { encodePipeline, writeMainBackgroundJpeg } from './asset-encode.mjs';
+import { generateUiIcons } from './gen-ui-icons.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -100,7 +101,6 @@ async function main() {
   const cardsBatch5 = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-64018102-6fa1-49b5-a545-8a5ea9a5d9e4.png');
   const player = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-87537738-4552-472d-825c-df3edf705e6f.png');
   const scenes = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-5363b966-8d89-43c0-b81a-a86cdabb5f79.png');
-  const uiFile = src('c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-4f4a4bc1-67c8-469c-b3a4-97b82aa582aa.png');
 
   console.log('Enemies…');
   const ew = 341;
@@ -201,25 +201,8 @@ async function main() {
   }
   await upscaleScene('assets/scenes/main-bg.png', 'assets/scenes/scene-5.png');
 
-  console.log('Intent icons…');
-  const iw = 64;
-  const ih = 64;
-  const intents = [
-    ['assets/intents/damage.png', 0],
-    ['assets/intents/block.png', 1],
-    ['assets/intents/buff.png', 2],
-    ['assets/intents/debuff.png', 3],
-    ['assets/intents/unknown.png', 4],
-  ];
-  const iconY = 900;
-  const iconX0 = 280;
-  const iconGap = 74;
-  for (const [out, i] of intents) {
-    await crop(out, uiFile, { left: iconX0 + i * iconGap, top: iconY, width: iw, height: ih }, { mode: 'icon' });
-  }
-
-  console.log('Energy badge…');
-  await crop('assets/ui/energy-badge.png', uiFile, { left: 360, top: 130, width: 100, height: 100 }, { mode: 'icon' });
+  console.log('UI icons (vector)…');
+  await generateUiIcons();
 
   console.log('Done.');
 }
