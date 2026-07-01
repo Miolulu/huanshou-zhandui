@@ -86,7 +86,6 @@
         <button id="btn-daily-login" class="btn-gold btn-small">每日签到</button>
         <button id="btn-show-compendium" class="btn-muted btn-small">怪物手册</button>
         <button id="btn-show-tasks" class="btn-muted btn-small">每日任务</button>
-        <button id="btn-tutorial" class="btn-muted btn-small">自走棋教程</button>
         <div id="purify-records" class="purify-records-panel"></div>
         <button id="btn-logout" class="btn-danger btn-small">退出登录</button>
         <div id="compendium-panel" class="compendium-panel hidden"></div>
@@ -111,35 +110,7 @@
             <p class="auth-hint">首次进入战斗时将进行实战引导 · 需登录账号保存图鉴与记录</p>
           </section>
 
-          <details class="legacy-modes" id="legacy-modes">
-            <summary>经典自走棋（联机 / 人机，8 人对战）</summary>
-            <div class="legacy-modes-body">
-              <p class="hint">以下为旧版酒馆自走棋模式，支持创建房间与联机匹配。</p>
-              <h3 class="section-label">选择模式</h3>
-              <div id="mode-grid" class="mode-grid"></div>
-              <div id="ai-difficulty-row" class="ai-difficulty-row hidden">
-                <label>AI 难度</label>
-                <select id="select-ai-difficulty">
-                  <option value="easy">简单</option>
-                  <option value="normal" selected>普通</option>
-                  <option value="hard">困难</option>
-                  <option value="nightmare">噩梦</option>
-                </select>
-              </div>
-              <div class="menu-actions legacy-actions">
-                <button id="btn-legacy-start" type="button" class="btn-accent btn-lg hidden">立即开始</button>
-                <button id="btn-create-room" type="button" class="btn-accent btn-lg">创建房间</button>
-                <button id="btn-show-join" type="button" class="btn-gold btn-lg">加入房间</button>
-              </div>
-              <div id="join-panel" class="join-panel hidden">
-                <input id="input-room-code" type="text" maxlength="6" placeholder="房间号 6 位">
-                <button id="btn-join-room" type="button" class="btn-accent">加入</button>
-              </div>
-            </div>
-          </details>
-
           <p id="menu-error" class="error-msg"></p>
-          <p id="session-recover-hint" class="hint hidden"></p>
         </div>
     </div>
   </div>
@@ -526,6 +497,6 @@
       }
     })();
   </script>
-  <script type="module" src="js/main.js?v=20250701"></script>
+  <script type="module" src="js/main.js?v=20250701b"></script>
 </body>
 </html>

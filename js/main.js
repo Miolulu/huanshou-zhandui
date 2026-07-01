@@ -1,13 +1,10 @@
 import { GameEngine } from './gameEngine.js';
 import { UI } from './ui.js';
-import { RoomManager } from './roomManager.js';
 import { initMenu, refreshMenuProfile } from './menuUI.js';
-import { LobbyUI } from './lobbyUI.js';
 import { initAuth } from './authUI.js';
 import { showScreen, showToast } from './appShell.js';
-import { getGameMode, buildPlayerConfigsForMode } from './gameModes.js';
-import { onGameEnd, loadProfile, ensureProfileForAccount, checkDailyLogin } from './playerProfile.js';
-import { saveGameSession, loadGameSession, clearGameSession } from './session.js';
+import { buildPlayerConfigsForMode } from './gameModes.js';
+import { loadProfile, ensureProfileForAccount, checkDailyLogin } from './playerProfile.js';
 import { createRun, RUN_MODES } from './roguelike/runEngine.js';
 import { SpireUI } from './roguelike/spireUI.js';
 import {
@@ -19,62 +16,7 @@ let game;
 let ui;
 let spireRun;
 let spireUI;
-let roomManager;
-let lobbyUI;
-let lastGameOptions = {};
 let appReady = false;
-
-function ensureGameEngine() {
-  initGameEngine();
-}
-
-function startGameFromRoom(playerConfigs, options = {}) {
-  ensureGameEngine();
-  const room = roomManager.currentRoom;
-  const mode = getGameMode(room?.modeId || options.modeId || 'ranked');
-  lastGameOptions = {
-    modeId: room?.modeId || options.modeId || 'ranked',
-    isRanked: mode.isRanked,
-    aiDifficulty: room?.aiDifficulty || options.aiDifficulty,
-    economy: mode.economy,
-    turnInterval: mode.turnInterval,
-    prepareTime: mode.prepareTime,
-  };
-  showScreen('game');
-  game.startGame(playerConfigs, lastGameOptions);
-}
-
-function startQuickGame(playerConfigs, options) {
-  ensureGameEngine();
-  lastGameOptions = options;
-  showScreen('game');
-  game.startGame(playerConfigs, options);
-}
-
-function enterLobby() {
-  showScreen('lobby');
-  lobbyUI.render(roomManager.getLobbyState());
-}
-
-function leaveLobby() {
-  roomManager.leaveRoom();
-  showScreen('menu');
-  refreshMenuProfile();
-}
-
-function recoverSession() {
-  const data = loadGameSession();
-  if (!data) { showToast('没有可恢复的对局'); return; }
-  ensureGameEngine();
-  lastGameOptions = data.meta || {};
-  showScreen('game');
-  if (game.restoreFromSession(data)) {
-    showToast('已恢复对局');
-  } else {
-    showToast('恢复失败');
-    clearGameSession();
-  }
-}
 
 function enterMainMenu() {
   ensureProfileForAccount();
@@ -134,51 +76,11 @@ function startSpireRun(mode = RUN_MODES.EXPEDITION) {
 }
 
 function initApp() {
-  roomManager = new RoomManager((state) => lobbyUI?.render(state));
-  lobbyUI = new LobbyUI(roomManager, startGameFromRoom, leaveLobby);
-
-  if (roomManager.channel) {
-    roomManager.onChannelMessage((e) => {
-      if (e.data?.type === 'GAME_START' && e.data.code === roomManager.currentRoom?.code) {
-        const configs = RoomManager.configsForClient(e.data.room, roomManager.playerId);
-        startGameFromRoom(configs, { modeId: e.data.modeId, aiDifficulty: e.data.aiDifficulty });
-      } else if (e.data?.code === roomManager.currentRoom?.code && e.data.room) {
-        roomManager.currentRoom = e.data.room;
-        roomManager.mySlotIndex = e.data.room.slots.findIndex(s => s.id === roomManager.playerId);
-        lobbyUI.render(roomManager.getLobbyState());
-      }
-    });
-  }
-
   initMenu(
-    (nickname, opts) => { roomManager.createRoom(nickname, opts); enterLobby(); },
-    (code, nickname) => { roomManager.joinRoom(code, nickname); enterLobby(); },
-    startQuickGame,
-    recoverSession,
     startSpireRun,
     () => startSpireRun(RUN_MODES.TIER),
     () => startSpireRun(RUN_MODES.INFINITE),
   );
-
-  const recoverBtn = document.getElementById('btn-recover-session');
-  if (recoverBtn) recoverBtn.onclick = recoverSession;
-
-  document.getElementById('btn-back-lobby')?.addEventListener('click', () => {
-    if (confirm('确定退出对局？')) {
-      clearGameSession();
-      showScreen('menu');
-      roomManager.leaveRoom();
-      refreshMenuProfile();
-    }
-  });
-
-  document.getElementById('overlay').addEventListener('click', (e) => {
-    if (e.target.id === 'btn-restart') {
-      showScreen('menu');
-      roomManager.leaveRoom();
-      refreshMenuProfile();
-    }
-  });
 }
 
 function hideBootError() {
@@ -190,23 +92,11 @@ function initGameEngine() {
   game = new GameEngine(
     (state) => {
       ui?.render(state);
-      saveGameSession(game, lastGameOptions);
-      if (state.phase === 'ENDED') clearGameSession();
     },
-    (event, engine) => {
+    (event) => {
       ui.appendBattleLog(event);
       if (event.type === 'BATTLE_START') ui.onBattleStart();
-      if (event.type === 'BATTLE_END') {
-        ui.render(game.getState());
-        const hr = game.lastHumanResult;
-        if (hr?.winner?.id === game.humanId) {
-          showToast(`胜利！${hr.turnCount} 回合`);
-        } else if (hr?.loser?.id === game.humanId) {
-          showToast(`战败，-${hr.damage} HP（${hr.turnCount} 回合）`);
-        } else if (hr?.type === 'DRAW') {
-          showToast(`平局，-${hr.damage} HP`);
-        }
-      }
+      if (event.type === 'BATTLE_END') ui.render(game.getState());
 
       const renderEvents = [
         'BATTLE_START', 'BATTLE_READY', 'BATTLE_END',
@@ -234,13 +124,6 @@ function initGameEngine() {
       }
     }
   );
-
-  game.onGameEnd = (result) => {
-    const { profile, expGain, rankResult } = onGameEnd(loadProfile(), result.finalRank, result.isRanked);
-    ui.setEndRewards({ expGain, rankResult, isRanked: result.isRanked });
-    refreshMenuProfile();
-  };
-
   ui = new UI(game);
 }
 
@@ -255,7 +138,6 @@ function init() {
     };
 
     if (debugSpire) {
-      initGameEngine();
       initApp();
       appReady = true;
       startSpireRun(RUN_MODES.EXPEDITION);
@@ -281,8 +163,7 @@ function init() {
 function runLocalBattleDebug() {
   showScreen('game');
   const configs = buildPlayerConfigsForMode('ai_battle', '调试员', 'normal');
-  lastGameOptions = { modeId: 'ai_battle', prepareTime: 999, aiDifficulty: 'normal' };
-  game.startGame(configs, lastGameOptions);
+  game.startGame(configs, { modeId: 'ai_battle', prepareTime: 999, aiDifficulty: 'normal' });
   const human = game.getHuman();
   game.buyCard(human, 0);
   showToast('调试：已收服 1 只，即将开战…');
