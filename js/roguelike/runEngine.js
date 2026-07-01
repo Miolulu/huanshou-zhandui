@@ -8,6 +8,7 @@ import {
 } from './floorMap.js';
 import { CombatEngine, createTutorialCombat } from './combatEngine.js';
 import { generateShopInventory, REMOVE_CARD_PRICE } from './shop.js';
+import { resetEncounterMemory } from './enemies.js';
 
 export { RUN_MODES, TIER_MAX_FLOOR };
 
@@ -51,6 +52,8 @@ export class RunEngine {
     this.isTutorialCombat = false;
     this.lastEncounterIds = [];
     this.onCombatWonCallback = null;
+
+    resetEncounterMemory();
 
     if (mode === RUN_MODES.EXPEDITION) {
       this.map = generateMap(seed);

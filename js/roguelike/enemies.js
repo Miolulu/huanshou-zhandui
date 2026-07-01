@@ -135,12 +135,15 @@ export const ENEMIES = {
   },
 };
 
-/** 按阶层解锁的怪物池（固定池 + 随机组合） */
+/** 按阶层逐步解锁的怪物池（层数越深，可出场的种类越多，保证轮换） */
 export const MONSTER_POOL = {
-  early: ['corrupted_mushroom', 'corrupted_wolf'],
-  mid: ['corrupted_mushroom', 'corrupted_wolf', 'corrupted_turtle', 'corrupted_cat'],
-  late: ['corrupted_turtle', 'corrupted_cat', 'corrupted_wolf', 'corrupted_mushroom'],
-  elite: ['corrupted_crab', 'corrupted_shadow'],
+  early: ['corrupted_mushroom', 'corrupted_wolf', 'corrupted_turtle'],
+  mid: ['corrupted_mushroom', 'corrupted_wolf', 'corrupted_turtle', 'corrupted_cat', 'corrupted_shadow'],
+  late: [
+    'corrupted_mushroom', 'corrupted_wolf', 'corrupted_turtle',
+    'corrupted_cat', 'corrupted_shadow', 'corrupted_crab',
+  ],
+  elite: ['corrupted_crab', 'corrupted_shadow', 'corrupted_cat'],
   boss: ['boss_dragon'],
 };
 
@@ -149,6 +152,26 @@ export const COMBAT_ENCOUNTERS = {
   elite: MONSTER_POOL.elite,
   boss: MONSTER_POOL.boss,
 };
+
+/**
+ * 遭遇轮换记忆：记录每个怪物最近一次出场的"遭遇序号"，
+ * 生成时优先挑最久没出现的怪，并强制本次组合不与上一次完全相同。
+ */
+const encounterMemory = {
+  seq: 0,
+  lastSeen: new Map(),
+  lastGroupKey: '',
+};
+
+export function resetEncounterMemory() {
+  encounterMemory.seq = 0;
+  encounterMemory.lastSeen.clear();
+  encounterMemory.lastGroupKey = '';
+}
+
+function groupKey(ids) {
+  return [...ids].sort().join('+');
+}
 
 export function createRng(seed) {
   let s = seed >>> 0;
@@ -193,7 +216,31 @@ export function createEnemy(enemyId, rng = Math.random, floor = 1, tier = 'norma
   };
 }
 
-/** 从怪物池随机组合生成本层遭遇组 */
+/**
+ * 从池中按“最久未出现优先”挑 count 个不同的怪物 id。
+ * 在最久未出现的候选内用 rng 做小范围随机，既保证轮换又不至于完全固定。
+ */
+function pickRotatingIds(pool, count, rng) {
+  const chosen = [];
+  const remaining = [...new Set(pool)];
+
+  while (chosen.length < count && remaining.length) {
+    // 依“上次出现的遭遇序号”升序排序（从未出现记为 -1，最优先）
+    remaining.sort((a, b) => {
+      const sa = encounterMemory.lastSeen.has(a) ? encounterMemory.lastSeen.get(a) : -1;
+      const sb = encounterMemory.lastSeen.has(b) ? encounterMemory.lastSeen.get(b) : -1;
+      return sa - sb;
+    });
+    // 在最久未出现的前半段里随机，避免每次都拿到同一顺序
+    const window = Math.max(1, Math.ceil(remaining.length / 2));
+    const pickIdx = Math.floor(rng() * window);
+    const id = remaining.splice(pickIdx, 1)[0];
+    chosen.push(id);
+  }
+  return chosen;
+}
+
+/** 从怪物池随机组合生成本层遭遇组（强制轮换，避免连续重复） */
 export function pickEncounter(floor, tier, rng = Math.random) {
   if (tier === 'boss') {
     return [createEnemy(MONSTER_POOL.boss[0], rng, floor, tier)];
@@ -205,19 +252,30 @@ export function pickEncounter(floor, tier, rng = Math.random) {
 
   let count = 1;
   if (tier === 'normal') {
-    const maxGroup = floor <= 10 ? 2 : floor <= 30 ? 3 : 3;
+    const maxGroup = floor <= 10 ? 2 : 3;
     count = 1 + Math.floor(rng() * maxGroup);
     count = Math.min(count, pool.length);
+  } else if (tier === 'elite') {
+    count = Math.min(pool.length, floor <= 30 ? 1 : 1 + Math.floor(rng() * 2));
   }
 
-  const picked = [];
-  const available = [...pool];
-  while (picked.length < count && available.length) {
-    const i = Math.floor(rng() * available.length);
-    picked.push(createEnemy(available[i], rng, floor, tier));
-    available.splice(i, 1);
+  let ids = pickRotatingIds(pool, count, rng);
+
+  // 若与上一次遭遇组合完全相同，尝试换一只，保证每层不同
+  if (pool.length > count && groupKey(ids) === encounterMemory.lastGroupKey) {
+    const swapPool = pool.filter((id) => !ids.includes(id));
+    if (swapPool.length) {
+      const replaceAt = Math.floor(rng() * ids.length);
+      ids[replaceAt] = swapPool[Math.floor(rng() * swapPool.length)];
+    }
   }
-  return picked;
+
+  // 更新轮换记忆
+  encounterMemory.seq += 1;
+  ids.forEach((id) => encounterMemory.lastSeen.set(id, encounterMemory.seq));
+  encounterMemory.lastGroupKey = groupKey(ids);
+
+  return ids.map((id) => createEnemy(id, rng, floor, tier));
 }
 
 export function pickRandomEnemy(tier, rng = Math.random, floor = 1) {
