@@ -4,8 +4,8 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 20;
-  overflow: hidden;
+  z-index: 30;
+  overflow: visible;
 }
 
 .purify-battle {

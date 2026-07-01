@@ -443,6 +443,10 @@
   z-index: 10;
 }
 
+#screen-spire .StwCombat .Hand .Card.card-drag-source {
+  opacity: 0.15;
+}
+
 #screen-spire .StwCombat .Hand .Card:first-child {
   margin-left: 0;
 }
@@ -562,8 +566,9 @@
 #screen-spire #spire-effect-layer {
   position: absolute;
   inset: 0;
-  z-index: 20;
+  z-index: 30;
   pointer-events: none;
+  overflow: visible;
 }
 
 @media (max-width: 768px) {

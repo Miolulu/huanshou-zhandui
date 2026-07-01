@@ -197,7 +197,7 @@ export class SpireUI {
     this.combatBusy = true;
     destroyCardDrag();
 
-    if (cardEl && !fromDrag) await this.battleEffects.animateCardPlay(cardEl);
+    if (cardEl) await this.battleEffects.animateCardPlay(cardEl, { fromDrag: !!fromDrag });
 
     const result = actionFn();
     if (!result?.ok) {

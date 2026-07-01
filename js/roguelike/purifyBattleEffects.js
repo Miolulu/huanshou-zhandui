@@ -124,43 +124,50 @@ export class PurifyBattleEffects {
     }
   }
 
-  animateCardPlay(cardEl) {
+  animateCardPlay(cardEl, { fromDrag = false } = {}) {
     if (!cardEl) return Promise.resolve();
     combatSounds.selectCard();
+    const eventCard = this.showCardEvent(cardEl);
+
+    if (fromDrag) {
+      cardEl.classList.add('card-playing');
+      return new Promise((resolve) => {
+        const done = () => {
+          eventCard?.remove();
+          cardEl.classList.remove('card-playing');
+          resolve();
+        };
+        eventCard?.addEventListener('animationend', done, { once: true });
+        setTimeout(done, 920);
+      });
+    }
+
     const rect = cardEl.getBoundingClientRect();
     const clone = cardEl.cloneNode(true);
     clone.classList.add('Card-clone', 'card-play-fly');
     clone.setAttribute('aria-hidden', 'true');
     clone.removeAttribute('id');
-    if (clone.tagName === 'BUTTON') {
-      clone.disabled = true;
-      clone.tabIndex = -1;
-    }
     clone.style.cssText = `
       position:fixed;left:${rect.left}px;top:${rect.top}px;
       width:${rect.width}px;height:${rect.height}px;
       margin:0;z-index:9999;pointer-events:none;`;
     document.body.appendChild(clone);
     cardEl.classList.add('card-playing');
-    const eventCard = this.showCardEvent(cardEl);
     return new Promise((resolve) => {
-      clone.addEventListener('animationend', () => {
+      const done = () => {
         clone.remove();
         eventCard?.remove();
         cardEl.classList.remove('card-playing');
         resolve();
-      }, { once: true });
-      setTimeout(() => {
-        clone.remove();
-        eventCard?.remove();
-        cardEl.classList.remove('card-playing');
-        resolve();
-      }, 900);
+      };
+      clone.addEventListener('animationend', done, { once: true });
+      setTimeout(done, 900);
     });
   }
 
   showCardEvent(cardEl) {
-    if (!this.layer || !cardEl) return null;
+    const layer = this.layer || document.getElementById('spire-effect-layer');
+    if (!layer || !cardEl) return null;
     const img = cardEl.querySelector('.Card-art-img');
     const name = cardEl.querySelector('.Card-name')?.textContent?.trim() || '';
     const type = cardEl.querySelector('.Card-type')?.textContent?.trim() || '';
@@ -175,7 +182,7 @@ export class PurifyBattleEffects {
           <strong>${name}</strong>
         </div>
       </div>`;
-    this.layer.appendChild(node);
+    layer.appendChild(node);
     node.addEventListener('animationend', () => node.remove(), { once: true });
     return node;
   }

@@ -1,6 +1,5 @@
 /**
- * 净化远征 · 拖拽出牌（参照 Slay the Web dragdrop.js）
- * 依赖 index.html 中加载的全局 gsap / Draggable
+ * 净化远征 · 拖拽出牌（body 固定定位代理跟随指针，避免手牌区 overflow 裁切）
  */
 import { combatSounds } from './combatSounds.js';
 
@@ -49,22 +48,34 @@ function resolveTargetIndex(targetEl, fallbackIndex) {
   return fallbackIndex;
 }
 
+function hideProxy(gsap, proxy) {
+  if (!proxy) return;
+  gsap.set(proxy, { visibility: 'hidden', opacity: 0, scale: 1, rotation: 0 });
+}
+
 export function destroyCardDrag() {
   const { gsap } = ensureDragPlugin();
-  dragInstances.forEach((d) => {
-    if (gsap && d.target) gsap.set(d.target, { x: 0, y: 0, clearProps: 'transform' });
-    d.kill();
-  });
+  document.querySelectorAll('.Card-drag-proxy').forEach((el) => el.remove());
+  dragInstances.forEach((d) => d.kill());
   dragInstances = [];
   document.querySelectorAll('.is-dragOver').forEach((el) => el.classList.remove('is-dragOver'));
-  document.querySelectorAll('#spire-hand .is-dragging').forEach((el) => el.classList.remove('is-dragging'));
+  document.querySelectorAll('#spire-hand .card-drag-source').forEach((el) => {
+    el.classList.remove('card-drag-source', 'is-dragging');
+  });
+}
+
+function updateDropHighlights(card, targets, draggable) {
+  targets.forEach((targetEl) => {
+    if (draggable.hitTest(targetEl, '45%') && canDropOnTarget(card, targetEl)) {
+      targetEl.classList.add(OVER_CLASS);
+    } else {
+      targetEl.classList.remove(OVER_CLASS);
+    }
+  });
 }
 
 /**
  * @param {HTMLElement} root - .purify-battle
- * @param {object} opts
- * @param {() => number} opts.getTargetIndex
- * @param {(cardEl: HTMLElement, targetIndex: number) => void} opts.onPlay
  */
 export function enableCardDrag(root, { getTargetIndex, onPlay }) {
   const { gsap, Draggable } = ensureDragPlugin();
@@ -76,25 +87,59 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
   const cards = root.querySelectorAll('#spire-hand .Card:not(.disabled)');
 
   cards.forEach((card) => {
-    gsap.set(card, { x: 0, y: 0 });
+    const proxy = card.cloneNode(true);
+    proxy.classList.add('Card-drag-proxy');
+    proxy.setAttribute('aria-hidden', 'true');
+    proxy.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+    document.body.appendChild(proxy);
+    gsap.set(proxy, {
+      position: 'fixed',
+      left: 0,
+      top: 0,
+      margin: 0,
+      visibility: 'hidden',
+      opacity: 0,
+      zIndex: 10050,
+      pointerEvents: 'none',
+    });
 
-    const draggable = Draggable.create(card, {
+    let homeX = 0;
+    let homeY = 0;
+    let proxyW = 0;
+    let proxyH = 0;
+
+    const draggable = Draggable.create(proxy, {
       type: 'x,y',
-      zIndexBoost: true,
+      trigger: card,
       dragClickables: true,
-      allowEventDefault: true,
-      minimumMovement: 4,
+      allowNativeTouchScrolling: false,
+      minimumMovement: 3,
       inertia: false,
+      cursor: 'inherit',
 
       onPress() {
+        if (card.classList.contains('disabled')) {
+          this.endDrag();
+          return;
+        }
         combatSounds.selectCard();
-      },
-
-      onDragStart() {
-        gsap.killTweensOf(this.target);
-        this.startX = this.x;
-        this.startY = this.y;
-        card.classList.add('is-dragging');
+        const rect = card.getBoundingClientRect();
+        homeX = rect.left;
+        homeY = rect.top;
+        proxyW = rect.width;
+        proxyH = rect.height;
+        gsap.set(proxy, {
+          x: homeX,
+          y: homeY,
+          width: proxyW,
+          height: proxyH,
+          visibility: 'visible',
+          opacity: 1,
+          scale: 1.04,
+          rotation: 0,
+        });
+        card.classList.add('card-drag-source', 'is-dragging');
+        proxy.classList.add('is-dragging');
       },
 
       onDrag() {
@@ -102,45 +147,53 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
           this.endDrag();
           return;
         }
-        targets.forEach((targetEl) => {
-          if (this.hitTest(targetEl, '40%') && canDropOnTarget(card, targetEl)) {
-            targetEl.classList.add(OVER_CLASS);
-          } else {
-            targetEl.classList.remove(OVER_CLASS);
-          }
-        });
+        updateDropHighlights(card, targets, this);
       },
 
       onRelease() {
         card.classList.remove('is-dragging');
+        proxy.classList.remove('is-dragging');
+        targets.forEach((t) => t.classList.remove(OVER_CLASS));
+
         let hitEl = null;
         for (const targetEl of targets) {
-          if (this.hitTest(targetEl, '40%')) {
+          if (this.hitTest(targetEl, '45%')) {
             hitEl = targetEl;
             break;
           }
         }
-        targets.forEach((t) => t.classList.remove(OVER_CLASS));
 
         if (canDropOnTarget(card, hitEl)) {
           const targetIndex = resolveTargetIndex(hitEl, getTargetIndex?.() ?? 0);
-          gsap.to(card, {
-            duration: 0.35,
-            scale: 0.6,
+          const cx = window.innerWidth / 2 - proxyW / 2;
+          const cy = window.innerHeight * 0.34 - proxyH / 2;
+          gsap.to(proxy, {
+            x: cx,
+            y: cy,
+            scale: 0.5,
+            rotation: 6,
             opacity: 0,
-            y: '-=40',
+            duration: 0.3,
             ease: 'power2.in',
             onComplete: () => {
-              gsap.set(card, { x: 0, y: 0, scale: 1, opacity: 1, clearProps: 'transform' });
+              card.classList.remove('card-drag-source');
+              hideProxy(gsap, proxy);
               onPlay?.(card, targetIndex);
             },
           });
         } else {
-          gsap.to(card, {
-            x: this.startX,
-            y: this.startY,
-            duration: 0.28,
+          gsap.to(proxy, {
+            x: homeX,
+            y: homeY,
+            scale: 1,
+            rotation: 0,
+            opacity: 1,
+            duration: 0.26,
             ease: 'power2.out',
+            onComplete: () => {
+              card.classList.remove('card-drag-source');
+              hideProxy(gsap, proxy);
+            },
           });
           combatSounds.cardToHand();
         }

@@ -375,6 +375,23 @@
   z-index: 50 !important;
 }
 
+.purify-hand .Card.card-drag-source,
+.purify-hand .purify-card.card-drag-source {
+  opacity: 0.15 !important;
+  visibility: visible;
+}
+
+.Card-drag-proxy {
+  position: fixed;
+  left: 0;
+  top: 0;
+  margin: 0 !important;
+  pointer-events: none !important;
+  transform-origin: center center;
+  will-change: transform;
+  z-index: 10050;
+}
+
 .purify-hand .Card[disabled],
 .purify-hand .purify-card.disabled {
   cursor: not-allowed;
