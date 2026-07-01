@@ -591,14 +591,12 @@
 .purify-reward-row {
   display: flex;
   justify-content: center;
-  gap: 14px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-bottom: 16px;
 }
 
 .purify-reward-card {
-  width: 130px;
-  min-height: 170px;
+  /* 尺寸见 stw-combat.css 悟道选牌区 */
 }
 
 .purify-text-btn {

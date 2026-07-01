@@ -47,6 +47,26 @@
   color: var(--secondary);
   font-family: var(--font-mono);
   font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+#screen-spire .tooltip {
+  max-width: 280px;
+  border-color: rgba(255, 193, 7, 0.35);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(12, 16, 28, 0.96);
+}
+
+#screen-spire .tooltip .tooltip__title {
+  color: #ffd76a;
+}
+
+#screen-spire .tooltip .tooltip__stats {
+  color: #b8d4f0;
+  font-family: inherit;
+  font-size: 0.74rem;
+  margin-top: 0.35rem;
 }
 
 [data-tooltip] { cursor: help; }

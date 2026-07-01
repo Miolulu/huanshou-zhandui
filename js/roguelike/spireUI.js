@@ -12,6 +12,9 @@ import { renderPlayerTarget, renderEnemyTarget } from './combatView.js';
 import { renderPileInto } from './pileOverlay.js';
 import { mainBackgroundUrl } from './assetPaths.js';
 import { showToast } from '../appShell.js';
+import { TooltipManager } from '../components/Tooltip.js';
+import { applyCardFan } from './cardFan.js';
+import { enemyTooltipData, playerTooltipData, setTooltip } from './combatTooltips.js';
 
 function logLineClass(line) {
   if (/伤害|扑击|攻\d|受到 \d+/.test(line)) return 'log-damage';
@@ -32,6 +35,7 @@ export class SpireUI {
     this.combatBusy = false;
     this.lastRunPhase = null;
     this.battleEffects = new PurifyBattleEffects();
+    this.tooltips = new TooltipManager();
     this.overlays = new SpireOverlays(document.getElementById('screen-spire'));
     this.overlays.onOpen = (id) => this.onOverlayOpen(id);
     this.overlays.onClose = (id) => {
@@ -523,7 +527,9 @@ export class SpireUI {
       return renderPurifyCardHtml(card, { playable, handCard: true });
     }).join('');
 
-    this.updateCombatChrome(c);
+    applyCardFan(this.el.hand, { rotateStep: 6.5, liftStep: 6, tiltX: 12 });
+
+    this.bindCombatTooltips(c);
 
     if (this.el.combatLog) {
       this.el.combatLog.innerHTML = c.log.map((line) =>
@@ -539,9 +545,24 @@ export class SpireUI {
 
     this.renderTutorialOverlay(this.tutorial);
 
+    this.updateCombatChrome(c);
+
     requestAnimationFrame(() => {
       if (!this.combatBusy) this.setupCardDrag(c);
     });
+  }
+
+  bindCombatTooltips(combat) {
+    const playerSprite = this.el.playerArea?.querySelector('.Target--player .Target-sprite');
+    setTooltip(playerSprite, playerTooltipData(combat));
+    this.el.enemyArea?.querySelectorAll('.Target--enemy:not(.Target--isDead)').forEach((el) => {
+      const idx = Number(el.dataset.target);
+      const enemy = combat.enemies?.[idx];
+      if (!enemy) return;
+      setTooltip(el.querySelector('.Target-sprite'), enemyTooltipData(enemy));
+    });
+    this.tooltips.bind(this.el.playerArea);
+    this.tooltips.bind(this.el.enemyArea);
   }
 
   setupCardDrag(c) {
@@ -605,6 +626,8 @@ export class SpireUI {
     this.el.rewardCards.innerHTML = state.rewardOptions.map((card) =>
       renderPurifyCardHtml(card, { playable: true, extraClass: 'purify-reward-card' })
     ).join('');
+
+    applyCardFan(this.el.rewardCards, { rotateStep: 5, liftStep: 4, tiltX: 8 });
 
     this.el.rewardCards.querySelectorAll('.purify-reward-card').forEach((btn) => {
       btn.onclick = () => {

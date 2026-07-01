@@ -564,9 +564,7 @@
 }
 
 .purify-reward-row .purify-card {
-  width: var(--stw-card-width);
-  height: var(--stw-card-height);
-  margin: 0 0.5rem;
+  margin: 0;
 }
 
 .purify-modal-card {
