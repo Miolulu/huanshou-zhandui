@@ -5,14 +5,26 @@ import { renderPurifyCardHtml } from './cardUI.js';
 import { intentIcon, intentLabel } from './enemies.js';
 import { TERMS } from './lore.js';
 import { CombatTutorial } from './combatTutorial.js';
+import { PurifyBattleEffects } from './purifyBattleEffects.js';
 import { showToast } from '../appShell.js';
 
-function hpBarHtml(current, max, label = 'HP', color = 'hsl(120, 45%, 42%)') {
+function hpBarHtml(current, max, label = 'HP', color = 'hsl(120, 45%, 42%)', block = 0) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
-  return `<div class="Healthbar hp-bar" role="progressbar" aria-valuenow="${current}" aria-valuemax="${max}">
+  const blockPct = max > 0 && block > 0 ? Math.min(100 - pct, (block / max) * 100) : 0;
+  const blockWidth = Math.min(100, pct + blockPct);
+  return `<div class="Healthbar hp-bar ${block > 0 ? 'Healthbar--hasBlock' : ''}" role="progressbar" aria-valuenow="${current}" aria-valuemax="${max}">
     <p class="Healthbar-label hp-text"><span>${label} ${current}</span>/${max}</p>
     <div class="Healthbar-bar hp-fill" style="width:${pct}%;background:${color}"></div>
+    ${block > 0 ? `<div class="Healthbar-blockBar" style="width:${blockWidth}%"></div>` : ''}
   </div>`;
+}
+
+function logLineClass(line) {
+  if (/伤害|扑击|攻\d|受到 \d+/.test(line)) return 'log-damage';
+  if (/恢复|复苏/.test(line)) return 'log-heal';
+  if (/护幕|淤壳|\+/.test(line) && /护幕|淤壳/.test(line)) return 'log-block';
+  if (/暴走|秽气|污染膨胀|缩入/.test(line)) return 'log-enemy';
+  return '';
 }
 
 export class SpireUI {
@@ -23,6 +35,8 @@ export class SpireUI {
     this.tutorial = null;
     this.tutorialDismissed = false;
     this.runEndRecorded = false;
+    this.combatBusy = false;
+    this.battleEffects = new PurifyBattleEffects();
     this.bindElements();
     this.bindActions();
   }
@@ -49,6 +63,9 @@ export class SpireUI {
       piles: document.getElementById('spire-piles'),
       energy: document.getElementById('spire-energy'),
       combatLog: document.getElementById('spire-combat-log'),
+      effectLayer: document.getElementById('spire-effect-layer'),
+      combatStage: document.getElementById('spire-combat-stage'),
+      actionBar: document.getElementById('purify-action-bar'),
       rewardCards: document.getElementById('spire-reward-cards'),
       endTitle: document.getElementById('spire-end-title'),
       endStats: document.getElementById('spire-end-stats'),
@@ -61,16 +78,15 @@ export class SpireUI {
       if (confirm(TERMS.abandonConfirm)) this.finishRun(false);
     });
     document.getElementById('btn-spire-end-turn')?.addEventListener('click', () => {
+      if (this.combatBusy) return;
       if (this.tutorial?.active && !this.tutorial.canEndTurn()) {
         showToast('请按引导步骤操作');
         return;
       }
-      const r = this.run.endCombatTurn();
-      this.afterCombatAction(r, () => this.tutorial?.onAction('end_turn'));
-      const endBtn = document.getElementById('btn-spire-end-turn');
-      endBtn?.classList.add('pokeball-shake');
-      setTimeout(() => endBtn?.classList.remove('pokeball-shake'), 600);
-      this.render();
+      this.performCombatAction(
+        () => this.run.endCombatTurn(),
+        () => this.tutorial?.onAction('end_turn'),
+      );
     });
     document.getElementById('btn-spire-skip-reward')?.addEventListener('click', () => {
       this.run.skipReward();
@@ -103,6 +119,71 @@ export class SpireUI {
     }
     if (!this.tutorial?.active) {
       this.clearTutorialOverlay();
+    }
+  }
+
+  bindBattleEffectRefs() {
+    this.battleEffects.bind({
+      stage: this.el.combatStage,
+      effectLayer: this.el.effectLayer,
+      enemyArea: this.el.enemyArea,
+      playerArea: this.el.playerArea,
+      hand: this.el.hand,
+    });
+  }
+
+  async performCombatAction(actionFn, stepAction, { cardEl } = {}) {
+    if (this.combatBusy) return null;
+    this.combatBusy = true;
+
+    if (cardEl) await this.battleEffects.animateCardPlay(cardEl);
+
+    const result = actionFn();
+    if (!result?.ok) {
+      if (result?.message) showToast(result.message);
+      this.combatBusy = false;
+      return result;
+    }
+
+    this.afterCombatAction(result, stepAction);
+
+    const hasTurnEnd = (result.events || []).some((e) => e.type === 'TURN_END');
+    if (hasTurnEnd && !cardEl) {
+      await this.battleEffects.animateHandDiscard();
+    }
+
+    this.render();
+    this.bindBattleEffectRefs();
+
+    const events = (result.events || []).filter((e) => e.type !== 'HAND_DISCARDED');
+    await this.battleEffects.playSequence(events);
+
+    const endBtn = document.getElementById('btn-spire-end-turn');
+    endBtn?.classList.add('pokeball-shake');
+    setTimeout(() => endBtn?.classList.remove('pokeball-shake'), 600);
+
+    this.combatBusy = false;
+
+    const phase = this.run.getState().phase;
+    if (phase !== RUN_PHASES.COMBAT) {
+      this.render();
+    } else {
+      this.updateCombatChrome(this.run.getState().combat);
+    }
+    return result;
+  }
+
+  updateCombatChrome(c) {
+    if (!c) return;
+    const endBtn = document.getElementById('btn-spire-end-turn');
+    if (endBtn) {
+      const canEnd = c.phase === 'player' && (!this.tutorial?.active || this.tutorial.canEndTurn());
+      endBtn.disabled = !canEnd || this.combatBusy;
+      endBtn.textContent = TERMS.endTurn;
+    }
+    if (this.el.actionBar) {
+      const noEnergy = c.phase === 'player' && c.player.energy <= 0;
+      this.el.actionBar.classList.toggle('no-energy', noEnergy);
     }
   }
 
@@ -301,8 +382,7 @@ export class SpireUI {
         <div class="purify-foe-icon">${e.icon || '👹'}</div>
         <div class="purify-foe-name">${e.name}</div>
         ${e.desc && enemies.length === 1 ? `<div class="purify-foe-desc">${e.desc}</div>` : ''}
-        ${hpBarHtml(e.hp, e.maxHp, TERMS.taint, 'hsl(0, 55%, 45%)')}
-        ${e.block ? `<div class="purify-foe-barrier">🛡 ${e.block}</div>` : ''}
+        ${hpBarHtml(e.hp, e.maxHp, TERMS.taint, 'hsl(0, 55%, 45%)', e.block || 0)}
         ${!dead ? `<div class="purify-intent">${intentIcon(e.intent)} ${intentLabel(e.intent)}</div>` : '<div class="purify-foe-dead">已净化</div>'}
       </button>`;
     }).join('')}</div>`;
@@ -320,7 +400,7 @@ export class SpireUI {
     const p = c.player;
     this.el.playerArea.innerHTML = `
       <div class="purify-self-stats">
-        ${hpBarHtml(p.hp, p.maxHp, TERMS.mind, 'hsl(194, 55%, 48%)')}
+        ${hpBarHtml(p.hp, p.maxHp, TERMS.mind, 'hsl(194, 55%, 48%)', p.block || 0)}
         <div class="purify-stat">🛡 ${TERMS.barrier} ${p.block}</div>
         ${c.strength ? `<div class="purify-stat">💪 ${TERMS.purifyPower} ${c.strength}</div>` : ''}
         ${c.weak ? `<div class="purify-stat miasma">${TERMS.miasma} ${c.weak}</div>` : ''}
@@ -348,35 +428,28 @@ export class SpireUI {
 
     this.el.hand.querySelectorAll('.purify-card:not(.disabled)').forEach((btn) => {
       btn.onclick = () => {
+        if (this.combatBusy) return;
         const card = c.hand.find((x) => x.uid === btn.dataset.uid);
-        const r = this.run.playCard(btn.dataset.uid, c.targetIndex);
-        if (!r.ok && r.message) showToast(r.message);
-        else {
-          this.afterCombatAction(r, () => {
+        this.performCombatAction(
+          () => this.run.playCard(btn.dataset.uid, c.targetIndex),
+          () => {
             if (card?.type === 'attack') this.tutorial?.onAction('play_attack');
             else if (card?.type === 'skill') this.tutorial?.onAction('play_skill');
-          });
-          if (card?.type === 'attack') {
-            this.el.enemyArea.querySelector('.purify-foe-icon')?.classList.add('shake');
-            setTimeout(() => {
-              this.el.enemyArea.querySelector('.purify-foe-icon')?.classList.remove('shake');
-            }, 450);
-          }
-        }
-        this.render();
+          },
+          { cardEl: btn },
+        );
       };
     });
 
-    const endBtn = document.getElementById('btn-spire-end-turn');
-    if (endBtn) {
-      const canEnd = c.phase === 'player' && (!this.tutorial?.active || this.tutorial.canEndTurn());
-      endBtn.disabled = !canEnd;
-      endBtn.textContent = TERMS.endTurn;
-    }
+    this.updateCombatChrome(c);
 
     if (this.el.combatLog) {
-      this.el.combatLog.innerHTML = c.log.map((line) => `<div class="purify-log-line">${line}</div>`).join('');
+      this.el.combatLog.innerHTML = c.log.map((line) =>
+        `<div class="purify-log-line ${logLineClass(line)}">${line}</div>`
+      ).join('');
     }
+
+    this.bindBattleEffectRefs();
 
     if (c.phase === 'won' && this.tutorial?.active) {
       this.tutorial.onAction('win');

@@ -250,20 +250,27 @@ export function intentLabel(intent) {
 }
 
 export function intentIcon(intent) {
+  const base = 'assets/intents';
+  let file = 'unknown.svg';
   switch (intent.intent) {
     case INTENTS.ATTACK:
     case INTENTS.STRONG_ATTACK:
     case INTENTS.ATTACK_DEFEND:
-      return '💢';
+      file = 'damage.svg';
+      break;
     case INTENTS.DEFEND:
-      return '🛡';
+      file = 'block.svg';
+      break;
     case INTENTS.BUFF:
-      return '☣';
+      file = 'buff.svg';
+      break;
     case INTENTS.DEBUFF:
-      return '☠';
+      file = 'debuff.svg';
+      break;
     default:
-      return '?';
+      break;
   }
+  return `<img class="purify-intent-icon" src="${base}/${file}" alt="" aria-hidden="true">`;
 }
 
 export function getAllEnemyIds() {

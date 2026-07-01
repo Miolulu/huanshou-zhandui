@@ -1,0 +1,198 @@
+/* 净化远征 · 战斗感知特效（参照 Slay the Web FCT + 扩展震屏/闪光） */
+
+#spire-effect-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  overflow: hidden;
+}
+
+.purify-battle {
+  position: relative;
+}
+
+/* ===== FCT 飘字（Slay the Web） ===== */
+.FCT {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  animation: fct-up 1.8s cubic-bezier(0.23, 1, 0.32, 1) both;
+  text-shadow: 0.1rem 0.1rem 0 rgba(0, 0, 0, 0.65);
+  white-space: nowrap;
+  z-index: 25;
+}
+
+.FCT--damage { color: #ff6a88; }
+.FCT--block { color: #afafff; font-size: clamp(1.6rem, 4vw, 2.6rem); }
+.FCT--heal { color: #45e09d; }
+.FCT--poison { color: #b57bff; font-size: clamp(1.5rem, 3.5vw, 2.4rem); }
+.FCT--buff { color: #ffd76a; font-size: clamp(1.4rem, 3vw, 2.2rem); }
+.FCT--debuff { color: #ff9f43; font-size: clamp(1.2rem, 2.8vw, 1.8rem); }
+
+@keyframes fct-up {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  12% { transform: translate(-50%, -80%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -160%) rotate(12deg); opacity: 0; }
+}
+
+/* ===== 护幕叠层血条 ===== */
+.Healthbar--hasBlock .Healthbar-blockBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #afafff;
+  border-radius: 0.4rem;
+  transition: width 600ms cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 0;
+}
+
+/* ===== 受击 / 行动反馈 ===== */
+.purify-foe-card.foe-hit,
+.purify-foe-card.foe-hit .purify-foe-icon {
+  animation: foe-hit-shake 0.42s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.purify-foe-card.foe-acting {
+  box-shadow: 0 0 28px rgba(255, 100, 100, 0.75) !important;
+  border-color: #ff6a6a !important;
+  transform: scale(1.04);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.purify-foe-card.hit-flash {
+  animation: hit-flash-red 0.38s ease;
+}
+
+.purify-self-stats.hit-flash {
+  animation: hit-flash-red 0.38s ease;
+}
+
+.purify-self-stats.heal-flash {
+  animation: heal-flash-green 0.45s ease;
+}
+
+.purify-stage.battle-shake {
+  animation: purify-shake 0.32s ease;
+}
+
+.purify-stage.combat-win-flash {
+  animation: win-flash 0.5s ease;
+}
+
+.purify-stage.combat-loss-flash {
+  animation: loss-flash 0.5s ease;
+}
+
+@keyframes foe-hit-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+@keyframes hit-flash-red {
+  0%, 100% { filter: none; }
+  40% { filter: brightness(1.4) saturate(1.3); box-shadow: inset 0 0 24px rgba(255, 80, 80, 0.45); }
+}
+
+@keyframes heal-flash-green {
+  0%, 100% { filter: none; }
+  40% { filter: brightness(1.2); box-shadow: inset 0 0 20px rgba(69, 224, 157, 0.35); }
+}
+
+@keyframes purify-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-4px, 2px); }
+  40% { transform: translate(4px, -2px); }
+  60% { transform: translate(-3px, -1px); }
+  80% { transform: translate(3px, 1px); }
+}
+
+@keyframes win-flash {
+  0%, 100% { filter: none; }
+  50% { filter: brightness(1.25); }
+}
+
+@keyframes loss-flash {
+  0%, 100% { filter: none; }
+  50% { filter: brightness(0.7) saturate(0.8); }
+}
+
+/* ===== 卡牌打出 / 收势弃牌 ===== */
+@keyframes card-play-fly {
+  0% { transform: rotate(0deg) scale(1); opacity: 1; }
+  35% { transform: rotate(18deg) translateY(-60px) scale(1.05); opacity: 1; }
+  100% {
+    transform: rotate(55deg) translate(calc(50vw - 50%), calc(40vh)) scale(0.35);
+    opacity: 0;
+  }
+}
+
+.card-play-fly {
+  animation: card-play-fly 0.75s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.purify-card.card-playing {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.purify-card.card-discard-out {
+  animation: card-discard-out 0.38s ease forwards;
+}
+
+@keyframes card-discard-out {
+  to { transform: translateY(40px) scale(0.85); opacity: 0; }
+}
+
+.purify-hand.hand-deal-pulse {
+  animation: hand-pulse 0.4s ease;
+}
+
+@keyframes hand-pulse {
+  0%, 100% { transform: translateY(0.5rem); }
+  50% { transform: translateY(0); }
+}
+
+.purify-stat.stat-pulse {
+  animation: stat-pulse 0.4s ease;
+}
+
+@keyframes stat-pulse {
+  50% { transform: scale(1.08); color: #afafff; }
+}
+
+/* ===== 收势按钮 · 灵力耗尽脉冲 ===== */
+.purify-action-bar.no-energy .EndTurn.purify-end-turn:not(:disabled) {
+  animation: end-turn-pulse 1.4s infinite alternate;
+}
+
+@keyframes end-turn-pulse {
+  from { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 8px rgba(255, 193, 7, 0.3); }
+  to { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 18px 6px rgba(255, 193, 7, 0.65); }
+}
+
+/* ===== 日志着色 ===== */
+.purify-log-line.log-damage { color: #ffb0b0; }
+.purify-log-line.log-heal { color: #7dffb0; }
+.purify-log-line.log-block { color: #afafff; }
+.purify-log-line.log-enemy { color: #ff9f9f; font-weight: 600; }
+
+/* ===== 污意图标 ===== */
+.purify-intent-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  vertical-align: middle;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.purify-intent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}

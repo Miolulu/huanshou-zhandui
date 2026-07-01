@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="css/roguelike.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/slaytheweb-ui.css">
+  <link rel="stylesheet" href="css/combat-fx.css">
 </head>
 <body>
   <!-- ===== 登录 / 注册 ===== -->
@@ -368,9 +369,9 @@
       <section id="spire-view-combat" class="purify-pane hidden">
         <div class="purify-battle">
           <aside id="spire-combat-log" class="purify-journal" aria-label="净化日志"></aside>
-          <div class="purify-stage">
+          <div id="spire-combat-stage" class="purify-stage">
             <div id="spire-enemy" class="purify-foe-zone"></div>
-            <div class="purify-action-bar">
+            <div id="purify-action-bar" class="purify-action-bar">
               <div class="purify-spirit-wrap">
                 <span class="purify-spirit-label">灵力</span>
                 <div id="spire-energy" class="purify-spirit-orbs"></div>
@@ -384,6 +385,7 @@
             <span class="purify-hand-label">当前技法</span>
             <div id="spire-hand" class="purify-hand"></div>
           </div>
+          <div id="spire-effect-layer" aria-hidden="true"></div>
           <div id="purify-tutorial-host" class="purify-tutorial-host hidden" aria-live="polite"></div>
         </div>
       </section>

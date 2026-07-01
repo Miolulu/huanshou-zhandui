@@ -2,6 +2,7 @@
 import { cloneCard } from './cardPool.js';
 import { advanceIntent, INTENTS, pickEncounter, createEnemy } from './enemies.js';
 import { TERMS } from './lore.js';
+import { COMBAT_EVENT } from './combatEvents.js';
 
 const HAND_SIZE = 5;
 const BASE_ENERGY = 3;
@@ -53,6 +54,7 @@ export class CombatEngine {
     this.hand = [];
     this.discard = [];
     this.exhaust = [];
+    this.combatEvents = [];
     if (skipStartTurn) {
       this.phase = 'player';
       this.player.energy = this.player.maxEnergy;
@@ -81,6 +83,20 @@ export class CombatEngine {
     if (this.log.length > 40) this.log.length = 40;
   }
 
+  beginAction() {
+    this.combatEvents = [];
+  }
+
+  emit(event) {
+    this.combatEvents.push(event);
+  }
+
+  drainEvents() {
+    const events = this.combatEvents;
+    this.combatEvents = [];
+    return events;
+  }
+
   drawCards(n) {
     for (let i = 0; i < n; i++) {
       if (!this.drawPile.length && this.discard.length) {
@@ -101,9 +117,11 @@ export class CombatEngine {
     if (this.powers.barrier) {
       this.player.block += 3;
       this.pushLog(TERMS.logBarrierPower);
+      this.emit({ type: COMBAT_EVENT.BLOCK_GAIN, target: 'player', amount: 3 });
     }
     this.drawCards(HAND_SIZE);
     this.pushLog(TERMS.logTurn(this.turn));
+    this.emit({ type: COMBAT_EVENT.TURN_START, turn: this.turn });
     this.clampTargetIndex();
   }
 
@@ -125,13 +143,22 @@ export class CombatEngine {
   }
 
   playCard(cardUid, targetIndex = null) {
-    if (this.phase !== 'player') return { ok: false, message: '当前无法施展技法' };
+    this.beginAction();
+    if (this.phase !== 'player') return { ok: false, message: '当前无法施展技法', events: [] };
     const idx = this.hand.findIndex((c) => c.uid === cardUid);
-    if (idx < 0) return { ok: false, message: '技法不在当前手牌' };
+    if (idx < 0) return { ok: false, message: '技法不在当前手牌', events: [] };
     const card = this.hand[idx];
-    if (card.cost > this.player.energy) return { ok: false, message: `${TERMS.spirit}不足` };
+    if (card.cost > this.player.energy) return { ok: false, message: `${TERMS.spirit}不足`, events: [] };
 
     if (targetIndex != null) this.setTarget(targetIndex);
+
+    this.emit({
+      type: COMBAT_EVENT.CARD_PLAYED,
+      cardUid: card.uid,
+      cardId: card.id,
+      cardType: card.type,
+      targetIndex: this.targetIndex,
+    });
 
     this.player.energy -= card.cost;
     this.hand.splice(idx, 1);
@@ -153,8 +180,9 @@ export class CombatEngine {
     if (!this.aliveEnemies.length) {
       this.phase = 'won';
       this.pushLog(TERMS.logWin);
+      this.emit({ type: COMBAT_EVENT.COMBAT_WON });
     }
-    return { ok: true };
+    return { ok: true, events: this.drainEvents() };
   }
 
   resolveCard(card) {
@@ -166,68 +194,97 @@ export class CombatEngine {
     if (card.block) {
       this.player.block += card.block;
       this.pushLog(`${card.name}：+${card.block} ${TERMS.barrier}`);
+      this.emit({ type: COMBAT_EVENT.BLOCK_GAIN, target: 'player', amount: card.block });
     }
     if (card.heal) {
       const before = this.player.hp;
       this.player.hp = Math.min(this.player.maxHp, this.player.hp + card.heal);
-      this.pushLog(`${card.name}：恢复 ${this.player.hp - before} ${TERMS.mind}`);
+      const healed = this.player.hp - before;
+      this.pushLog(`${card.name}：恢复 ${healed} ${TERMS.mind}`);
+      if (healed > 0) this.emit({ type: COMBAT_EVENT.HEAL, amount: healed });
     }
     if (card.draw) {
       this.drawCards(card.draw);
       this.pushLog(`${card.name}：感通 ${card.draw} 张技法`);
+      this.emit({ type: COMBAT_EVENT.DRAW, amount: card.draw });
     }
     if (card.damage && target) {
+      const enemyIndex = this.enemyIndexOf(target);
       for (let h = 0; h < hits; h++) {
         const raw = Math.floor((card.damage + dmgBonus) * dmgMult);
-        this.dealDamageToEnemy(target, raw);
+        const result = this.dealDamageToEnemy(target, raw);
+        this.emit({
+          type: COMBAT_EVENT.DAMAGE,
+          target: 'enemy',
+          enemyIndex,
+          amount: result.hpLost,
+          blocked: result.blocked,
+          raw,
+        });
       }
       this.pushLog(`${card.name} → ${target.name}：${card.damage + dmgBonus}${hits > 1 ? `×${hits}` : ''} 伤害`);
     }
     if (card.applyPoison && target) {
       target.poison = (target.poison || 0) + card.applyPoison;
       this.pushLog(`${card.name}：${target.name} 叠加 ${card.applyPoison} 层${TERMS.taintStack}`);
+      this.emit({
+        type: COMBAT_EVENT.POISON,
+        enemyIndex: this.enemyIndexOf(target),
+        amount: card.applyPoison,
+        stacks: card.applyPoison,
+      });
     }
     this.clampTargetIndex();
   }
 
   dealDamageToEnemy(enemy, amount) {
     let dmg = amount;
+    let blocked = 0;
     if (enemy.block > 0) {
-      const absorbed = Math.min(enemy.block, dmg);
-      enemy.block -= absorbed;
-      dmg -= absorbed;
+      blocked = Math.min(enemy.block, dmg);
+      enemy.block -= blocked;
+      dmg -= blocked;
     }
-    enemy.hp = Math.max(0, enemy.hp - dmg);
+    const hpLost = dmg;
+    enemy.hp = Math.max(0, enemy.hp - hpLost);
+    return { blocked, hpLost };
   }
 
   dealDamageToPlayer(amount) {
     let dmg = amount;
+    let blocked = 0;
     if (this.player.block > 0) {
-      const absorbed = Math.min(this.player.block, dmg);
-      this.player.block -= absorbed;
-      dmg -= absorbed;
+      blocked = Math.min(this.player.block, dmg);
+      this.player.block -= blocked;
+      dmg -= blocked;
     }
-    this.player.hp = Math.max(0, this.player.hp - dmg);
-    return dmg;
+    const hpLost = dmg;
+    this.player.hp = Math.max(0, this.player.hp - hpLost);
+    return { blocked, hpLost };
   }
 
   endTurn() {
-    if (this.phase !== 'player') return { ok: false };
+    this.beginAction();
+    if (this.phase !== 'player') return { ok: false, events: [] };
+    this.emit({ type: COMBAT_EVENT.TURN_END });
     this.discard.push(...this.hand);
     this.hand = [];
+    this.emit({ type: COMBAT_EVENT.HAND_DISCARDED });
     this.phase = 'enemy';
     this.enemyTurn();
     if (this.player.hp <= 0) {
       this.phase = 'lost';
       this.pushLog(TERMS.logLose);
-      return { ok: true };
+      this.emit({ type: COMBAT_EVENT.COMBAT_LOST });
+      return { ok: true, events: this.drainEvents() };
     }
     if (!this.aliveEnemies.length) {
       this.phase = 'won';
-      return { ok: true };
+      this.emit({ type: COMBAT_EVENT.COMBAT_WON });
+      return { ok: true, events: this.drainEvents() };
     }
     this.startTurn();
-    return { ok: true };
+    return { ok: true, events: this.drainEvents() };
   }
 
   enemyTurn() {
@@ -243,12 +300,20 @@ export class CombatEngine {
   }
 
   executeEnemyIntent(e) {
+    const enemyIndex = this.enemyIndexOf(e);
+    this.emit({ type: COMBAT_EVENT.ENEMY_ACTION, enemyIndex, intent: e.intent?.intent });
     e.block = 0;
     const intent = e.intent;
 
     if (e.poison > 0) {
-      this.dealDamageToEnemy(e, e.poison);
+      const result = this.dealDamageToEnemy(e, e.poison);
       this.pushLog(`${TERMS.taintStack}：${e.name} 受到 ${e.poison} 点伤害`);
+      this.emit({
+        type: COMBAT_EVENT.POISON,
+        enemyIndex,
+        amount: result.hpLost,
+        tick: true,
+      });
       e.poison = Math.max(0, e.poison - 1);
     }
 
@@ -256,27 +321,47 @@ export class CombatEngine {
       case INTENTS.ATTACK:
       case INTENTS.STRONG_ATTACK: {
         const dmg = intent.value + (e.strength || 0);
-        const taken = this.dealDamageToPlayer(dmg);
-        this.pushLog(`${e.name} 暴走扑击，你受到 ${taken} 点伤害`);
+        const result = this.dealDamageToPlayer(dmg);
+        this.pushLog(`${e.name} 暴走扑击，你受到 ${result.hpLost} 点伤害`);
+        this.emit({
+          type: COMBAT_EVENT.DAMAGE,
+          target: 'player',
+          enemyIndex,
+          amount: result.hpLost,
+          blocked: result.blocked,
+          raw: dmg,
+        });
         break;
       }
       case INTENTS.DEFEND:
         e.block += intent.value;
         this.pushLog(`${e.name} 缩入淤壳 +${intent.value}`);
+        this.emit({ type: COMBAT_EVENT.BLOCK_GAIN, target: 'enemy', enemyIndex, amount: intent.value });
         break;
       case INTENTS.BUFF:
         e.strength = (e.strength || 0) + intent.value;
         this.pushLog(`${e.name} 污染膨胀 +${intent.value}`);
+        this.emit({ type: COMBAT_EVENT.BUFF, enemyIndex, amount: intent.value });
         break;
       case INTENTS.DEBUFF:
         if (intent.debuff === 'weak') this.weak += intent.value;
         this.pushLog(`${e.name} 释放秽气，你感到虚弱`);
+        this.emit({ type: COMBAT_EVENT.DEBUFF, amount: intent.value });
         break;
       case INTENTS.ATTACK_DEFEND: {
         e.block += intent.block;
         const dmg = intent.attack + (e.strength || 0);
-        const taken = this.dealDamageToPlayer(dmg);
-        this.pushLog(`${e.name} 攻${taken} 防${intent.block}`);
+        const result = this.dealDamageToPlayer(dmg);
+        this.pushLog(`${e.name} 攻${result.hpLost} 防${intent.block}`);
+        this.emit({ type: COMBAT_EVENT.BLOCK_GAIN, target: 'enemy', enemyIndex, amount: intent.block });
+        this.emit({
+          type: COMBAT_EVENT.DAMAGE,
+          target: 'player',
+          enemyIndex,
+          amount: result.hpLost,
+          blocked: result.blocked,
+          raw: dmg,
+        });
         break;
       }
       default:
