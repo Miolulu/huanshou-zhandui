@@ -123,18 +123,14 @@
   position: absolute;
   left: 50%;
   top: 32%;
-  width: min(92vw, 34rem);
-  max-height: min(64vh, 38rem);
+  width: min(94vw, 44rem);
   transform: translate(-50%, -50%);
   z-index: 35;
   animation: card-event-pop 0.86s cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 .CardEvent-frame {
-  display: flex;
-  flex-direction: column;
   width: 100%;
-  max-height: inherit;
   overflow: hidden;
   border-radius: 0.65rem;
   border: 2px solid rgba(255, 216, 105, 0.85);
@@ -147,9 +143,9 @@
 .CardEvent-media {
   position: relative;
   width: 100%;
-  height: min(52vh, 28rem);
+  aspect-ratio: 3 / 1;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   background: radial-gradient(ellipse at center, #1a2433 0%, #080b12 100%);
   overflow: hidden;
@@ -157,20 +153,17 @@
 
 .CardEvent-art {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   object-position: center;
   filter: saturate(1.12) contrast(1.04);
 }
 
 .CardEvent-art--fallback {
-  width: 60%;
-  height: 60%;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(160deg, #1a2228 0%, #53b5a8 45%, #121820 100%);
-  border-radius: 0.35rem;
 }
 
 .CardEvent-sheen {
@@ -185,30 +178,38 @@
 }
 
 .CardEvent-caption {
-  position: relative;
-  flex-shrink: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.55rem 0.85rem 0.65rem;
+  gap: 0.65rem;
+  padding: 0.4rem 0.7rem 0.48rem;
   color: #fff7d0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.55));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.35) 55%, transparent 100%);
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.75);
+  pointer-events: none;
 }
 
-.CardEvent-caption strong {
-  font-size: clamp(1.4rem, 4vw, 2.5rem);
-  line-height: 1;
+.CardEvent-name {
+  font-size: clamp(1.15rem, 3.2vw, 2rem);
+  line-height: 1.05;
+  text-align: right;
+  max-width: 62%;
 }
 
 .CardEvent-type {
   flex-shrink: 0;
-  padding: 0.2rem 0.55rem;
+  align-self: flex-end;
+  padding: 0.18rem 0.55rem;
   border-radius: 999px;
-  background: rgba(17, 111, 84, 0.85);
+  background: rgba(17, 111, 84, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.35);
-  font-size: clamp(0.75rem, 2vw, 1rem);
+  font-size: clamp(0.68rem, 1.8vw, 0.92rem);
+  line-height: 1.2;
 }
 
 .CardEvent--attack .CardEvent-frame {
@@ -291,16 +292,16 @@
 @media (max-width: 768px) {
   .CardEvent {
     top: 28%;
-    width: min(94vw, 28rem);
-    max-height: min(58vh, 32rem);
-  }
-
-  .CardEvent-media {
-    max-height: min(48vh, 24rem);
+    width: min(96vw, 36rem);
   }
 
   .CardEvent-caption {
-    padding: 0.45rem 0.55rem 0.55rem;
+    padding: 0.32rem 0.5rem 0.4rem;
+  }
+
+  .CardEvent-name {
+    font-size: clamp(1rem, 4.5vw, 1.45rem);
+    max-width: 58%;
   }
 }
 

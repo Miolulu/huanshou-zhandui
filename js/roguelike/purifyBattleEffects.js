@@ -176,7 +176,6 @@ export class PurifyBattleEffects {
 
     const node = document.createElement('div');
     node.className = `CardEvent CardEvent--${cardEl.dataset.cardType || 'skill'}`;
-    node.style.setProperty('--card-ar', `${artW} / ${artH}`);
     node.innerHTML = `
       <div class="CardEvent-frame">
         <div class="CardEvent-media">
@@ -184,10 +183,10 @@ export class PurifyBattleEffects {
     ? `<img class="CardEvent-art" src="${img.currentSrc || img.src}" alt="" width="${artW}" height="${artH}">`
     : '<div class="CardEvent-art CardEvent-art--fallback"></div>'}
           <div class="CardEvent-sheen" aria-hidden="true"></div>
-        </div>
-        <div class="CardEvent-caption">
-          <span class="CardEvent-type">${type}</span>
-          <strong>${name}</strong>
+          <div class="CardEvent-caption">
+            <span class="CardEvent-type">${type}</span>
+            <strong class="CardEvent-name">${name}</strong>
+          </div>
         </div>
       </div>`;
     layer.appendChild(node);
