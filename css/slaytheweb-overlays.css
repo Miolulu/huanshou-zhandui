@@ -522,6 +522,144 @@ button:not(:disabled),
 #screen-spire .purify-journal-overlay .purify-log-line.log-damage { color: #a03030; }
 #screen-spire .purify-journal-overlay .purify-log-line.log-heal { color: #208850; }
 
+/* 中间模态：深色卡片（须在 .Overlay .Box 灰底规则之后，覆盖默认灰面板） */
+#screen-spire .Overlay .purify-modal-card,
+#screen-spire .Overlay .purify-rest-card,
+#screen-spire .Overlay .purify-end-card,
+#screen-spire .Overlay .ShopBox {
+  max-width: 640px;
+  min-width: min(420px, 90vw);
+  width: 100%;
+  margin: auto;
+  padding: 32px 32px 28px;
+  border-radius: 20px;
+  background: rgba(12, 20, 10, 0.96);
+  border: 1px solid rgba(160, 200, 100, 0.28);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  color: #e6f0dc;
+  text-align: center;
+}
+
+#screen-spire .Overlay .purify-modal-card { max-width: 720px; }
+#screen-spire .Overlay .ShopBox { max-width: 44rem; }
+
+#screen-spire .Overlay .purify-modal-card :where(h1, h2, h3, p, li),
+#screen-spire .Overlay .purify-rest-card :where(h1, h2, h3, p, li),
+#screen-spire .Overlay .purify-end-card :where(h1, h2, h3, p, li),
+#screen-spire .Overlay .ShopBox :where(h1, h2, h3, p, li) {
+  color: inherit;
+  text-shadow: none;
+}
+
+#screen-spire .Overlay .purify-modal-card h2,
+#screen-spire .Overlay .purify-rest-card h2,
+#screen-spire .Overlay .purify-end-card h2 {
+  font-size: 1.35rem;
+  color: #f0d878;
+  margin: 0 0 18px;
+  letter-spacing: 0.06em;
+}
+
+#screen-spire .Overlay .ShopBox .Box-sub {
+  color: #c8d8b8;
+  opacity: 0.92;
+}
+
+#screen-spire .Overlay .purify-modal-card > .Overlay-close,
+#screen-spire .Overlay .purify-rest-card > .Overlay-close,
+#screen-spire .Overlay .purify-end-card > .Overlay-close,
+#screen-spire .Overlay .ShopBox > .Overlay-close {
+  color: hsl(80, 20%, 78%);
+}
+
+#screen-spire .Overlay .purify-modal-card > .Overlay-close:hover,
+#screen-spire .Overlay .purify-rest-card > .Overlay-close:hover,
+#screen-spire .Overlay .purify-end-card > .Overlay-close:hover,
+#screen-spire .Overlay .ShopBox > .Overlay-close:hover {
+  color: #fff;
+}
+
+#screen-spire .purify-rest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+#screen-spire .purify-rest-actions li {
+  display: block;
+}
+
+#screen-spire .purify-rest-btn.Button {
+  display: block;
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(160, 200, 100, 0.35);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+  text-align: center;
+  cursor: var(--cursor-point, pointer);
+  box-shadow: none;
+  transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+}
+
+#screen-spire .purify-rest-btn.purify-rest-heal.Button {
+  background: linear-gradient(135deg, rgba(60, 120, 50, 0.9), rgba(40, 80, 35, 0.95));
+  color: #d8f4c8;
+}
+
+#screen-spire .purify-rest-btn.purify-rest-upgrade.Button {
+  background: linear-gradient(135deg, rgba(120, 90, 30, 0.9), rgba(80, 60, 20, 0.95));
+  color: #ffe8a0;
+}
+
+#screen-spire .purify-rest-btn.Button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  filter: brightness(1.08);
+}
+
+#screen-spire .purify-reward-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 16px;
+}
+
+#screen-spire .purify-text-btn {
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  color: #a8c898;
+  font-size: 0.9rem;
+  cursor: var(--cursor-point, pointer);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  box-shadow: none;
+  width: auto;
+}
+
+#screen-spire .purify-text-btn:hover {
+  color: #d8f0c8;
+  background: transparent;
+}
+
+#screen-spire .purify-end-stats {
+  text-align: left;
+  max-width: 320px;
+  margin: 0 auto 20px;
+  line-height: 1.8;
+  color: #b8d0a8;
+  font-size: 0.92rem;
+}
+
 @media (max-width: 768px) {
   #screen-spire .purify-hud-float {
     top: 2.55rem;
@@ -540,5 +678,14 @@ button:not(:disabled),
     font-size: 0.72rem;
     max-width: 4.5rem;
     padding: 0.45rem 0.55rem;
+  }
+
+  #screen-spire .Overlay .purify-modal-card,
+  #screen-spire .Overlay .purify-rest-card,
+  #screen-spire .Overlay .purify-end-card,
+  #screen-spire .Overlay .ShopBox {
+    min-width: 0;
+    max-width: calc(100vw - 2rem);
+    padding: 24px 18px 20px;
   }
 }

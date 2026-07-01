@@ -59,6 +59,7 @@ export const TERMS = {
   rewardTitle: '悟道 · 择一技法入秘典',
   rewardSkip: '暂不入秘典',
   restTitle: '幻兽驿站',
+  restTitle: '幻兽驿站',
   restHeal: '调息 · 恢复 20 心神',
   restUpgrade: '精研 · 强化一张秘典技法',
   restHint: '在驿站调息恢复，或精研强化已有技法',

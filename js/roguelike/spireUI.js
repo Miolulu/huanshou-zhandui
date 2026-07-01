@@ -46,6 +46,7 @@ export class SpireUI {
       else if (id === 'spire-overlay-end') showToast('请点击返回主页');
     };
     this.bindElements();
+    this.applyStaticTerms();
     this.bindActions();
     this.bindCombatShortcuts();
   }
@@ -85,6 +86,26 @@ export class SpireUI {
       endStats: document.getElementById('spire-end-stats'),
       tutorialHost: document.getElementById('purify-tutorial-host'),
     };
+  }
+
+  applyStaticTerms() {
+    const rewardTitle = document.getElementById('purify-reward-title');
+    if (rewardTitle) rewardTitle.textContent = TERMS.rewardTitle;
+
+    const skipReward = document.getElementById('btn-spire-skip-reward');
+    if (skipReward) skipReward.textContent = TERMS.rewardSkip;
+
+    const restHeal = document.getElementById('btn-spire-rest-heal');
+    if (restHeal) restHeal.textContent = TERMS.restHeal;
+
+    const restUpgrade = document.getElementById('btn-spire-rest-upgrade');
+    if (restUpgrade) restUpgrade.textContent = TERMS.restUpgrade;
+
+    const restHeading = document.getElementById('purify-rest-title');
+    if (restHeading) restHeading.textContent = `🌿 ${TERMS.restTitle}`;
+
+    const endContinue = document.getElementById('btn-spire-end-continue');
+    if (endContinue) endContinue.textContent = '返回主页';
   }
 
   bindActions() {
