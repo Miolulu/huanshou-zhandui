@@ -1,9 +1,5 @@
 /**
- * 保守抠图 v3：缩小本体保护范围，更彻底去掉贴边黑底
- *
- * 1. 仅从「明显彩色」像素出发，向相邻的极暗像素扩张 2 层（描边/阴影）
- * 2. 边缘洪水删除暗色背景
- * 3. 删除与透明区相邻、且不含彩色的孤立暗色块
+ * 保守抠图 v4：椭圆主体识别 + 贴边洪水，去掉四角黑块与两侧光效溢出
  */
 import sharp from 'sharp';
 
@@ -15,7 +11,13 @@ function colorDist(a, b) {
   return Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]), Math.abs(a[2] - b[2]));
 }
 
-/** 角色彩色像素（较高阈值，避免把背景噪点/光晕算进种子） */
+function percentile(sorted, p) {
+  if (!sorted.length) return 0;
+  const idx = Math.min(sorted.length - 1, Math.floor((sorted.length * p) / 100));
+  return sorted[idx];
+}
+
+/** 角色彩色像素 */
 function isColorPixel(r, g, b, minBright = 42) {
   return maxChannel(r, g, b) > minBright;
 }
@@ -30,9 +32,6 @@ function isProtectableDark(r, g, b, maxBright = 26) {
   return maxChannel(r, g, b) <= maxBright;
 }
 
-/**
- * 从彩色种子扩张：只向极暗邻居扩散，层数少
- */
 function buildForegroundMask(data, width, height, { minBright = 42, dilatePasses = 2, darkMax = 26 } = {}) {
   const total = width * height;
   const fg = new Uint8Array(total);
@@ -75,6 +74,60 @@ function buildForegroundMask(data, width, height, { minBright = 42, dilatePasses
   return fg;
 }
 
+/**
+ * 按彩色像素分布拟合椭圆主体（比矩形核心更贴合角色轮廓）
+ * @returns {{ cx: number, cy: number, rx: number, ry: number } | null}
+ */
+function fitEllipseFromColor(data, width, height, minBright = 45, { padX = 8, padY = 10, pct = 90 } = {}) {
+  const xs = [];
+  const ys = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3] < 128) continue;
+      if (!isColorPixel(data[i], data[i + 1], data[i + 2], minBright)) continue;
+      xs.push(x);
+      ys.push(y);
+    }
+  }
+  if (xs.length < 24) return null;
+
+  const cx = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const cy = ys.reduce((a, b) => a + b, 0) / ys.length;
+  const dxs = xs.map((x) => Math.abs(x - cx)).sort((a, b) => a - b);
+  const dys = ys.map((y) => Math.abs(y - cy)).sort((a, b) => a - b);
+  const rx = percentile(dxs, pct) + padX;
+  const ry = percentile(dys, pct) + padY;
+  if (rx < 8 || ry < 8) return null;
+  return { cx, cy, rx, ry };
+}
+
+function buildEllipseMask(width, height, ellipse) {
+  const mask = new Uint8Array(width * height);
+  const { cx, cy, rx, ry } = ellipse;
+  const invRx2 = 1 / (rx * rx);
+  const invRy2 = 1 / (ry * ry);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      if (dx * dx * invRx2 + dy * dy * invRy2 <= 1) {
+        mask[y * width + x] = 1;
+      }
+    }
+  }
+  return mask;
+}
+
+/** 删除椭圆外的像素（去掉两侧溢出光效/贴边黑块） */
+function cullOutsideEllipse(data, width, height, ellipse) {
+  const mask = buildEllipseMask(width, height, ellipse);
+  const total = width * height;
+  for (let idx = 0; idx < total; idx++) {
+    if (!mask[idx]) data[idx * 4 + 3] = 0;
+  }
+}
+
 /** 从四边洪水删除暗色背景 */
 function floodRemoveBackground(data, width, height, fg, maxBright = 36) {
   const total = width * height;
@@ -110,56 +163,6 @@ function floodRemoveBackground(data, width, height, fg, maxBright = 36) {
     if (x < width - 1) tryPush(idx + 1);
     if (y > 0) tryPush(idx - width);
     if (y < height - 1) tryPush(idx + width);
-  }
-}
-
-/**
- * 彩色核心：只从角色主体彩色像素扩张有限层，用于裁掉远处孤立黑块
- */
-function buildCoreMask(data, width, height, { minBright = 45, dilatePasses = 4 } = {}) {
-  const total = width * height;
-  const core = new Uint8Array(total);
-
-  for (let idx = 0; idx < total; idx++) {
-    const i = idx * 4;
-    if (data[i + 3] < 8) continue;
-    if (isColorPixel(data[i], data[i + 1], data[i + 2], minBright)) core[idx] = 1;
-  }
-
-  for (let pass = 0; pass < dilatePasses; pass++) {
-    const next = new Uint8Array(core);
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const idx = y * width + x;
-        if (core[idx]) continue;
-        const i = idx * 4;
-        if (data[i + 3] < 8) continue;
-        const neighbors = [
-          x > 0 ? idx - 1 : -1,
-          x < width - 1 ? idx + 1 : -1,
-          y > 0 ? idx - width : -1,
-          y < height - 1 ? idx + width : -1,
-        ];
-        for (const n of neighbors) {
-          if (n >= 0 && core[n]) {
-            next[idx] = 1;
-            break;
-          }
-        }
-      }
-    }
-    core.set(next);
-  }
-
-  return core;
-}
-
-/** 删除核心遮罩外的所有像素（去掉远离本体的黑块/光晕） */
-function cullOutsideCore(data, width, height, core) {
-  const total = width * height;
-  for (let idx = 0; idx < total; idx++) {
-    if (core[idx]) continue;
-    data[idx * 4 + 3] = 0;
   }
 }
 
@@ -239,7 +242,7 @@ function floodRemoveTintedBg(data, width, height, fg, cornerSamples = 4) {
 
 /**
  * @param {import('sharp').Sharp | Buffer} input
- * @param {{ preset?: 'sprite'|'icon' }} opts
+ * @param {{ preset?: 'sprite'|'icon'|'player' }} opts
  */
 export async function matteSprite(input, { preset = 'sprite' } = {}) {
   const source = typeof input?.ensureAlpha === 'function' ? input : sharp(input);
@@ -247,16 +250,26 @@ export async function matteSprite(input, { preset = 'sprite' } = {}) {
   const { width, height } = info;
 
   const isIcon = preset === 'icon';
+  const isPlayer = preset === 'player';
   const minBright = isIcon ? 38 : 42;
   const maxBright = isIcon ? 34 : 36;
-  const dilatePasses = isIcon ? 2 : 2;
-  const darkMax = isIcon ? 28 : 26;
+  const dilatePasses = 2;
+  const darkMax = isIcon ? 28 : isPlayer ? 28 : 26;
 
   const fg = buildForegroundMask(data, width, height, { minBright, dilatePasses, darkMax });
-  const core = buildCoreMask(data, width, height, { minBright: minBright + 3, dilatePasses: isIcon ? 5 : 4 });
   floodRemoveTintedBg(data, width, height, fg);
   floodRemoveBackground(data, width, height, fg, maxBright);
-  cullOutsideCore(data, width, height, core);
+
+  // 敌人：椭圆主体裁切，去掉两侧溢出光效；玩家立绘保留全身法阵/光效
+  if (preset !== 'player') {
+    const ellipse = fitEllipseFromColor(data, width, height, minBright + 3, {
+      padX: isIcon ? 6 : 10,
+      padY: isIcon ? 8 : 12,
+      pct: width > 500 ? 93 : 90,
+    });
+    if (ellipse) cullOutsideEllipse(data, width, height, ellipse);
+  }
+
   cleanEdgeAlpha(data, width, height, fg);
 
   let result = sharp(data, {

@@ -149,13 +149,14 @@
 
 #screen-spire .Target-sprite {
   flex-shrink: 0;
-  width: min(44vw, 24rem);
-  height: min(54vh, 30rem);
+  width: 100%;
+  max-width: min(40vw, 22rem);
+  height: min(50vh, 28rem);
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
-  overflow: visible;
+  overflow: hidden;
 }
 
 #screen-spire .Target-sprite img {
@@ -175,8 +176,8 @@
 }
 
 #screen-spire .Target--enemy .Target-sprite {
-  width: min(40vw, 22rem);
-  height: min(50vh, 28rem);
+  max-width: 100%;
+  height: min(46vh, 24rem);
 }
 
 #screen-spire .Target-sprite--hero {

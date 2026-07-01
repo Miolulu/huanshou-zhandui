@@ -84,10 +84,11 @@ for (const rel of DIRS) {
   const dir = path.join(ROOT, rel);
   for (const name of fs.readdirSync(dir).filter((f) => f.endsWith('.png'))) {
     const file = path.join(dir, name);
-    const out = await matteSprite(sharp(file), { preset: 'sprite' });
+    const relPath = path.join(rel, name).replace(/\\/g, '/');
+    const preset = relPath.includes('/player/') ? 'player' : 'sprite';
+    const out = await matteSprite(sharp(file), { preset });
     await out.png().toFile(file);
     const stats = await analyze(file);
-    const relPath = path.join(rel, name);
     results.push({ file: relPath, ...stats });
 
     const ok = stats.semi === 0 && stats.edgeBlack < 100;

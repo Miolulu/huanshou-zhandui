@@ -54,7 +54,9 @@ for (const rel of DIRS) {
   const dir = path.join(ROOT, rel);
   for (const name of fs.readdirSync(dir).filter((f) => f.endsWith('.png'))) {
     const file = path.join(dir, name);
-    const out = await matteSprite(sharp(file), { preset: 'sprite' });
+    const relNorm = path.join(rel, name).replace(/\\/g, '/');
+    const preset = relNorm.includes('/player/') ? 'player' : 'sprite';
+    const out = await matteSprite(sharp(file), { preset });
     await out.png().toFile(file);
     const stats = await probeAlpha(file);
     console.log('  ✓', path.join(rel, name), stats);
