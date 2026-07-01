@@ -46,14 +46,14 @@ export const TERMS = {
   nodeBoss: '源点',
 
   nodeStartIcon: '🌱',
-  nodeBattleIcon: '✨',
-  nodeEliteIcon: '☠',
-  nodeRestIcon: '🌿',
+  nodeBattleIcon: '⚔️',
+  nodeEliteIcon: '❓',
+  nodeRestIcon: '🔥',
   nodeBossIcon: '👹',
 
   // 事件界面
   mapTitle: '污染地带路线图',
-  mapHint: '选择下一处净化点 · ✨ 遭遇 · ☠ 深渊 · 🌿 驿站 · 👹 源点',
+  mapHint: '⚔️ 战斗 · ❓ 事件 · 🔥 休息 · 🏪 驿站奖励 · 👹 源点',
   rewardTitle: '悟道 · 择一技法入秘典',
   rewardSkip: '暂不入秘典',
   restTitle: '幻兽驿站',

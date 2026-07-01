@@ -21,10 +21,11 @@
   <link rel="stylesheet" href="css/animation.css">
   <link rel="stylesheet" href="css/bg-layout.css">
   <link rel="stylesheet" href="css/roguelike.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <!-- ===== 登录 / 注册 ===== -->
-  <div id="screen-auth" class="screen active">
+  <div id="screen-auth" class="screen menu-bg active">
     <div class="auth-container">
       <div class="auth-logo">
         <h1>幻兽战队</h1>
@@ -59,7 +60,7 @@
   </div>
 
   <!-- ===== 主界面（Vol.4 左档案 + 右内容） ===== -->
-  <div id="screen-menu" class="screen">
+  <div id="screen-menu" class="screen menu-bg">
     <header class="menu-top-bar u-glass">
       <div class="menu-top-logo">幻兽战队</div>
       <div class="menu-top-user">
@@ -331,7 +332,7 @@
   </div>
 
   <!-- ===== 净化远征（单机） ===== -->
-  <div id="screen-spire" class="screen purify-screen">
+  <div id="screen-spire" class="screen purify-screen battle-bg">
     <header class="purify-topbar">
       <button type="button" id="btn-spire-back" class="purify-back">退出远征</button>
       <div class="purify-brand">
@@ -357,7 +358,7 @@
             <p id="purify-map-intro" class="purify-pane-desc">选择下一处净化点，深入污染地带</p>
           </header>
           <div id="spire-map-nodes" class="purify-path"></div>
-          <p id="purify-map-hint" class="purify-map-hint">✨ 遭遇污化幻兽 · ☠ 深渊级污染 · 🌿 幻兽驿站 · 👹 污染源点</p>
+          <p id="purify-map-hint" class="purify-map-hint">⚔️ 战斗 · ❓ 事件 · 🔥 休息 · 🏪 驿站奖励 · 👹 源点</p>
         </div>
       </section>
 
@@ -371,7 +372,7 @@
                 <span class="purify-spirit-label">灵力</span>
                 <div id="spire-energy" class="purify-spirit-orbs"></div>
               </div>
-              <button type="button" id="btn-spire-end-turn" class="purify-end-turn">收势</button>
+              <button type="button" id="btn-spire-end-turn" class="purify-end-turn pokeball-btn"><span class="pokeball-label">收势</span></button>
             </div>
             <div id="spire-player" class="purify-self-zone"></div>
           </div>
@@ -497,6 +498,6 @@
       }
     })();
   </script>
-  <script type="module" src="js/main.js?v=20250701d"></script>
+  <script type="module" src="js/main.js?v=20250702poke"></script>
 </body>
 </html>

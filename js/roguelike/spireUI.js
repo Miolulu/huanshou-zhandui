@@ -7,6 +7,14 @@ import { TERMS } from './lore.js';
 import { CombatTutorial } from './combatTutorial.js';
 import { showToast } from '../appShell.js';
 
+function hpBarHtml(current, max, label = 'HP', color = 'var(--grass-green)') {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
+  return `<div class="hp-bar" role="progressbar" aria-valuenow="${current}" aria-valuemax="${max}">
+    <div class="hp-fill" style="width:${pct}%;background:${color}"></div>
+    <span class="hp-text">${label} ${current}/${max}</span>
+  </div>`;
+}
+
 export class SpireUI {
   constructor(run, onBack, hooks = {}) {
     this.run = run;
@@ -58,6 +66,9 @@ export class SpireUI {
       }
       const r = this.run.endCombatTurn();
       this.afterCombatAction(r, () => this.tutorial?.onAction('end_turn'));
+      const endBtn = document.getElementById('btn-spire-end-turn');
+      endBtn?.classList.add('pokeball-shake');
+      setTimeout(() => endBtn?.classList.remove('pokeball-shake'), 600);
       this.render();
     });
     document.getElementById('btn-spire-skip-reward')?.addEventListener('click', () => {
@@ -289,7 +300,7 @@ export class SpireUI {
         <div class="purify-foe-icon">${e.icon || '👹'}</div>
         <div class="purify-foe-name">${e.name}</div>
         ${e.desc && enemies.length === 1 ? `<div class="purify-foe-desc">${e.desc}</div>` : ''}
-        <div class="purify-foe-taint"><span>${TERMS.taint}</span> ${e.hp}/${e.maxHp}</div>
+        ${hpBarHtml(e.hp, e.maxHp, TERMS.taint, 'var(--grass-green)')}
         ${e.block ? `<div class="purify-foe-barrier">🛡 ${e.block}</div>` : ''}
         ${!dead ? `<div class="purify-intent">${intentIcon(e.intent)} ${intentLabel(e.intent)}</div>` : '<div class="purify-foe-dead">已净化</div>'}
       </button>`;
@@ -308,7 +319,7 @@ export class SpireUI {
     const p = c.player;
     this.el.playerArea.innerHTML = `
       <div class="purify-self-stats">
-        <div class="purify-stat">🌿 ${p.hp}/${p.maxHp} ${TERMS.mind}</div>
+        ${hpBarHtml(p.hp, p.maxHp, TERMS.mind, 'var(--water-blue)')}
         <div class="purify-stat">🛡 ${TERMS.barrier} ${p.block}</div>
         ${c.strength ? `<div class="purify-stat">💪 ${TERMS.purifyPower} ${c.strength}</div>` : ''}
         ${c.weak ? `<div class="purify-stat miasma">${TERMS.miasma} ${c.weak}</div>` : ''}
@@ -348,6 +359,12 @@ export class SpireUI {
             if (card?.type === 'attack') this.tutorial?.onAction('play_attack');
             else if (card?.type === 'skill') this.tutorial?.onAction('play_skill');
           });
+          if (card?.type === 'attack') {
+            this.el.enemyArea.querySelector('.purify-foe-icon')?.classList.add('shake');
+            setTimeout(() => {
+              this.el.enemyArea.querySelector('.purify-foe-icon')?.classList.remove('shake');
+            }, 450);
+          }
         }
         this.render();
       };
@@ -357,7 +374,8 @@ export class SpireUI {
     if (endBtn) {
       const canEnd = c.phase === 'player' && (!this.tutorial?.active || this.tutorial.canEndTurn());
       endBtn.disabled = !canEnd;
-      endBtn.textContent = TERMS.endTurn;
+      const label = endBtn.querySelector('.pokeball-label');
+      if (label) label.textContent = TERMS.endTurn;
     }
 
     if (this.el.combatLog) {
