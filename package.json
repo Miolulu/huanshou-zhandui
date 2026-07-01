@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "slice-art": "node scripts/slice-art.mjs"
+    "slice-art": "node scripts/slice-art.mjs",
+    "compress-assets": "node scripts/compress-assets.mjs"
   },
   "devDependencies": {
     "sharp": "^0.35.2"

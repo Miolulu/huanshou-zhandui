@@ -171,12 +171,20 @@ export class PurifyBattleEffects {
     const img = cardEl.querySelector('.Card-art-img');
     const name = cardEl.querySelector('.Card-name')?.textContent?.trim() || '';
     const type = cardEl.querySelector('.Card-type')?.textContent?.trim() || '';
+    const artW = img?.naturalWidth > 0 ? img.naturalWidth : 10;
+    const artH = img?.naturalHeight > 0 ? img.naturalHeight : 14;
+
     const node = document.createElement('div');
     node.className = `CardEvent CardEvent--${cardEl.dataset.cardType || 'skill'}`;
+    node.style.setProperty('--card-ar', `${artW} / ${artH}`);
     node.innerHTML = `
       <div class="CardEvent-frame">
-        ${img ? `<img class="CardEvent-art" src="${img.currentSrc || img.src}" alt="">` : '<div class="CardEvent-art CardEvent-art--fallback"></div>'}
-        <div class="CardEvent-sheen"></div>
+        <div class="CardEvent-media">
+          ${img
+    ? `<img class="CardEvent-art" src="${img.currentSrc || img.src}" alt="" width="${artW}" height="${artH}">`
+    : '<div class="CardEvent-art CardEvent-art--fallback"></div>'}
+          <div class="CardEvent-sheen" aria-hidden="true"></div>
+        </div>
         <div class="CardEvent-caption">
           <span class="CardEvent-type">${type}</span>
           <strong>${name}</strong>

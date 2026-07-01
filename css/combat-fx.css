@@ -125,58 +125,78 @@
 .CardEvent {
   position: absolute;
   left: 50%;
-  top: 34%;
-  width: min(58vw, 34rem);
-  aspect-ratio: 3 / 2;
+  top: 32%;
+  width: min(92vw, 34rem);
+  max-height: min(64vh, 38rem);
   transform: translate(-50%, -50%);
   z-index: 35;
   animation: card-event-pop 0.86s cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 .CardEvent-frame {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  height: 100%;
+  max-height: inherit;
   overflow: hidden;
   border-radius: 0.65rem;
   border: 2px solid rgba(255, 216, 105, 0.85);
   box-shadow:
     0 1rem 3rem rgba(0, 0, 0, 0.65),
     0 0 2rem rgba(255, 193, 7, 0.35);
-  background: #111;
+  background: #0c1018;
+}
+
+.CardEvent-media {
+  position: relative;
+  width: 100%;
+  height: min(52vh, 28rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #1a2433 0%, #080b12 100%);
+  overflow: hidden;
 }
 
 .CardEvent-art {
-  width: 100%;
-  height: 100%;
   display: block;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   object-position: center;
-  filter: saturate(1.2) contrast(1.05);
-  transform: scale(1.06);
+  filter: saturate(1.12) contrast(1.04);
+}
+
+.CardEvent-art--fallback {
+  width: 60%;
+  height: 60%;
+  background: linear-gradient(160deg, #1a2228 0%, #53b5a8 45%, #121820 100%);
+  border-radius: 0.35rem;
 }
 
 .CardEvent-sheen {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background:
-    radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.38), transparent 22%),
-    linear-gradient(110deg, transparent 15%, rgba(255, 255, 255, 0.5) 42%, transparent 58%),
-    linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent 45%);
+    radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.28), transparent 22%),
+    linear-gradient(110deg, transparent 15%, rgba(255, 255, 255, 0.35) 42%, transparent 58%);
   mix-blend-mode: screen;
   animation: card-event-sheen 0.86s ease both;
 }
 
 .CardEvent-caption {
-  position: absolute;
-  left: 0.85rem;
-  right: 0.85rem;
-  bottom: 0.75rem;
+  position: relative;
+  flex-shrink: 0;
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  padding: 0.55rem 0.85rem 0.65rem;
   color: #fff7d0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.55));
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.75);
 }
 
@@ -274,13 +294,16 @@
 @media (max-width: 768px) {
   .CardEvent {
     top: 28%;
-    width: min(92vw, 28rem);
+    width: min(94vw, 28rem);
+    max-height: min(58vh, 32rem);
+  }
+
+  .CardEvent-media {
+    max-height: min(48vh, 24rem);
   }
 
   .CardEvent-caption {
-    left: 0.55rem;
-    right: 0.55rem;
-    bottom: 0.5rem;
+    padding: 0.45rem 0.55rem 0.55rem;
   }
 }
 

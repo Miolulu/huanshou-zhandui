@@ -8,6 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 import { matteSprite } from './local-matte.mjs';
+import { encodePipeline, writeMainBackgroundJpeg } from './asset-encode.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -75,21 +76,18 @@ async function crop(outRel, file, region, { mode = 'card' } = {}) {
     }
   }
 
-  await pipeline.png({ compressionLevel: 9 }).toFile(out);
+  const encoded = encodePipeline(pipeline, mode === 'icon' ? 'icon' : mode === 'sprite' ? 'sprite' : mode === 'scene' ? 'scene' : 'card');
+  await encoded.toFile(out);
   console.log('  ✓', outRel);
 }
 
 async function upscaleScene(outRel, inputRel) {
   const out = path.join(ROOT, outRel);
   const input = path.join(ROOT, inputRel);
-  fs.mkdirSync(path.dirname(out), { recursive: true });
-  await sharp(input)
-    .resize(1920, 1080, { fit: 'cover', kernel: sharp.kernel.lanczos3 })
-    .modulate({ saturation: 1.08, brightness: 0.95 })
-    .sharpen({ sigma: 1.1, m1: 0.8, m2: 1.4 })
-    .png({ compressionLevel: 9 })
-    .toFile(out);
-  console.log('  ✓', outRel);
+  const jpgOut = out.replace(/\.png$/i, '.jpg');
+  await writeMainBackgroundJpeg(jpgOut, input);
+  if (fs.existsSync(out)) fs.unlinkSync(out);
+  console.log('  ✓', path.relative(ROOT, jpgOut).replace(/\\/g, '/'));
 }
 
 async function main() {

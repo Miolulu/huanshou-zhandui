@@ -43,7 +43,7 @@ export const SCENE_BACKGROUNDS = [
   'assets/scenes/scene-5.png',
 ];
 
-export const MAIN_BACKGROUND = 'assets/scenes/main-bg.png';
+export const MAIN_BACKGROUND = 'assets/scenes/main-bg.jpg';
 
 export function cardArtUrl(cardId) {
   return CARD_ART[cardId] || null;
