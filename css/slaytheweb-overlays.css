@@ -1,0 +1,313 @@
+/**
+ * Slay the Web 风格 Overlay 面板 + 自定义光标
+ */
+:root {
+  --cursor-default: url('assets/cursors/default.svg') 2 2, auto;
+  --cursor-point: url('assets/cursors/point.svg') 10 2, pointer;
+  --cursor-grab: url('assets/cursors/grab-open.svg') 10 2, grab;
+  --cursor-grabbing: url('assets/cursors/grab-closed.svg') 10 2, grabbing;
+}
+
+html {
+  cursor: var(--cursor-default);
+}
+
+a,
+button:not(:disabled),
+.purify-node.available:not(.cleared),
+.Options .Button,
+.purify-foe-card:not(.dead) {
+  cursor: var(--cursor-point);
+}
+
+.purify-hand .Card:not(.disabled),
+.purify-hand .purify-card:not(.disabled) {
+  cursor: var(--cursor-grab);
+}
+
+.purify-hand .Card.is-dragging,
+.purify-hand .purify-card.is-dragging {
+  cursor: var(--cursor-grabbing);
+}
+
+/* ===== App 远征壳层 ===== */
+#screen-spire.App {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  flex-flow: column;
+  overflow: hidden;
+  color: var(--stw-text, hsl(34, 78%, 85%));
+}
+
+#screen-spire.App.active {
+  display: flex;
+}
+
+#screen-spire .App-background.purify-scene-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  background-color: hsl(220, 35%, 8%);
+  background-size: cover;
+  background-position: center;
+  background-image: url('https://www.slaytheweb.cards/images/scenes/moonlit-landscape-1904.jpg');
+}
+
+#screen-spire .App-background[data-room-index="1"] {
+  background-image: url('https://www.slaytheweb.cards/images/scenes/arietty.webp');
+}
+#screen-spire .App-background[data-room-index="2"] {
+  background-image: url('https://www.slaytheweb.cards/images/scenes/bauhaus.jpg');
+}
+#screen-spire .App-background[data-room-index="3"] {
+  background-image: url('https://www.slaytheweb.cards/images/scenes/chihiro.jpg');
+}
+#screen-spire .App-background[data-room-index="4"] {
+  background-image: url('https://www.slaytheweb.cards/images/scenes/howl.jpg');
+}
+#screen-spire .App-background[data-room-index="5"] {
+  background-image: url('https://www.slaytheweb.cards/images/scenes/laputa.jpg');
+}
+#screen-spire .App-background[data-room-index="6"] {
+  background-image: url('https://www.slaytheweb.cards/images/scenes/mononoke.jpg');
+}
+#screen-spire .App-background[data-room-index="7"] {
+  background-image: url('https://www.slaytheweb.cards/images/scenes/nausicaa.jpg');
+}
+#screen-spire .App-background[data-room-index="8"] {
+  background-image: url('https://www.slaytheweb.cards/images/scenes/1.jpg');
+}
+
+#screen-spire .purify-main {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+#screen-spire .purify-hud-float {
+  position: absolute;
+  top: 0.65rem;
+  right: 5.5rem;
+  z-index: 4;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+
+#screen-spire .purify-hud-chip {
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 193, 7, 0.25);
+  color: var(--stw-text);
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ===== Overlay ===== */
+#screen-spire .Overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#screen-spire .Overlay.is-open {
+  pointer-events: auto;
+}
+
+#screen-spire .Overlay-toggle {
+  position: absolute;
+  z-index: 12;
+  font-size: 0.88rem;
+  padding: 0.55rem 0.75rem;
+  user-select: none;
+  background: rgba(0, 0, 0, 0.45);
+  border: 0;
+  color: var(--stw-text);
+  box-shadow: none;
+  cursor: var(--cursor-point);
+  text-shadow: 1px 1px 0 #000;
+}
+
+#screen-spire .Overlay-toggle:hover {
+  background: linear-gradient(to right, rgba(139, 69, 19, 0.85) 40%, transparent);
+}
+
+#screen-spire .Overlay[data-pos="topleft"] .Overlay-toggle { top: 0; left: 0; }
+#screen-spire .Overlay[data-pos="topright"] .Overlay-toggle { top: 0; right: 0; }
+#screen-spire .Overlay[data-pos="topright2"] .Overlay-toggle { top: 0; right: 5.5rem; }
+#screen-spire .Overlay[data-pos="topleft2"] .Overlay-toggle { top: 0; left: 5.5rem; }
+#screen-spire .Overlay[data-pos="bottomleft"] .Overlay-toggle { bottom: 0; top: auto; left: 0; }
+#screen-spire .Overlay[data-pos="bottomright"] .Overlay-toggle { bottom: 0; top: auto; right: 0; }
+
+#screen-spire .Overlay-content {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(0, 1rem, 0);
+  z-index: 11;
+  padding: 3.5rem 1rem 1rem;
+}
+
+#screen-spire .Overlay.is-open .Overlay-toggle {
+  background: linear-gradient(to right, brown 40%, transparent);
+}
+
+#screen-spire .Overlay.is-open .Overlay-content {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity 200ms 60ms var(--stw-ease, cubic-bezier(0.23, 1, 0.32, 1)),
+    transform 300ms 60ms var(--stw-ease, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+#screen-spire .Overlay-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  margin: 0;
+  background: hsla(0, 0%, 0%, 0.72);
+}
+
+#screen-spire .Overlay.is-open .Overlay-bg {
+  display: block;
+}
+
+#screen-spire .Overlay--middle .Overlay-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#screen-spire .Overlay .Box {
+  max-width: 42rem;
+  color: hsl(17, 6%, 7%);
+}
+
+#screen-spire .Overlay .Box--map {
+  max-width: 560px;
+}
+
+#screen-spire .Overlay-deck-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: left;
+}
+
+#screen-spire .Overlay-deck-list li {
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+#screen-spire .purify-topbar {
+  display: none;
+}
+
+/* ===== 地图 MapContainer ===== */
+.MapContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+#screen-spire .purify-map-board {
+  width: 100%;
+  min-height: 320px;
+  padding: 1.25rem 0.75rem 1.5rem;
+  background: hsl(120, 17.5%, 19%);
+  border: 2px groove chocolate;
+  outline: 1px solid chocolate;
+  outline-offset: -0.5rem;
+  border-radius: 0.75rem;
+}
+
+#screen-spire .purify-node.boss-node,
+#screen-spire .purify-node[data-type="boss"] {
+  width: 5.5rem !important;
+  height: 5.5rem !important;
+  border-width: 0.35rem !important;
+  border-color: gold !important;
+  animation: boss-node-pulse 3s alternate infinite;
+}
+
+@keyframes boss-node-pulse {
+  from { border-color: gold; box-shadow: 0 0 16px rgba(255, 193, 7, 0.5); }
+  to { border-color: cyan; box-shadow: 0 0 20px rgba(0, 255, 255, 0.45); }
+}
+
+#screen-spire .purify-node.available:not(.cleared):hover > .purify-node-icon {
+  transform: scale(1.25);
+  transition: transform 100ms ease;
+}
+
+#screen-spire .purify-pane-head h2 {
+  color: hsl(40, 100%, 61%);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
+}
+
+#screen-spire .purify-floor-badge-float {
+  position: absolute;
+  top: 0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  font-size: 0.82rem;
+  color: var(--stw-gold);
+  pointer-events: none;
+}
+
+#screen-spire .Targets,
+#screen-spire .purify-battle {
+  animation: stw-fade-in 800ms var(--stw-ease, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+
+@keyframes stw-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+#screen-spire .purify-journal-overlay {
+  max-height: 55vh;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  text-align: left;
+  color: hsl(17, 6%, 15%);
+  font-size: 0.82rem;
+}
+
+#screen-spire .purify-journal-overlay .purify-log-line {
+  color: hsl(17, 6%, 25%);
+}
+
+#screen-spire .purify-journal-overlay .purify-log-line.log-damage { color: #a03030; }
+#screen-spire .purify-journal-overlay .purify-log-line.log-heal { color: #208850; }
+
+@media (max-width: 768px) {
+  #screen-spire .Overlay[data-pos="topright2"] .Overlay-toggle { right: 4.5rem; font-size: 0.75rem; }
+  #screen-spire .purify-hud-float { right: 4rem; font-size: 0.72rem; }
+}

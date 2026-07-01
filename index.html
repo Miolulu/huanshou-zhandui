@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/slaytheweb-theme.css">
   <link rel="stylesheet" href="css/slaytheweb-ui.css">
+  <link rel="stylesheet" href="css/slaytheweb-overlays.css">
   <link rel="stylesheet" href="css/combat-fx.css">
 </head>
 <body>
@@ -327,35 +328,28 @@
     </footer>
   </div>
 
-  <!-- ===== 净化远征（单机） ===== -->
-  <div id="screen-spire" class="screen purify-screen">
-    <div class="purify-scene-bg" aria-hidden="true"></div>
-    <header class="purify-topbar">
-      <button type="button" id="btn-spire-back" class="purify-back">退出远征</button>
-      <div class="purify-brand">
-        <span class="purify-brand-mark" aria-hidden="true">✨</span>
-        <div>
-          <strong class="purify-brand-title">净化远征</strong>
-          <small class="purify-brand-sub"><span id="purify-mode-badge">单机</span> · 幻兽净化师</small>
-        </div>
-      </div>
-      <span id="purify-floor-badge" class="purify-floor-badge hidden"></span>
-      <div class="purify-resources">
-        <span id="spire-hp" class="purify-res purify-res-mind" title="心神">🌿 70/70</span>
-        <span id="spire-gold" class="purify-res purify-res-coin" title="探索币">💰 0</span>
-        <span id="spire-deck" class="purify-res purify-res-codex" title="净化秘典">📜 10</span>
-      </div>
-    </header>
+  <!-- ===== 净化远征（单机 · StW App 壳层） ===== -->
+  <div id="screen-spire" class="screen App purify-screen">
+    <figure class="App-background purify-scene-bg" id="spire-scene-bg" data-room-index="0" aria-hidden="true"></figure>
+
+    <span id="purify-floor-badge" class="purify-floor-badge purify-floor-badge-float hidden"></span>
+    <div class="purify-hud-float">
+      <span id="spire-hp" class="purify-hud-chip" title="心神">🌿 70/70</span>
+      <span id="spire-gold" class="purify-hud-chip" title="探索币">💰 0</span>
+      <span class="purify-hud-chip"><span id="purify-mode-badge">远征</span></span>
+    </div>
 
     <main class="purify-main">
       <section id="spire-view-map" class="purify-pane">
-        <div class="purify-map-board">
-          <header class="purify-pane-head">
-            <h2 id="purify-map-title">污染地带路线图</h2>
-            <p id="purify-map-intro" class="purify-pane-desc">选择下一处净化点，深入污染地带</p>
-          </header>
-          <div id="spire-map-nodes" class="purify-path"></div>
-          <p id="purify-map-hint" class="purify-map-hint">⚔️ 战斗 · ❓ 事件 · 🔥 休息 · 🏪 驿站奖励 · 👹 源点</p>
+        <div class="MapContainer">
+          <div class="purify-map-board">
+            <header class="purify-pane-head">
+              <h2 id="purify-map-title">污染地带路线图</h2>
+              <p id="purify-map-intro" class="purify-pane-desc">选择下一处净化点，深入污染地带</p>
+            </header>
+            <div id="spire-map-nodes" class="purify-path"></div>
+            <p id="purify-map-hint" class="purify-map-hint">⚔️ 战斗 · 🔥 休息 · 👹 源点 · 按 M 随时打开路线图</p>
+          </div>
         </div>
       </section>
 
@@ -411,6 +405,71 @@
         </div>
       </section>
     </main>
+
+    <div id="spire-overlay-menu" class="Overlay Overlay--middle" data-pos="topleft">
+      <button type="button" class="Overlay-toggle">菜单 Esc</button>
+      <div class="Overlay-content">
+        <div class="Box">
+          <h2 class="Title">净化远征</h2>
+          <p class="Box-sub">幻兽净化师 · 单机净化</p>
+          <ul class="Options">
+            <li><button type="button" id="btn-spire-back" class="Button" danger>放弃远征</button></li>
+          </ul>
+          <p class="auth-hint">M 路线图 · D 秘典 · A 待启 · S 余韵 · J 日志</p>
+        </div>
+      </div>
+      <figure class="Overlay-bg"></figure>
+    </div>
+
+    <div id="spire-overlay-map" class="Overlay" data-pos="topright">
+      <button type="button" class="Overlay-toggle"><u>M</u> 路线图</button>
+      <div class="Overlay-content MapContainer">
+        <div class="Box Box--map">
+          <h2 id="overlay-map-title">污染地带路线图</h2>
+          <p id="overlay-map-intro" class="Box-sub"></p>
+          <div id="spire-overlay-map-nodes" class="purify-path"></div>
+        </div>
+      </div>
+      <figure class="Overlay-bg"></figure>
+    </div>
+
+    <div id="spire-overlay-deck" class="Overlay" data-pos="topright2">
+      <button type="button" class="Overlay-toggle"><u>D</u> <span id="label-overlay-deck">秘典 10</span></button>
+      <div class="Overlay-content">
+        <div class="Box">
+          <h2>净化秘典</h2>
+          <ul id="spire-overlay-deck-list" class="Overlay-deck-list"></ul>
+        </div>
+      </div>
+      <figure class="Overlay-bg"></figure>
+    </div>
+
+    <div id="spire-overlay-draw" class="Overlay" data-pos="bottomleft">
+      <button type="button" class="Overlay-toggle"><u>A</u> <span id="label-overlay-draw">待启 0</span></button>
+      <div class="Overlay-content">
+        <div class="Box"><p id="overlay-draw-desc">待启牌堆中的技法会在调息时感通入手。</p></div>
+      </div>
+      <figure class="Overlay-bg"></figure>
+    </div>
+
+    <div id="spire-overlay-discard" class="Overlay" data-pos="bottomright">
+      <button type="button" class="Overlay-toggle"><u>S</u> <span id="label-overlay-discard">余韵 0</span></button>
+      <div class="Overlay-content">
+        <div class="Box"><p id="overlay-discard-desc">已打出的技法进入余韵，待启耗尽时会洗入待启。</p></div>
+      </div>
+      <figure class="Overlay-bg"></figure>
+    </div>
+
+    <div id="spire-overlay-log" class="Overlay" data-pos="topleft2">
+      <button type="button" class="Overlay-toggle"><u>J</u> 净化日志</button>
+      <div class="Overlay-content">
+        <div class="Box">
+          <h2>净化日志</h2>
+          <div id="spire-overlay-log-body" class="purify-journal purify-journal-overlay"></div>
+        </div>
+      </div>
+      <figure class="Overlay-bg"></figure>
+    </div>
   </div>
 
   <div id="dialog-root" class="dialog-root" aria-live="polite">
@@ -500,6 +559,6 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/Draggable.min.js"></script>
-  <script type="module" src="js/main.js?v=20250702drag"></script>
+  <script type="module" src="js/main.js?v=20250702overlays"></script>
 </body>
 </html>

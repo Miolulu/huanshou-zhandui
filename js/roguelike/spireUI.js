@@ -7,6 +7,7 @@ import { TERMS } from './lore.js';
 import { CombatTutorial } from './combatTutorial.js';
 import { PurifyBattleEffects } from './purifyBattleEffects.js';
 import { destroyCardDrag, enableCardDrag } from './cardDrag.js';
+import { SpireOverlays } from './spireOverlays.js';
 import { showToast } from '../appShell.js';
 
 function hpBarHtml(current, max, label = 'HP', color = 'hsl(120, 45%, 42%)', block = 0) {
@@ -38,6 +39,8 @@ export class SpireUI {
     this.runEndRecorded = false;
     this.combatBusy = false;
     this.battleEffects = new PurifyBattleEffects();
+    this.overlays = new SpireOverlays(document.getElementById('screen-spire'));
+    this.overlays.onOpen = (id) => this.onOverlayOpen(id);
     this.bindElements();
     this.bindActions();
   }
@@ -49,7 +52,12 @@ export class SpireUI {
       modeBadge: document.getElementById('purify-mode-badge'),
       hudHp: document.getElementById('spire-hp'),
       hudGold: document.getElementById('spire-gold'),
-      hudDeck: document.getElementById('spire-deck'),
+      sceneBg: document.getElementById('spire-scene-bg'),
+      overlayMapNodes: document.getElementById('spire-overlay-map-nodes'),
+      overlayMapTitle: document.getElementById('overlay-map-title'),
+      overlayMapIntro: document.getElementById('overlay-map-intro'),
+      overlayDeckList: document.getElementById('spire-overlay-deck-list'),
+      overlayLogBody: document.getElementById('spire-overlay-log-body'),
       viewMap: document.getElementById('spire-view-map'),
       viewCombat: document.getElementById('spire-view-combat'),
       viewReward: document.getElementById('spire-view-reward'),
@@ -222,11 +230,16 @@ export class SpireUI {
   render() {
     const state = this.run.getState();
     this.renderHud(state);
+    this.updateSceneBg(state);
+    this.overlays.updateLabels(state);
     this.hideAllViews();
 
     if (state.phase !== RUN_PHASES.COMBAT || !state.combat) {
       this.clearTutorialOverlay();
       destroyCardDrag();
+    }
+    if (state.phase === RUN_PHASES.VICTORY || state.phase === RUN_PHASES.DEFEAT) {
+      this.overlays?.closeAll();
     }
 
     switch (state.phase) {
@@ -286,10 +299,72 @@ export class SpireUI {
       this.el.hudGold.textContent = `💰 ${state.gold}`;
       this.el.hudGold.title = TERMS.exploreCoin;
     }
-    if (this.el.hudDeck) {
-      this.el.hudDeck.textContent = `📜 ${state.deckSize}`;
-      this.el.hudDeck.title = TERMS.codex;
+  }
+
+  updateSceneBg(state) {
+    if (!this.el.sceneBg) return;
+    const idx = Math.min(8, Math.max(0, (state.floor || 1) - 1));
+    this.el.sceneBg.dataset.roomIndex = String(idx);
+  }
+
+  onOverlayOpen(id) {
+    const state = this.run.getState();
+    if (id === 'spire-overlay-map') this.renderMapInto(state, this.el.overlayMapNodes, state.phase === RUN_PHASES.MAP);
+    if (id === 'spire-overlay-deck') this.renderDeckOverlay();
+    if (id === 'spire-overlay-log') this.renderLogOverlay(state);
+  }
+
+  renderDeckOverlay() {
+    if (!this.el.overlayDeckList) return;
+    const deck = this.run.deck || [];
+    this.el.overlayDeckList.innerHTML = deck.length
+      ? deck.map((c) => `<li>${c.name} <small>（${c.cost} 灵耗）</small></li>`).join('')
+      : '<li>秘典为空</li>';
+  }
+
+  renderLogOverlay(state) {
+    if (!this.el.overlayLogBody) return;
+    const log = state.combat?.log || [];
+    this.el.overlayLogBody.innerHTML = log.length
+      ? log.map((line) => `<div class="purify-log-line ${logLineClass(line)}">${line}</div>`).join('')
+      : '<div class="purify-log-line">暂无战斗记录</div>';
+  }
+
+  renderMapInto(state, container, interactive = true) {
+    if (!container) return;
+
+    if (state.mode === RUN_MODES.EXPEDITION && state.map) {
+      if (this.el.overlayMapTitle) this.el.overlayMapTitle.textContent = TERMS.mapTitle;
+      if (this.el.overlayMapIntro) this.el.overlayMapIntro.textContent = interactive ? TERMS.modeDesc : '当前远征进度（战斗中仅可查看）';
+      this.renderExpeditionMap(state, container, interactive);
+      return;
     }
+
+    if (state.phase === RUN_PHASES.COMBAT && !interactive) {
+      container.innerHTML = `<p class="Box-sub">战斗进行中 · 收势后可继续选择路线</p>`;
+      return;
+    }
+
+    if (this.el.overlayMapTitle) {
+      this.el.overlayMapTitle.textContent = state.mode === RUN_MODES.TIER
+        ? `阶层挑战 · 第 ${state.floor} / ${TIER_MAX_FLOOR} 层`
+        : `无限模式 · 第 ${state.floor} 层`;
+    }
+    if (this.el.overlayMapIntro) {
+      this.el.overlayMapIntro.textContent = '选择本层净化路线';
+    }
+
+    container.innerHTML = `
+      <div class="purify-path-row purify-floor-row">
+        ${state.floorChoices.map((n) =>
+          `<button type="button" class="purify-node available ${n.type === 'boss' ? 'boss-node' : ''}" data-type="${n.type || ''}" data-node="${n.id}">
+            <span class="purify-node-icon">${n.icon}</span>
+            <span class="purify-node-label">${n.label}</span>
+          </button>`
+        ).join('')}
+      </div>`;
+
+    if (interactive) this.bindMapNodeClicks(container);
   }
 
   renderMap(state) {
@@ -298,7 +373,7 @@ export class SpireUI {
     if (state.mode === RUN_MODES.EXPEDITION && state.map) {
       if (this.el.mapTitle) this.el.mapTitle.textContent = TERMS.mapTitle;
       if (this.el.mapIntro) this.el.mapIntro.textContent = TERMS.modeDesc;
-      this.renderExpeditionMap(state);
+      this.renderExpeditionMap(state, this.el.mapNodes, true);
       return;
     }
 
@@ -314,15 +389,20 @@ export class SpireUI {
     this.el.mapNodes.innerHTML = `
       <div class="purify-path-row purify-floor-row">
         ${state.floorChoices.map((n) =>
-          `<button type="button" class="purify-node available" data-node="${n.id}">
+          `<button type="button" class="purify-node available ${n.type === 'boss' ? 'boss-node' : ''}" data-type="${n.type || ''}" data-node="${n.id}">
             <span class="purify-node-icon">${n.icon}</span>
             <span class="purify-node-label">${n.label}</span>
           </button>`
         ).join('')}
       </div>`;
 
-    this.el.mapNodes.querySelectorAll('.purify-node').forEach((btn) => {
+    this.bindMapNodeClicks(this.el.mapNodes);
+  }
+
+  bindMapNodeClicks(container) {
+    container.querySelectorAll('.purify-node.available:not(.cleared)').forEach((btn) => {
       btn.onclick = () => {
+        this.overlays.closeAll();
         const r = this.run.startNode(btn.dataset.node);
         if (!r.ok && r.message) showToast(r.message);
         if (r.tutorial || r.ok) {
@@ -333,18 +413,19 @@ export class SpireUI {
     });
   }
 
-  renderExpeditionMap(state) {
+  renderExpeditionMap(state, container, interactive = true) {
     const rows = state.map.rows;
-    this.el.mapNodes.innerHTML = rows.map((row, ri) => {
+    container.innerHTML = rows.map((row, ri) => {
       const nodes = row.map((n) => {
         const cls = [
           'purify-node',
+          n.type === 'boss' ? 'boss-node' : '',
           n.cleared ? 'cleared' : '',
           n.available ? 'available' : '',
           n.id === state.map.currentNodeId ? 'current' : '',
         ].filter(Boolean).join(' ');
-        const disabled = !n.available || n.cleared;
-        return `<button type="button" class="${cls}" data-node="${n.id}" ${disabled ? 'disabled' : ''}>
+        const disabled = !interactive || !n.available || n.cleared;
+        return `<button type="button" class="${cls}" data-type="${n.type || ''}" data-node="${n.id}" ${disabled ? 'disabled' : ''}>
           <span class="purify-node-icon">${n.icon}</span>
           <span class="purify-node-label">${n.label}</span>
         </button>`;
@@ -352,16 +433,7 @@ export class SpireUI {
       return `<div class="purify-path-row" data-row="${ri}">${nodes}</div>`;
     }).join('');
 
-    this.el.mapNodes.querySelectorAll('.purify-node.available:not(.cleared)').forEach((btn) => {
-      btn.onclick = () => {
-        const r = this.run.startNode(btn.dataset.node);
-        if (!r.ok && r.message) showToast(r.message);
-        if (r.tutorial || (r.ok && r.phase === RUN_PHASES.COMBAT)) {
-          this.hooks.onEncounter?.(this.run.getState().lastEncounterIds, { seen: true });
-        }
-        this.render();
-      };
-    });
+    if (interactive) this.bindMapNodeClicks(container);
   }
 
   renderCombat(state) {
