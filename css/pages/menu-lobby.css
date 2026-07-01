@@ -1,7 +1,7 @@
 /* Vol.4 Lobby / 主菜单 */
 
-/* 登录 — Arcane Fantasy 背景 */
-#screen-auth {
+/* 登录 — Arcane Fantasy 背景（仅 active 时显示，避免覆盖 .screen { display: none }） */
+#screen-auth.active {
   min-height: 100vh;
   display: flex;
   align-items: center;

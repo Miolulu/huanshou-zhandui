@@ -24,7 +24,12 @@ let lobbyUI;
 let lastGameOptions = {};
 let appReady = false;
 
+function ensureGameEngine() {
+  initGameEngine();
+}
+
 function startGameFromRoom(playerConfigs, options = {}) {
+  ensureGameEngine();
   const room = roomManager.currentRoom;
   const mode = getGameMode(room?.modeId || options.modeId || 'ranked');
   lastGameOptions = {
@@ -40,6 +45,7 @@ function startGameFromRoom(playerConfigs, options = {}) {
 }
 
 function startQuickGame(playerConfigs, options) {
+  ensureGameEngine();
   lastGameOptions = options;
   showScreen('game');
   game.startGame(playerConfigs, options);
@@ -59,6 +65,7 @@ function leaveLobby() {
 function recoverSession() {
   const data = loadGameSession();
   if (!data) { showToast('没有可恢复的对局'); return; }
+  ensureGameEngine();
   lastGameOptions = data.meta || {};
   showScreen('game');
   if (game.restoreFromSession(data)) {
@@ -156,14 +163,14 @@ function initApp() {
   const recoverBtn = document.getElementById('btn-recover-session');
   if (recoverBtn) recoverBtn.onclick = recoverSession;
 
-  document.getElementById('btn-back-lobby').onclick = () => {
+  document.getElementById('btn-back-lobby')?.addEventListener('click', () => {
     if (confirm('确定退出对局？')) {
       clearGameSession();
       showScreen('menu');
       roomManager.leaveRoom();
       refreshMenuProfile();
     }
-  };
+  });
 
   document.getElementById('overlay').addEventListener('click', (e) => {
     if (e.target.id === 'btn-restart') {
@@ -244,7 +251,6 @@ function init() {
     const debugSpire = new URLSearchParams(location.search).get('debug') === 'spire' && isLocal;
 
     const afterAuth = () => {
-      initGameEngine();
       enterMainMenu();
     };
 

@@ -4,7 +4,7 @@ import { LEGACY_MODE_LIST, getGameMode, isModeUnlocked, buildPlayerConfigsForMod
 import { loadProfile, saveProfile, checkDailyLogin, claimLoginReward, DAILY_TASKS, expForLevel, signOut } from './playerProfile.js';
 import { getCurrentUsername } from './auth.js';
 import { formatRank } from './rank.js';
-import { startTutorial, shouldAutoStartTutorial } from './tutorial.js';
+import { startTutorial } from './tutorial.js';
 import { hasRecoverableSession } from './session.js';
 import { renderCompendiumPanel, renderPurifyRecords } from './compendiumUI.js';
 import { ensurePurifyProfile } from './roguelike/purifyProfile.js';
@@ -72,11 +72,11 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
     };
   }
 
-  document.getElementById('btn-show-join').onclick = () => {
-    document.getElementById('join-panel').classList.toggle('hidden');
-  };
+  document.getElementById('btn-show-join')?.addEventListener('click', () => {
+    document.getElementById('join-panel')?.classList.toggle('hidden');
+  });
 
-  document.getElementById('btn-join-room').onclick = () => {
+  document.getElementById('btn-join-room')?.addEventListener('click', () => {
     setMenuError('');
     const code = document.getElementById('input-room-code').value.trim();
     if (!code) { setMenuError('请输入房间号'); return; }
@@ -85,7 +85,7 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
     } catch (e) {
       setMenuError(e.message);
     }
-  };
+  });
 
   const params = new URLSearchParams(location.search);
   const roomCode = params.get('room');
@@ -107,9 +107,7 @@ export function initMenu(onCreateRoom, onJoinRoom, onQuickStart, onRecoverSessio
     };
   }
 
-  if (shouldAutoStartTutorial()) {
-    setTimeout(() => startTutorial(), 600);
-  }
+  // 净化远征使用实战引导（combatTutorial），不再自动弹出旧版自走棋教程
 }
 
 export function refreshMenuProfile() {

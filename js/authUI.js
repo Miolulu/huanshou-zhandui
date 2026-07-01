@@ -5,7 +5,14 @@ export function initAuth(onAuthenticated) {
   cleanupLegacyAuthData();
 
   if (isLoggedIn()) {
-    onAuthenticated();
+    try {
+      onAuthenticated();
+    } catch (err) {
+      console.error(err);
+      showScreen('auth');
+      const errLogin = document.getElementById('auth-login-error');
+      if (errLogin) errLogin.textContent = err.message || '自动登录失败，请重新登录';
+    }
     return;
   }
 
@@ -59,7 +66,12 @@ export function initAuth(onAuthenticated) {
       const password = document.getElementById('auth-login-password').value;
       await login(username, password);
       showToast('登录成功');
-      onAuthenticated();
+      try {
+        onAuthenticated();
+      } catch (err) {
+        console.error(err);
+        if (errLogin) errLogin.textContent = err.message || '进入主界面失败，请刷新重试';
+      }
     } catch (err) {
       if (errLogin) errLogin.textContent = err.message;
     }
@@ -76,7 +88,12 @@ export function initAuth(onAuthenticated) {
       if (password !== password2) throw new Error('两次密码不一致');
       await register(username, password, nickname);
       showToast('注册成功，欢迎加入幻兽战队！');
-      onAuthenticated();
+      try {
+        onAuthenticated();
+      } catch (err) {
+        console.error(err);
+        if (errRegister) errRegister.textContent = err.message || '进入主界面失败，请刷新重试';
+      }
     } catch (err) {
       if (errRegister) errRegister.textContent = err.message;
     }
