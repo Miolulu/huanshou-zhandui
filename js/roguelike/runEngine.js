@@ -128,9 +128,13 @@ export class RunEngine {
 
   playCard(cardUid, targetIndex = null) {
     if (this.phase !== RUN_PHASES.COMBAT || !this.combat) return { ok: false };
+    const wasTutorial = this.isTutorialCombat;
     const r = this.combat.playCard(cardUid, targetIndex);
     if (this.combat?.phase === 'won') this.onCombatWon();
     else if (this.combat?.phase === 'lost') this.onCombatLost();
+    if (wasTutorial && this.phase === RUN_PHASES.MAP) {
+      return { ...r, ok: r.ok !== false, tutorialFinished: true };
+    }
     return r;
   }
 
@@ -141,9 +145,13 @@ export class RunEngine {
 
   endCombatTurn() {
     if (this.phase !== RUN_PHASES.COMBAT || !this.combat) return { ok: false };
+    const wasTutorial = this.isTutorialCombat;
     const r = this.combat.endTurn();
     if (this.combat?.phase === 'won') this.onCombatWon();
     else if (this.combat?.phase === 'lost') this.onCombatLost();
+    if (wasTutorial && this.phase === RUN_PHASES.MAP) {
+      return { ...r, ok: r.ok !== false, tutorialFinished: true };
+    }
     return r;
   }
 

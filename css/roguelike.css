@@ -778,7 +778,7 @@
 }
 
 .purify-tutorial-host:not(.hidden) {
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .purify-tutorial-overlay {
@@ -789,6 +789,7 @@
   align-items: flex-end;
   justify-content: center;
   padding: 24px;
+  pointer-events: none;
 }
 
 .purify-tutorial-card {
@@ -829,8 +830,26 @@
   cursor: pointer;
 }
 
+.purify-tutorial-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.purify-tutorial-skip {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(160, 200, 100, 0.35);
+  background: transparent;
+  color: #8aa878;
+  cursor: pointer;
+}
+
 .purify-tutorial-highlight {
   position: relative;
   z-index: 301 !important;
+  pointer-events: auto !important;
   box-shadow: 0 0 0 3px rgba(240, 200, 80, 0.8), 0 0 24px rgba(240, 200, 80, 0.4) !important;
 }

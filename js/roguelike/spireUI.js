@@ -55,8 +55,8 @@ export class SpireUI {
         showToast('请按引导步骤操作');
         return;
       }
-      this.run.endCombatTurn();
-      this.tutorial?.onAction('end_turn');
+      const r = this.run.endCombatTurn();
+      this.afterCombatAction(r, () => this.tutorial?.onAction('end_turn'));
       this.render();
     });
     document.getElementById('btn-spire-skip-reward')?.addEventListener('click', () => {
@@ -81,6 +81,13 @@ export class SpireUI {
   finishRun(victory) {
     this.recordRunEnd(victory);
     this.onBack?.();
+  }
+
+  afterCombatAction(result, stepAction) {
+    stepAction?.();
+    if (result?.tutorialFinished && this.tutorial?.active) {
+      this.tutorial.onAction('win');
+    }
   }
 
   recordRunEnd(victory) {
@@ -243,6 +250,7 @@ export class SpireUI {
     if (state.isTutorialCombat && !this.tutorial) {
       this.tutorial = new CombatTutorial(() => {
         this.hooks.onTutorialComplete?.();
+        showToast('实战引导完成！继续你的净化远征');
         this.tutorial = null;
         this.renderTutorialOverlay(null);
       });
@@ -267,7 +275,9 @@ export class SpireUI {
     this.el.enemyArea.querySelectorAll('.purify-foe-card:not(.dead)').forEach((btn) => {
       btn.onclick = () => {
         this.run.setCombatTarget(Number(btn.dataset.target));
-        this.tutorial?.onAction('observe');
+        if (this.tutorial?.currentStep?.action === 'observe') {
+          this.tutorial.onAction('observe');
+        }
         this.render();
       };
     });
@@ -310,8 +320,12 @@ export class SpireUI {
         const card = c.hand.find((x) => x.uid === btn.dataset.uid);
         const r = this.run.playCard(btn.dataset.uid, c.targetIndex);
         if (!r.ok && r.message) showToast(r.message);
-        else if (card?.type === 'attack') this.tutorial?.onAction('play_attack');
-        else if (card?.type === 'skill') this.tutorial?.onAction('play_skill');
+        else {
+          this.afterCombatAction(r, () => {
+            if (card?.type === 'attack') this.tutorial?.onAction('play_attack');
+            else if (card?.type === 'skill') this.tutorial?.onAction('play_skill');
+          });
+        }
         this.render();
       };
     });
@@ -349,6 +363,10 @@ export class SpireUI {
     host.innerHTML = tutorial.getOverlayHtml();
     document.getElementById('btn-tutorial-next')?.addEventListener('click', () => {
       tutorial.skipObserve();
+      this.render();
+    });
+    document.getElementById('btn-tutorial-skip')?.addEventListener('click', () => {
+      tutorial.skipAll();
       this.render();
     });
     const step = tutorial.currentStep;

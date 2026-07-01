@@ -53,7 +53,6 @@ function startSpireRun(mode = RUN_MODES.EXPEDITION) {
     },
     onTutorialComplete: () => {
       profile = completeCombatTutorial(loadProfile());
-      showToast('实战引导完成！继续你的净化远征');
     },
     onRunEnd: (result) => {
       if (spireRunEndRecorded) return;

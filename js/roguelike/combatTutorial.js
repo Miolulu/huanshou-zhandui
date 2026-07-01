@@ -96,6 +96,13 @@ export class CombatTutorial {
     }
   }
 
+  skipAll() {
+    if (!this.active) return;
+    this.active = false;
+    this.stepIndex = COMBAT_TUTORIAL_STEPS.length;
+    this.onComplete?.();
+  }
+
   getOverlayHtml() {
     const step = this.currentStep;
     if (!step || !this.active) return '';
@@ -105,7 +112,10 @@ export class CombatTutorial {
           <span class="purify-tutorial-step">${this.stepIndex + 1} / ${COMBAT_TUTORIAL_STEPS.length}</span>
           <h3>${step.title}</h3>
           <p>${step.text}</p>
-          ${step.action === 'observe' ? '<button type="button" class="purify-tutorial-next" id="btn-tutorial-next">知道了</button>' : ''}
+          <div class="purify-tutorial-actions">
+            ${step.action === 'observe' ? '<button type="button" class="purify-tutorial-next" id="btn-tutorial-next">知道了</button>' : ''}
+            <button type="button" class="purify-tutorial-skip" id="btn-tutorial-skip">跳过引导</button>
+          </div>
         </div>
       </div>`;
   }

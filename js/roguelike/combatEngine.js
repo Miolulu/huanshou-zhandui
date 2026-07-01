@@ -24,6 +24,7 @@ export class CombatEngine {
       floor = 1,
       enemies = null,
       tutorial = false,
+      skipStartTurn = false,
     } = options;
     this.rng = rng;
     this.tier = tier;
@@ -52,7 +53,12 @@ export class CombatEngine {
     this.hand = [];
     this.discard = [];
     this.exhaust = [];
-    this.startTurn();
+    if (skipStartTurn) {
+      this.phase = 'player';
+      this.player.energy = this.player.maxEnergy;
+    } else {
+      this.startTurn();
+    }
   }
 
   get aliveEnemies() {
@@ -335,6 +341,7 @@ export function createTutorialCombat(deck) {
     floor: 1,
     enemies: [mushroom],
     tutorial: true,
+    skipStartTurn: true,
   });
   engine.hand = [
     { uid: 'tut_strike', id: 'purify_strike', name: '净化冲击', type: 'attack', cost: 1, damage: 8, desc: '对污化幻兽造成 8 点净化伤害' },
@@ -344,7 +351,7 @@ export function createTutorialCombat(deck) {
   engine.drawPile = [];
   engine.discard = [];
   engine.player.energy = 3;
-  engine.turn = 0;
+  engine.turn = 1;
   engine.log = [];
   engine.pushLog('【实战引导】污化·治愈菇 出现在你面前');
   engine.pushLog('按照提示完成第一次净化');
