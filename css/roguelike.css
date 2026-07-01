@@ -250,6 +250,7 @@
 
 /* ----- 战斗布局 ----- */
 .purify-battle {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: grid;
@@ -771,36 +772,24 @@
 }
 
 .purify-tutorial-host {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  pointer-events: none;
-}
-
-.purify-tutorial-host:not(.hidden) {
-  pointer-events: none;
-}
-
-.purify-tutorial-overlay {
   position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 24px;
-  pointer-events: none;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+  width: min(300px, calc(100% - 16px));
+  pointer-events: auto;
 }
 
-.purify-tutorial-card {
-  max-width: 480px;
-  width: 100%;
-  padding: 20px 22px;
-  border-radius: 16px;
-  background: rgba(12, 20, 10, 0.95);
-  border: 1px solid rgba(160, 200, 100, 0.35);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-  pointer-events: auto;
+.purify-tutorial-host.hidden {
+  display: none !important;
+}
+
+.purify-tutorial-banner {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(12, 20, 10, 0.96);
+  border: 1px solid rgba(160, 200, 100, 0.45);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
 }
 
 .purify-tutorial-step {
@@ -808,15 +797,17 @@
   color: #8aa878;
 }
 
-.purify-tutorial-card h3 {
+.purify-tutorial-banner h3 {
   color: #f0d878;
-  margin: 6px 0;
+  margin: 6px 0 4px;
+  font-size: 1rem;
 }
 
-.purify-tutorial-card p {
+.purify-tutorial-banner p {
   color: #c0d8b0;
-  line-height: 1.55;
-  font-size: 0.92rem;
+  line-height: 1.5;
+  font-size: 0.88rem;
+  margin: 0;
 }
 
 .purify-tutorial-next {
@@ -849,7 +840,6 @@
 
 .purify-tutorial-highlight {
   position: relative;
-  z-index: 301 !important;
-  pointer-events: auto !important;
-  box-shadow: 0 0 0 3px rgba(240, 200, 80, 0.8), 0 0 24px rgba(240, 200, 80, 0.4) !important;
+  z-index: 15 !important;
+  box-shadow: 0 0 0 3px rgba(240, 200, 80, 0.85), 0 0 20px rgba(240, 200, 80, 0.35) !important;
 }

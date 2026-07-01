@@ -85,7 +85,7 @@ export class CombatTutorial {
       this.stepIndex += 1;
       if (this.isDone()) {
         this.active = false;
-        this.onComplete?.();
+        this.onComplete?.({ skipped: false });
       }
     }
   }
@@ -100,22 +100,20 @@ export class CombatTutorial {
     if (!this.active) return;
     this.active = false;
     this.stepIndex = COMBAT_TUTORIAL_STEPS.length;
-    this.onComplete?.();
+    this.onComplete?.({ skipped: true });
   }
 
   getOverlayHtml() {
     const step = this.currentStep;
     if (!step || !this.active) return '';
     return `
-      <div class="purify-tutorial-overlay" id="purify-tutorial-overlay">
-        <div class="purify-tutorial-card">
-          <span class="purify-tutorial-step">${this.stepIndex + 1} / ${COMBAT_TUTORIAL_STEPS.length}</span>
-          <h3>${step.title}</h3>
-          <p>${step.text}</p>
-          <div class="purify-tutorial-actions">
-            ${step.action === 'observe' ? '<button type="button" class="purify-tutorial-next" id="btn-tutorial-next">知道了</button>' : ''}
-            <button type="button" class="purify-tutorial-skip" id="btn-tutorial-skip">跳过引导</button>
-          </div>
+      <div class="purify-tutorial-banner">
+        <span class="purify-tutorial-step">${this.stepIndex + 1} / ${COMBAT_TUTORIAL_STEPS.length}</span>
+        <h3>${step.title}</h3>
+        <p>${step.text}</p>
+        <div class="purify-tutorial-actions">
+          ${step.action === 'observe' ? '<button type="button" class="purify-tutorial-next" id="btn-tutorial-next">知道了</button>' : ''}
+          <button type="button" class="purify-tutorial-skip" id="btn-tutorial-skip">跳过引导</button>
         </div>
       </div>`;
   }

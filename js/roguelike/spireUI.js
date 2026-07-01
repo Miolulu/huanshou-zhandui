@@ -13,6 +13,7 @@ export class SpireUI {
     this.onBack = onBack;
     this.hooks = hooks;
     this.tutorial = null;
+    this.tutorialDismissed = false;
     this.runEndRecorded = false;
     this.bindElements();
     this.bindActions();
@@ -88,6 +89,25 @@ export class SpireUI {
     if (result?.tutorialFinished && this.tutorial?.active) {
       this.tutorial.onAction('win');
     }
+    if (!this.tutorial?.active) {
+      this.clearTutorialOverlay();
+    }
+  }
+
+  clearTutorialOverlay() {
+    const host = this.el.tutorialHost;
+    if (!host) return;
+    host.innerHTML = '';
+    host.classList.add('hidden');
+    document.querySelectorAll('.purify-tutorial-highlight').forEach((el) => {
+      el.classList.remove('purify-tutorial-highlight');
+    });
+  }
+
+  finishTutorialGuide() {
+    this.tutorialDismissed = true;
+    this.tutorial = null;
+    this.clearTutorialOverlay();
   }
 
   recordRunEnd(victory) {
@@ -107,6 +127,10 @@ export class SpireUI {
     const state = this.run.getState();
     this.renderHud(state);
     this.hideAllViews();
+
+    if (state.phase !== RUN_PHASES.COMBAT || !state.combat) {
+      this.clearTutorialOverlay();
+    }
 
     switch (state.phase) {
       case RUN_PHASES.MAP:
@@ -247,12 +271,11 @@ export class SpireUI {
     const c = state.combat;
     if (!c) return;
 
-    if (state.isTutorialCombat && !this.tutorial) {
-      this.tutorial = new CombatTutorial(() => {
+    if (state.isTutorialCombat && !this.tutorial && !this.tutorialDismissed) {
+      this.tutorial = new CombatTutorial(({ skipped } = {}) => {
         this.hooks.onTutorialComplete?.();
-        showToast('实战引导完成！继续你的净化远征');
-        this.tutorial = null;
-        this.renderTutorialOverlay(null);
+        this.finishTutorialGuide();
+        showToast(skipped ? '已跳过实战引导' : '实战引导完成！继续你的净化远征');
       });
     }
 
@@ -352,11 +375,7 @@ export class SpireUI {
     const host = this.el.tutorialHost;
     if (!host) return;
     if (!tutorial?.active) {
-      host.innerHTML = '';
-      host.classList.add('hidden');
-      document.querySelectorAll('.purify-tutorial-highlight').forEach((el) => {
-        el.classList.remove('purify-tutorial-highlight');
-      });
+      this.clearTutorialOverlay();
       return;
     }
     host.classList.remove('hidden');
@@ -368,6 +387,9 @@ export class SpireUI {
     document.getElementById('btn-tutorial-skip')?.addEventListener('click', () => {
       tutorial.skipAll();
       this.render();
+    });
+    document.querySelectorAll('.purify-tutorial-highlight').forEach((el) => {
+      el.classList.remove('purify-tutorial-highlight');
     });
     const step = tutorial.currentStep;
     if (step?.highlight) {
