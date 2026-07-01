@@ -105,7 +105,7 @@ button:not(:disabled),
 
 #screen-spire .Overlay-toggle {
   position: absolute;
-  z-index: 12;
+  z-index: 40;
   font-size: 0.88rem;
   padding: 0.55rem 0.75rem;
   user-select: none;
@@ -132,6 +132,15 @@ button:not(:disabled),
   top: auto;
   left: 50%;
   transform: translateX(-50%);
+}
+#screen-spire .Overlay[data-pos="midleft"] .Overlay-toggle {
+  top: 50%;
+  bottom: auto;
+  left: 0;
+  transform: translateY(-50%);
+  max-width: 5.5rem;
+  line-height: 1.15;
+  text-align: left;
 }
 
 #screen-spire .Overlay-content {
@@ -525,4 +534,10 @@ button:not(:disabled),
   }
 
   #screen-spire .Overlay[data-pos="topright2"] .Overlay-toggle { right: 4.5rem; font-size: 0.75rem; }
+
+  #screen-spire .Overlay[data-pos="midleft"] .Overlay-toggle {
+    font-size: 0.72rem;
+    max-width: 4.5rem;
+    padding: 0.45rem 0.55rem;
+  }
 }

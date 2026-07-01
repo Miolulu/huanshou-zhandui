@@ -48,20 +48,33 @@
 }
 
 /* ===== 受击 / 行动反馈 ===== */
+#screen-spire .Target--enemy.foe-hit .Target-sprite,
 .purify-foe-card.foe-hit,
 .purify-foe-card.foe-hit .purify-foe-icon {
   animation: foe-hit-shake 0.42s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
+#screen-spire .Target--enemy.foe-acting .Target-sprite,
 .purify-foe-card.foe-acting {
-  box-shadow: 0 0 28px rgba(255, 100, 100, 0.75) !important;
-  border-color: #ff6a6a !important;
-  transform: scale(1.04);
-  transition: transform 0.2s, box-shadow 0.2s;
+  filter: drop-shadow(0 0 18px rgba(255, 100, 100, 0.75));
 }
 
+#screen-spire .Target--enemy .Target-sprite.foe-lunge {
+  animation: foe-lunge-player 0.48s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+#screen-spire .Target--player.player-hit .Target-sprite {
+  animation: player-hit-shake 0.42s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+#screen-spire .Target--player.hit-flash .Target-sprite,
+#screen-spire .Target--player.hit-flash .Healthbar,
 .purify-foe-card.hit-flash {
   animation: hit-flash-red 0.38s ease;
+}
+
+#screen-spire .Target--player .Healthbar.healthbar-hit {
+  animation: healthbar-damage-pulse 0.55s ease;
 }
 
 .purify-self-stats.hit-flash {
@@ -72,16 +85,51 @@
   animation: heal-flash-green 0.45s ease;
 }
 
+#screen-spire .purify-battle.battle-shake,
 .purify-stage.battle-shake {
   animation: purify-shake 0.32s ease;
 }
 
+#screen-spire .purify-battle.combat-win-flash,
 .purify-stage.combat-win-flash {
   animation: win-flash 0.5s ease;
 }
 
+#screen-spire .purify-battle.combat-loss-flash,
 .purify-stage.combat-loss-flash {
   animation: loss-flash 0.5s ease;
+}
+
+.FCT--player-damage {
+  font-size: clamp(2.4rem, 6vw, 4rem) !important;
+  z-index: 36;
+  color: #ff4d6d !important;
+  text-shadow:
+    0 0 12px rgba(255, 40, 80, 0.85),
+    0 2px 0 #000,
+    0 0 24px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes foe-lunge-player {
+  0% { transform: translateX(0) scale(1); }
+  38% { transform: translateX(calc(-1 * min(34vw, 14rem))) scale(1.1); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes player-hit-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes healthbar-damage-pulse {
+  0%, 100% { box-shadow: none; filter: none; }
+  35% {
+    box-shadow: 0 0 18px rgba(255, 70, 90, 0.95), inset 0 0 12px rgba(255, 40, 60, 0.45);
+    filter: brightness(1.25);
+  }
 }
 
 @keyframes foe-hit-shake {

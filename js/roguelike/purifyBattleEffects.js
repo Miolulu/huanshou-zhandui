@@ -3,6 +3,8 @@ import { combatSounds } from './combatSounds.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const ATTACK_INTENTS = new Set(['attack', 'strong_attack', 'attack_defend']);
+
 export class PurifyBattleEffects {
   /**
    * @param {object} refs
@@ -64,12 +66,16 @@ export class PurifyBattleEffects {
             combatSounds.blockGain();
           } else {
             combatSounds.hitPlayer();
-            if (event.amount > 0) this.floatOnPlayer(`-${event.amount}`, 'damage');
+            if (event.amount > 0) {
+              this.floatOnPlayerDamage(`-${event.amount}`);
+              this.shakePlayer();
+              this.flashPlayer('hit-flash');
+              this.flashPlayerHealth();
+            }
             if (event.blocked > 0) this.floatOnPlayer(`🛡${event.blocked}`, 'block');
-            this.flashPlayer('hit-flash');
             this.shakeStage();
           }
-          await delay(480);
+          await delay(520);
         } else {
           combatSounds.hitEnemy();
           if (event.amount > 0) {
@@ -88,8 +94,12 @@ export class PurifyBattleEffects {
         await delay(300);
         break;
       case 'ENEMY_ACTION':
-        this.highlightFoe(event.enemyIndex);
-        await delay(420);
+        if (ATTACK_INTENTS.has(event.intent)) {
+          await this.animateEnemyLunge(event.enemyIndex);
+        } else {
+          this.highlightFoe(event.enemyIndex);
+          await delay(420);
+        }
         break;
       case 'BUFF':
         this.floatOnFoe(event.enemyIndex, `+${event.amount}`, 'buff');
@@ -223,6 +233,45 @@ export class PurifyBattleEffects {
     const card = this.playerArea?.querySelector('.Target--player') || this.playerArea;
     const anchor = card?.querySelector('.Target-combatText') || card?.querySelector('.Healthbar') || card;
     this.floatAt(anchor, text, kind);
+  }
+
+  floatOnPlayerDamage(text) {
+    const card = this.playerArea?.querySelector('.Target--player') || this.playerArea;
+    const sprite = card?.querySelector('.Target-sprite');
+    const anchor = sprite || card?.querySelector('.Healthbar') || card;
+    if (!anchor || !text || !this.layer) return;
+    const rect = anchor.getBoundingClientRect();
+    const layerRect = this.layer.getBoundingClientRect();
+    const node = document.createElement('div');
+    node.className = 'FCT FCT--damage FCT--player-damage';
+    node.textContent = text;
+    node.style.left = `${rect.left - layerRect.left + rect.width / 2}px`;
+    node.style.top = `${rect.top - layerRect.top + rect.height * 0.22}px`;
+    this.layer.appendChild(node);
+    node.addEventListener('animationend', () => node.remove(), { once: true });
+  }
+
+  async animateEnemyLunge(index) {
+    const card = this.enemyArea?.querySelector(`.Target[data-target="${index}"]`);
+    const sprite = card?.querySelector('.Target-sprite');
+    if (!card || !sprite) return;
+    card.classList.add('foe-acting');
+    sprite.classList.add('foe-lunge');
+    await delay(480);
+    sprite.classList.remove('foe-lunge');
+    card.classList.remove('foe-acting');
+  }
+
+  shakePlayer() {
+    const card = this.playerArea?.querySelector('.Target--player') || this.playerArea;
+    card?.classList.add('player-hit');
+    setTimeout(() => card?.classList.remove('player-hit'), 450);
+  }
+
+  flashPlayerHealth() {
+    const bar = this.playerArea?.querySelector('.Healthbar');
+    bar?.classList.add('healthbar-hit');
+    setTimeout(() => bar?.classList.remove('healthbar-hit'), 550);
   }
 
   shakeFoe(index) {
