@@ -365,7 +365,7 @@
   flex-shrink: 1;
   margin-left: -1.35rem;
   cursor: grab;
-  transform: none !important;
+  touch-action: none;
 }
 
 .purify-hand .Card.is-dragging,
@@ -423,8 +423,8 @@
   margin-left: 0;
 }
 
-.purify-hand .purify-card:hover:not(.disabled) {
-  transform: translateY(-1rem) scale(1.08) !important;
+.purify-hand .purify-card:hover:not(.disabled):not(.is-dragging) {
+  transform: translateY(-1rem) scale(1.08);
   box-shadow: 0 0 0.75em gold !important;
   z-index: 5;
 }

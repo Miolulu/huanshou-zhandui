@@ -120,7 +120,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  background: transparent;
+  overflow: visible;
 }
 
 #screen-spire .Target-sprite img {
@@ -133,7 +134,7 @@
 #screen-spire .Target-sprite--enemy img,
 #screen-spire .Target--player .Target-sprite img {
   mix-blend-mode: normal;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 #screen-spire .Target--enemy .Target-sprite {

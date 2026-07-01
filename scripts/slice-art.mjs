@@ -31,29 +31,126 @@ function shrinkRegion(region, px = 4) {
   };
 }
 
-async function keyBlackToAlpha(input, { tolerance = 24, softness = 42 } = {}) {
+function colorDist(r, g, b, r2, g2, b2) {
+  return Math.sqrt((r - r2) ** 2 + (g - g2) ** 2 + (b - b2) ** 2);
+}
+
+function sampleEdgeBackground(data, width, height) {
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let n = 0;
+  const stepX = Math.max(1, Math.floor(width / 24));
+  const stepY = Math.max(1, Math.floor(height / 24));
+
+  for (let x = 0; x < width; x += stepX) {
+    for (const y of [0, height - 1]) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3] < 8) continue;
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      n += 1;
+    }
+  }
+  for (let y = 0; y < height; y += stepY) {
+    for (const x of [0, width - 1]) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3] < 8) continue;
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      n += 1;
+    }
+  }
+
+  if (!n) return [12, 14, 28];
+  return [Math.round(r / n), Math.round(g / n), Math.round(b / n)];
+}
+
+function floodFillMatte(data, width, height, bg, threshold = 52) {
+  const total = width * height;
+  const visited = new Uint8Array(total);
+  const queue = new Int32Array(total);
+  let head = 0;
+  let tail = 0;
+
+  const tryPush = (idx) => {
+    if (idx < 0 || idx >= total || visited[idx]) return;
+    const i = idx * 4;
+    const dist = colorDist(data[i], data[i + 1], data[i + 2], bg[0], bg[1], bg[2]);
+    if (dist > threshold) return;
+    visited[idx] = 1;
+    queue[tail++] = idx;
+  };
+
+  for (let x = 0; x < width; x++) {
+    tryPush(x);
+    tryPush((height - 1) * width + x);
+  }
+  for (let y = 0; y < height; y++) {
+    tryPush(y * width);
+    tryPush(y * width + width - 1);
+  }
+
+  while (head < tail) {
+    const idx = queue[head++];
+    const i = idx * 4;
+    data[i + 3] = 0;
+    const x = idx % width;
+    const y = (idx / width) | 0;
+    if (x > 0) tryPush(idx - 1);
+    if (x < width - 1) tryPush(idx + 1);
+    if (y > 0) tryPush(idx - width);
+    if (y < height - 1) tryPush(idx + width);
+  }
+
+  // 羽化边缘，去掉深色硬边
+  const alphaCopy = new Uint8Array(total);
+  for (let idx = 0; idx < total; idx++) alphaCopy[idx] = data[idx * 4 + 3];
+
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      const i = idx * 4;
+      if (alphaCopy[idx] > 0) continue;
+      let near = 0;
+      for (const n of [idx - 1, idx + 1, idx - width, idx + width]) {
+        if (alphaCopy[n] > 0) near += 1;
+      }
+      if (!near) continue;
+      const dist = colorDist(data[i], data[i + 1], data[i + 2], bg[0], bg[1], bg[2]);
+      if (dist < threshold + 18) data[i + 3] = 0;
+      else if (dist < threshold + 36) {
+        const t = (dist - threshold - 18) / 18;
+        data[i + 3] = Math.round(255 * Math.min(1, Math.max(0, t)));
+      }
+    }
+  }
+}
+
+async function matteSprite(input) {
   const source = typeof input?.ensureAlpha === 'function' ? input : sharp(input);
   const { data, info } = await source
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const lum = Math.max(r, g, b);
-    if (lum <= tolerance) {
-      data[i + 3] = 0;
-    } else if (lum <= softness) {
-      const t = (lum - tolerance) / (softness - tolerance);
-      data[i + 3] = Math.round(data[i + 3] * t);
-    }
-  }
+  const bg = sampleEdgeBackground(data, info.width, info.height);
+  const threshold = info.width > 200 ? 58 : 52;
+  floodFillMatte(data, info.width, info.height, bg, threshold);
 
-  return sharp(data, {
+  let result = sharp(data, {
     raw: { width: info.width, height: info.height, channels: 4 },
   });
+
+  try {
+    result = result.trim({ threshold: 1 });
+  } catch {
+    /* keep */
+  }
+
+  return result;
 }
 
 async function trimBlackEdges(input, threshold = 6) {
@@ -89,10 +186,7 @@ async function crop(outRel, file, region, { mode = 'card' } = {}) {
     } catch {
       /* keep extracted buffer */
     }
-    pipeline = await keyBlackToAlpha(sharp(buf), {
-      tolerance: mode === 'icon' ? 18 : 26,
-      softness: mode === 'icon' ? 34 : 48,
-    });
+    pipeline = await matteSprite(sharp(buf));
   } else if (mode === 'card') {
     try {
       pipeline = await trimBlackEdges(pipeline, 5);

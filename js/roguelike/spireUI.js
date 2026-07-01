@@ -168,17 +168,18 @@ export class SpireUI {
     });
   }
 
-  async performCombatAction(actionFn, stepAction, { cardEl } = {}) {
+  async performCombatAction(actionFn, stepAction, { cardEl, fromDrag } = {}) {
     if (this.combatBusy) return null;
     this.combatBusy = true;
     destroyCardDrag();
 
-    if (cardEl) await this.battleEffects.animateCardPlay(cardEl);
+    if (cardEl && !fromDrag) await this.battleEffects.animateCardPlay(cardEl);
 
     const result = actionFn();
     if (!result?.ok) {
       if (result?.message) showToast(result.message);
       this.combatBusy = false;
+      this.render();
       return result;
     }
 
@@ -489,8 +490,6 @@ export class SpireUI {
       return renderPurifyCardHtml(card, { playable, handCard: true });
     }).join('');
 
-    this.setupCardDrag(c);
-
     this.updateCombatChrome(c);
 
     if (this.el.combatLog) {
@@ -506,19 +505,25 @@ export class SpireUI {
     }
 
     this.renderTutorialOverlay(this.tutorial);
+
+    requestAnimationFrame(() => {
+      if (!this.combatBusy) this.setupCardDrag(c);
+    });
   }
 
   setupCardDrag(c) {
-    if (!this.el.combatBattle || c.phase !== 'player' || this.combatBusy) return;
+    if (!this.el.combatBattle || !c || c.phase !== 'player' || this.combatBusy) return;
     if (typeof window.gsap === 'undefined' || typeof window.Draggable === 'undefined') return;
 
     enableCardDrag(this.el.combatBattle, {
-      getTargetIndex: () => c.targetIndex,
+      getTargetIndex: () => this.run.getState().combat?.targetIndex ?? 0,
       onPlay: (cardEl, targetIndex) => {
         if (this.combatBusy) return;
-        const card = c.hand.find((x) => x.uid === cardEl.dataset.uid);
+        const live = this.run.getState().combat;
+        if (!live) return;
+        const card = live.hand.find((x) => x.uid === cardEl.dataset.uid);
         if (!card) return;
-        const tutorialOk = !this.tutorial?.active || this.tutorial.canPlayCard(card, c);
+        const tutorialOk = !this.tutorial?.active || this.tutorial.canPlayCard(card, live);
         if (!tutorialOk) {
           showToast('请按引导步骤操作');
           this.render();

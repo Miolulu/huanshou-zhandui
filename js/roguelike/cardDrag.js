@@ -9,6 +9,15 @@ let dragInstances = [];
 
 const OVER_CLASS = 'is-dragOver';
 
+function ensureDragPlugin() {
+  const gsap = window.gsap;
+  const Draggable = window.Draggable;
+  if (gsap?.registerPlugin && Draggable) {
+    gsap.registerPlugin(Draggable);
+  }
+  return { gsap, Draggable };
+}
+
 function cardTargetType(cardType) {
   if (cardType === 'attack') return 'enemy';
   return 'player';
@@ -41,7 +50,7 @@ function resolveTargetIndex(targetEl, fallbackIndex) {
 }
 
 export function destroyCardDrag() {
-  const gsap = window.gsap;
+  const { gsap } = ensureDragPlugin();
   dragInstances.forEach((d) => {
     if (gsap && d.target) gsap.set(d.target, { x: 0, y: 0, clearProps: 'transform' });
     d.kill();
@@ -58,8 +67,7 @@ export function destroyCardDrag() {
  * @param {(cardEl: HTMLElement, targetIndex: number) => void} opts.onPlay
  */
 export function enableCardDrag(root, { getTargetIndex, onPlay }) {
-  const gsap = window.gsap;
-  const Draggable = window.Draggable;
+  const { gsap, Draggable } = ensureDragPlugin();
   if (!gsap || !Draggable || !root) return;
 
   destroyCardDrag();
@@ -68,23 +76,29 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
   const cards = root.querySelectorAll('#spire-hand .Card:not(.disabled)');
 
   cards.forEach((card) => {
+    gsap.set(card, { x: 0, y: 0 });
+
     const draggable = Draggable.create(card, {
       type: 'x,y',
       zIndexBoost: true,
       dragClickables: true,
       allowEventDefault: true,
-      minimumMovement: 6,
+      minimumMovement: 4,
+      inertia: false,
 
-      onDragStart() {
-        gsap.killTweensOf(this.target);
-        this.startX = 0;
-        this.startY = 0;
-        card.classList.add('is-dragging');
+      onPress() {
         combatSounds.selectCard();
       },
 
+      onDragStart() {
+        gsap.killTweensOf(this.target);
+        this.startX = this.x;
+        this.startY = this.y;
+        card.classList.add('is-dragging');
+      },
+
       onDrag() {
-        if (card.disabled || card.classList.contains('disabled')) {
+        if (card.classList.contains('disabled')) {
           this.endDrag();
           return;
         }
@@ -117,7 +131,7 @@ export function enableCardDrag(root, { getTargetIndex, onPlay }) {
             y: '-=40',
             ease: 'power2.in',
             onComplete: () => {
-              gsap.set(card, { x: 0, y: 0, scale: 1, opacity: 1 });
+              gsap.set(card, { x: 0, y: 0, scale: 1, opacity: 1, clearProps: 'transform' });
               onPlay?.(card, targetIndex);
             },
           });

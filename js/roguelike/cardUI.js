@@ -48,7 +48,7 @@ export function renderPurifyCardHtml(card, {
       <h3 class="Card-name">${card.name}</h3>
       <p class="Card-description">${card.desc || ''}</p>
     </div>
-  </${tag}>`;
+  </${actualTag}>`;
 }
 
 export function renderShopOfferHtml(item, index, { gold = 0 } = {}) {
