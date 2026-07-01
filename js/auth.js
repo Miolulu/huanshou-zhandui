@@ -1,9 +1,8 @@
-/** 本地账号登录（浏览器 localStorage，成长数据按账号隔离） */
+/** 本地账号注册 / 登录（浏览器 localStorage，成长数据按账号隔离） */
 
 const ACCOUNTS_KEY = 'hszd_accounts_v1';
 const SESSION_KEY = 'hszd_session_v1';
 const LEGACY_PROFILE_KEY = 'hszd_player_profile_v1';
-const REGISTRATION_ENABLED = false;
 
 function loadAccounts() {
   try {
@@ -47,27 +46,22 @@ function validateNickname(nickname) {
   return null;
 }
 
-/** 清理旧版/无效本地数据（登录页初始化时调用一次） */
+/** 清理旧版全局档案与无效 session，不影响已注册账号 */
 export function cleanupLegacyAuthData() {
   localStorage.removeItem(LEGACY_PROFILE_KEY);
 
   try {
     const raw = localStorage.getItem(SESSION_KEY);
-    if (raw) {
-      const session = JSON.parse(raw);
-      const accounts = loadAccounts();
-      const acc = accounts[session.usernameKey];
-      if (!acc || acc.id !== session.accountId) {
-        localStorage.removeItem(SESSION_KEY);
-      }
+    if (!raw) return;
+    const session = JSON.parse(raw);
+    const accounts = loadAccounts();
+    const acc = accounts[session.usernameKey];
+    if (!acc || acc.id !== session.accountId) {
+      localStorage.removeItem(SESSION_KEY);
     }
   } catch {
     localStorage.removeItem(SESSION_KEY);
   }
-}
-
-export function isRegistrationEnabled() {
-  return REGISTRATION_ENABLED;
 }
 
 export function getSession() {
@@ -100,9 +94,6 @@ export function getCurrentUsername() {
 }
 
 export async function register(username, password, nickname) {
-  if (!REGISTRATION_ENABLED) {
-    throw new Error('注册功能已关闭，请使用已有账号登录');
-  }
   const uErr = validateUsername(username);
   if (uErr) throw new Error(uErr);
   const pErr = validatePassword(password);
@@ -143,7 +134,7 @@ export async function login(username, password) {
   const key = username.trim().toLowerCase();
   const accounts = loadAccounts();
   const acc = accounts[key];
-  if (!acc) throw new Error('账号不存在');
+  if (!acc) throw new Error('账号不存在，请先注册');
   const hash = await hashPassword(password);
   if (hash !== acc.passwordHash) throw new Error('密码错误');
 
