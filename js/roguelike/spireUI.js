@@ -100,7 +100,7 @@ export class SpireUI {
         return;
       }
       this.performCombatAction(
-        () => this.run.endCombatTurn(),
+        () => this.run.endCombatTurn({ deferNewTurn: true }),
         () => this.tutorial?.onAction('end_turn'),
       );
     });
@@ -217,8 +217,18 @@ export class SpireUI {
     this.render();
     this.bindBattleEffectRefs();
 
-    const events = (result.events || []).filter((e) => e.type !== 'HAND_DISCARDED');
+    let events = (result.events || []).filter((e) => e.type !== 'HAND_DISCARDED');
+    if (result.needsNewTurn) {
+      events = events.filter((e) => e.type !== 'TURN_START');
+    }
     await this.battleEffects.playSequence(events);
+
+    if (result.needsNewTurn) {
+      const next = this.run.beginCombatPlayerTurn();
+      if (next.ok) {
+        await this.battleEffects.playSequence(next.events || []);
+      }
+    }
 
     const endBtn = document.getElementById('btn-spire-end-turn');
     endBtn?.classList.add('pokeball-shake');
@@ -227,9 +237,8 @@ export class SpireUI {
     this.combatBusy = false;
 
     const phase = this.run.getState().phase;
-    if (phase !== RUN_PHASES.COMBAT) {
-      this.render();
-    } else {
+    this.render();
+    if (phase === RUN_PHASES.COMBAT) {
       const combat = this.run.getState().combat;
       this.updateCombatChrome(combat);
       this.setupCardDrag(combat);

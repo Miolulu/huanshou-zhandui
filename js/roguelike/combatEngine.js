@@ -283,6 +283,16 @@ export class CombatEngine {
       this.emit({ type: COMBAT_EVENT.COMBAT_WON });
       return { ok: true, events: this.drainEvents() };
     }
+    return { ok: true, events: this.drainEvents(), needsNewTurn: true };
+  }
+
+  /** 敌方回合结束后开启新玩家回合（对齐 Slay the Web：先怪物行动，再清护幕抽牌） */
+  beginPlayerTurn() {
+    if (this.phase !== 'enemy') return { ok: false, events: [] };
+    if (this.player.hp <= 0 || !this.aliveEnemies.length) {
+      return { ok: false, events: [] };
+    }
+    this.beginAction();
     this.startTurn();
     return { ok: true, events: this.drainEvents() };
   }

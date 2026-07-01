@@ -67,7 +67,8 @@ export class PurifyBattleEffects {
           } else {
             combatSounds.hitPlayer();
             if (event.amount > 0) {
-              this.floatOnPlayerDamage(`-${event.amount}`);
+              const offsetX = (event.enemyIndex ?? 0) * 32 - 16;
+              this.floatOnPlayerDamage(`-${event.amount}`, { offsetX });
               this.shakePlayer();
               this.flashPlayer('hit-flash');
               this.flashPlayerHealth();
@@ -235,7 +236,7 @@ export class PurifyBattleEffects {
     this.floatAt(anchor, text, kind);
   }
 
-  floatOnPlayerDamage(text) {
+  floatOnPlayerDamage(text, { offsetX = 0 } = {}) {
     const card = this.playerArea?.querySelector('.Target--player') || this.playerArea;
     const sprite = card?.querySelector('.Target-sprite');
     const anchor = sprite || card?.querySelector('.Healthbar') || card;
@@ -245,7 +246,7 @@ export class PurifyBattleEffects {
     const node = document.createElement('div');
     node.className = 'FCT FCT--damage FCT--player-damage';
     node.textContent = text;
-    node.style.left = `${rect.left - layerRect.left + rect.width / 2}px`;
+    node.style.left = `${rect.left - layerRect.left + rect.width / 2 + offsetX}px`;
     node.style.top = `${rect.top - layerRect.top + rect.height * 0.22}px`;
     this.layer.appendChild(node);
     node.addEventListener('animationend', () => node.remove(), { once: true });
