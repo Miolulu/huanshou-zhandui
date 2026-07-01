@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/bg-layout.css">
   <link rel="stylesheet" href="css/roguelike.css">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/slaytheweb-ui.css">
 </head>
 <body>
   <!-- ===== 登录 / 注册 ===== -->
@@ -333,7 +334,8 @@
   </div>
 
   <!-- ===== 净化远征（单机） ===== -->
-  <div id="screen-spire" class="screen purify-screen battle-bg">
+  <div id="screen-spire" class="screen purify-screen">
+    <div class="purify-scene-bg" aria-hidden="true"></div>
     <header class="purify-topbar">
       <button type="button" id="btn-spire-back" class="purify-back">退出远征</button>
       <div class="purify-brand">
@@ -373,10 +375,11 @@
                 <span class="purify-spirit-label">灵力</span>
                 <div id="spire-energy" class="purify-spirit-orbs"></div>
               </div>
-              <button type="button" id="btn-spire-end-turn" class="purify-end-turn pokeball-btn"><span class="pokeball-label">收势</span></button>
+              <button type="button" id="btn-spire-end-turn" class="purify-end-turn EndTurn">收势</button>
             </div>
             <div id="spire-player" class="purify-self-zone"></div>
           </div>
+          <aside id="spire-piles" class="purify-piles-bar" aria-label="牌堆"></aside>
           <div class="purify-hand-wrap">
             <span class="purify-hand-label">当前技法</span>
             <div id="spire-hand" class="purify-hand"></div>

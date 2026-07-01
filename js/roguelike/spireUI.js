@@ -1,17 +1,17 @@
 /** 幻兽净化师 · 净化远征 UI */
 import { RUN_PHASES, RUN_MODES, TIER_MAX_FLOOR } from './runEngine.js';
 import { modeLabel } from './floorMap.js';
-import { cardTypeClass, cardTypeLabel } from './cardPool.js';
+import { renderPurifyCardHtml } from './cardUI.js';
 import { intentIcon, intentLabel } from './enemies.js';
 import { TERMS } from './lore.js';
 import { CombatTutorial } from './combatTutorial.js';
 import { showToast } from '../appShell.js';
 
-function hpBarHtml(current, max, label = 'HP', color = 'var(--grass-green)') {
+function hpBarHtml(current, max, label = 'HP', color = 'hsl(120, 45%, 42%)') {
   const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
-  return `<div class="hp-bar" role="progressbar" aria-valuenow="${current}" aria-valuemax="${max}">
-    <div class="hp-fill" style="width:${pct}%;background:${color}"></div>
-    <span class="hp-text">${label} ${current}/${max}</span>
+  return `<div class="Healthbar hp-bar" role="progressbar" aria-valuenow="${current}" aria-valuemax="${max}">
+    <p class="Healthbar-label hp-text"><span>${label} ${current}</span>/${max}</p>
+    <div class="Healthbar-bar hp-fill" style="width:${pct}%;background:${color}"></div>
   </div>`;
 }
 
@@ -46,6 +46,7 @@ export class SpireUI {
       enemyArea: document.getElementById('spire-enemy'),
       playerArea: document.getElementById('spire-player'),
       hand: document.getElementById('spire-hand'),
+      piles: document.getElementById('spire-piles'),
       energy: document.getElementById('spire-energy'),
       combatLog: document.getElementById('spire-combat-log'),
       rewardCards: document.getElementById('spire-reward-cards'),
@@ -300,7 +301,7 @@ export class SpireUI {
         <div class="purify-foe-icon">${e.icon || '👹'}</div>
         <div class="purify-foe-name">${e.name}</div>
         ${e.desc && enemies.length === 1 ? `<div class="purify-foe-desc">${e.desc}</div>` : ''}
-        ${hpBarHtml(e.hp, e.maxHp, TERMS.taint, 'var(--grass-green)')}
+        ${hpBarHtml(e.hp, e.maxHp, TERMS.taint, 'hsl(0, 55%, 45%)')}
         ${e.block ? `<div class="purify-foe-barrier">🛡 ${e.block}</div>` : ''}
         ${!dead ? `<div class="purify-intent">${intentIcon(e.intent)} ${intentLabel(e.intent)}</div>` : '<div class="purify-foe-dead">已净化</div>'}
       </button>`;
@@ -319,20 +320,22 @@ export class SpireUI {
     const p = c.player;
     this.el.playerArea.innerHTML = `
       <div class="purify-self-stats">
-        ${hpBarHtml(p.hp, p.maxHp, TERMS.mind, 'var(--water-blue)')}
+        ${hpBarHtml(p.hp, p.maxHp, TERMS.mind, 'hsl(194, 55%, 48%)')}
         <div class="purify-stat">🛡 ${TERMS.barrier} ${p.block}</div>
         ${c.strength ? `<div class="purify-stat">💪 ${TERMS.purifyPower} ${c.strength}</div>` : ''}
         ${c.weak ? `<div class="purify-stat miasma">${TERMS.miasma} ${c.weak}</div>` : ''}
-      </div>
-      <div class="purify-piles">
-        <span>${TERMS.drawPile} ${c.drawCount}</span>
-        <span>${TERMS.discardPile} ${c.discardCount}</span>
-        <span>${TERMS.exhaustPile} ${c.exhaustCount}</span>
       </div>`;
+
+    if (this.el.piles) {
+      this.el.piles.innerHTML = `
+        <div class="purify-pile" title="${TERMS.drawPile}"><strong>${c.drawCount}</strong>${TERMS.drawPile}</div>
+        <div class="purify-pile" title="${TERMS.discardPile}"><strong>${c.discardCount}</strong>${TERMS.discardPile}</div>
+        <div class="purify-pile" title="${TERMS.exhaustPile}"><strong>${c.exhaustCount}</strong>${TERMS.exhaustPile}</div>`;
+    }
 
     if (this.el.energy) {
       this.el.energy.innerHTML = Array.from({ length: p.maxEnergy }, (_, i) =>
-        `<span class="purify-orb ${i < p.energy ? 'filled' : ''}"></span>`
+        `<span class="EnergyBadge ${i < p.energy ? 'filled' : 'empty'}" aria-hidden="true"><span>✦</span></span>`
       ).join('');
     }
 
@@ -340,13 +343,7 @@ export class SpireUI {
       const energyOk = card.cost <= p.energy && c.phase === 'player';
       const tutorialOk = !this.tutorial?.active || this.tutorial.canPlayCard(card, c);
       const playable = energyOk && tutorialOk;
-      return `<button type="button" class="purify-card ${cardTypeClass(card.type)} ${playable ? '' : 'disabled'}"
-        data-uid="${card.uid}" ${playable ? '' : 'disabled'}>
-        <div class="purify-card-cost">${card.cost}</div>
-        <div class="purify-card-name">${card.name}</div>
-        <div class="purify-card-type">${cardTypeLabel(card.type)}</div>
-        <div class="purify-card-desc">${card.desc || ''}</div>
-      </button>`;
+      return renderPurifyCardHtml(card, { playable });
     }).join('');
 
     this.el.hand.querySelectorAll('.purify-card:not(.disabled)').forEach((btn) => {
@@ -374,8 +371,7 @@ export class SpireUI {
     if (endBtn) {
       const canEnd = c.phase === 'player' && (!this.tutorial?.active || this.tutorial.canEndTurn());
       endBtn.disabled = !canEnd;
-      const label = endBtn.querySelector('.pokeball-label');
-      if (label) label.textContent = TERMS.endTurn;
+      endBtn.textContent = TERMS.endTurn;
     }
 
     if (this.el.combatLog) {
@@ -418,12 +414,7 @@ export class SpireUI {
   renderReward(state) {
     if (!this.el.rewardCards) return;
     this.el.rewardCards.innerHTML = state.rewardOptions.map((card) =>
-      `<button type="button" class="purify-card purify-reward-card ${cardTypeClass(card.type)}" data-uid="${card.uid}">
-        <div class="purify-card-cost">${card.cost}</div>
-        <div class="purify-card-name">${card.name}</div>
-        <div class="purify-card-type">${cardTypeLabel(card.type)}</div>
-        <div class="purify-card-desc">${card.desc || ''}</div>
-      </button>`
+      renderPurifyCardHtml(card, { playable: true, extraClass: 'purify-reward-card' })
     ).join('');
 
     this.el.rewardCards.querySelectorAll('.purify-reward-card').forEach((btn) => {

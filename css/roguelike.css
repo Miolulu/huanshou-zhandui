@@ -254,7 +254,7 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 200px 1fr 100px;
   grid-template-rows: 1fr auto;
   gap: 12px;
 }

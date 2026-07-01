@@ -1,0 +1,539 @@
+/**
+ * 净化远征 UI · 参照 Slay the Web (oskarrough/slaytheweb)
+ * https://github.com/oskarrough/slaytheweb
+ */
+:root {
+  --stw-teal: #116f54;
+  --stw-gold: #ffc107;
+  --stw-lightblue: hsl(194.7, 53.3%, 79%);
+  --stw-card-width: 10rem;
+  --stw-card-height: 16.5rem;
+  --stw-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --stw-text: hsl(34, 78%, 85%);
+  --stw-text-stroke: rgba(0, 0, 0, 0.95);
+}
+
+/* ===== 远征场景背景（聚光灯 + 上下暗角） ===== */
+#screen-spire.purify-screen {
+  --bg: hsl(220, 35%, 8%);
+  color: var(--stw-text);
+  background: var(--bg) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.purify-scene-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 35%, hsl(160, 30%, 18%), transparent 65%),
+    radial-gradient(ellipse 70% 50% at 50% 80%, hsl(220, 40%, 12%), transparent 60%),
+    linear-gradient(180deg, hsl(220, 30%, 10%), hsl(160, 20%, 8%) 45%, hsl(220, 35%, 6%));
+}
+
+.purify-scene-bg::before,
+.purify-scene-bg::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 28vh;
+  z-index: 1;
+}
+
+.purify-scene-bg::before {
+  top: 0;
+  background: linear-gradient(to bottom, #0f1642, transparent);
+}
+
+.purify-scene-bg::after {
+  bottom: 0;
+  background: linear-gradient(to top, #0f1642, transparent);
+}
+
+#screen-spire .purify-topbar,
+#screen-spire .purify-main {
+  position: relative;
+  z-index: 2;
+}
+
+#screen-spire .purify-topbar {
+  background: rgba(8, 12, 20, 0.75);
+  border-bottom: 1px solid rgba(255, 193, 7, 0.2);
+  backdrop-filter: blur(6px);
+}
+
+#screen-spire .purify-brand-title {
+  color: var(--stw-gold);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== 地图（Slay the Web 绿底路径板） ===== */
+.purify-map-board {
+  background: hsl(120, 17.5%, 19%);
+  border: 2px groove chocolate;
+  outline: 1px solid chocolate;
+  outline-offset: -0.5rem;
+  border-radius: 0.75rem;
+  padding: 1.5rem 1rem 2rem;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.purify-path::before {
+  background: linear-gradient(180deg, chocolate, var(--stw-gold), chocolate) !important;
+  width: 2px !important;
+}
+
+.purify-node {
+  width: 4rem !important;
+  height: 4rem !important;
+  border-radius: 50% !important;
+  background: hsl(0, 30%, 8%) !important;
+  border: 3px dashed transparent !important;
+  box-shadow: none !important;
+  color: var(--stw-text) !important;
+}
+
+.purify-node.available:not(.cleared) {
+  border-color: var(--stw-gold) !important;
+  box-shadow: 0 0 12px rgba(255, 193, 7, 0.45) !important;
+  cursor: pointer;
+}
+
+.purify-node.cleared {
+  opacity: 0.35;
+}
+
+/* ===== 战斗布局 ===== */
+.purify-battle {
+  grid-template-columns: minmax(140px, 180px) 1fr minmax(100px, 120px);
+  grid-template-rows: 1fr auto;
+}
+
+.purify-journal {
+  background: rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid rgba(255, 193, 7, 0.15) !important;
+  color: var(--stw-lightblue) !important;
+  font-size: 0.76rem;
+}
+
+.purify-stage {
+  min-height: 42vh;
+}
+
+.purify-foe-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.purify-foe-card {
+  background: rgba(20, 28, 35, 0.82) !important;
+  border: 2px solid rgba(255, 107, 107, 0.35) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  min-width: 200px;
+}
+
+.purify-foe-card.targeted {
+  box-shadow: 0 0 20px rgba(255, 193, 7, 0.55) !important;
+  border-color: var(--stw-gold) !important;
+}
+
+.purify-foe-name {
+  color: #ffb0b0 !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.purify-foe-icon {
+  font-size: 3.5rem;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+.purify-foe-icon.shake {
+  animation: stw-shake 0.45s var(--stw-ease);
+}
+
+.purify-intent {
+  background: rgba(80, 40, 40, 0.65) !important;
+  border: 1px solid rgba(255, 150, 150, 0.35) !important;
+  color: #ffb0b0 !important;
+}
+
+/* ===== 血条 Healthbar ===== */
+.Healthbar,
+.hp-bar {
+  position: relative;
+  text-align: center;
+  background: darkslategrey;
+  border: 3px solid rgba(0, 0, 0, 0.8);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  min-height: 2rem;
+}
+
+.Healthbar-label,
+.hp-text {
+  position: relative;
+  z-index: 1;
+  margin: 0.35em 0;
+  font-weight: bold;
+  color: var(--stw-text);
+  text-shadow:
+    1px 0 0 var(--stw-text-stroke),
+    -1px 0 0 var(--stw-text-stroke),
+    0 1px 0 var(--stw-text-stroke),
+    0 -1px 0 var(--stw-text-stroke);
+  font-size: 0.82rem;
+}
+
+.Healthbar-bar,
+.hp-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  max-width: 100%;
+  border-radius: 0.4rem;
+  transition: width 600ms var(--stw-ease);
+}
+
+/* ===== 灵力 · 菱形 EnergyBadge ===== */
+.purify-spirit-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.EnergyBadge {
+  position: relative;
+  z-index: 1;
+  font-size: 1.25rem;
+  width: 2.2em;
+  height: 2.2em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 3px solid rgba(0, 0, 0, 0.8);
+  transform: rotate(45deg);
+  background-color: var(--stw-teal);
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: 0 0 0.1em var(--stw-lightblue);
+  margin-left: 0.5rem;
+}
+
+.EnergyBadge > span {
+  transform: rotate(-45deg);
+}
+
+.purify-spirit-orbs .EnergyBadge.filled {
+  background-color: var(--stw-teal);
+}
+
+.purify-spirit-orbs .EnergyBadge.empty {
+  background: #272d2b;
+}
+
+.purify-spirit-orbs {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.purify-spirit-orbs .EnergyBadge {
+  position: static;
+  width: 1.5em;
+  height: 1.5em;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.purify-spirit-label,
+.purify-hand-label {
+  color: var(--stw-lightblue);
+  font-size: 0.78rem;
+}
+
+.purify-stat {
+  background: rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid rgba(255, 193, 7, 0.15) !important;
+  color: var(--stw-lightblue) !important;
+}
+
+.purify-self-stats .hp-bar {
+  min-width: 180px;
+}
+
+/* ===== 收势按钮 ===== */
+.EndTurn.purify-end-turn {
+  background: linear-gradient(180deg, hsl(50, 70%, 56%), hsl(45, 60%, 40%));
+  border: 3px solid rgba(0, 0, 0, 0.85);
+  border-radius: 0.5rem;
+  padding: 0.65rem 1.4rem;
+  font-weight: 800;
+  color: #1a1200;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+  transition: box-shadow 80ms, transform 80ms;
+  width: auto;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.EndTurn.purify-end-turn::before,
+.EndTurn.purify-end-turn::after {
+  display: none;
+}
+
+.EndTurn.purify-end-turn:hover:not(:disabled) {
+  box-shadow: 0 0 15px 4px var(--stw-gold);
+}
+
+.EndTurn.purify-end-turn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+.EndTurn.purify-end-turn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.EndTurn.purify-end-turn.pokeball-shake {
+  animation: stw-end-shake 0.55s ease;
+}
+
+.purify-action-bar {
+  justify-content: space-between !important;
+  width: 100%;
+  padding: 0 0.5rem;
+}
+
+/* ===== 牌堆指示 ===== */
+.purify-piles-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-bottom: 0.5rem;
+}
+
+.purify-pile {
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 193, 7, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--stw-lightblue);
+}
+
+.purify-pile strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--stw-gold);
+}
+
+/* ===== 手牌 Hand（重叠 + 悬停发光） ===== */
+.purify-hand-wrap {
+  grid-column: 1 / -1;
+}
+
+.purify-hand {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  min-height: var(--stw-card-height);
+  padding: 0 3rem 0.5rem;
+  margin-top: 0.5rem;
+  transform: translateY(0.5rem);
+  perspective: none;
+}
+
+.purify-hand .Card,
+.purify-hand .purify-card {
+  width: var(--stw-card-width);
+  height: var(--stw-card-height);
+  flex-shrink: 1;
+  margin-left: -1.35rem;
+  cursor: grab;
+  transform: none !important;
+}
+
+.purify-hand .purify-card:first-child {
+  margin-left: 0;
+}
+
+.purify-hand .purify-card:hover:not(.disabled) {
+  transform: translateY(-1rem) scale(1.08) !important;
+  box-shadow: 0 0 0.75em gold !important;
+  z-index: 5;
+}
+
+/* ===== 卡牌 Card ===== */
+.Card.purify-card {
+  position: relative;
+  display: flex;
+  padding: 0;
+  border: 0.45rem ridge #53b5a8;
+  border-radius: 0.35rem;
+  background: transparent;
+  text-align: center;
+  overflow: visible;
+}
+
+.Card-inner {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-flow: column nowrap;
+  background: #2a3335;
+  color: var(--stw-text);
+  border-radius: 0.15rem;
+  overflow: hidden;
+}
+
+.Card-media {
+  margin: 0;
+  border-bottom: 2px solid #1a2022;
+  background: #111;
+  min-height: 7rem;
+}
+
+.Card-art {
+  width: 100%;
+  height: 7rem;
+  background-size: cover;
+  background-position: center top;
+}
+
+.Card-art.el-fire { background: linear-gradient(160deg, #4a1810 0%, #ff6b35 40%, #2a1010 100%); }
+.Card-art.el-water { background: linear-gradient(160deg, #0a2840 0%, #3b82c4 45%, #0d2030 100%); }
+.Card-art.el-grass { background: linear-gradient(160deg, #0f2a14 0%, #4dad5b 45%, #0a1a10 100%); }
+.Card-art.el-electric { background: linear-gradient(160deg, #2a2a08 0%, #ffd700 40%, #1a1a06 100%); }
+.Card-art.el-earth { background: linear-gradient(160deg, #2a1f10 0%, #8b6914 45%, #1a1408 100%); }
+.Card-art.el-wind { background: linear-gradient(160deg, #102830 0%, #7dd3fc 45%, #0a1820 100%); }
+.Card-art.el-light { background: linear-gradient(160deg, #2a2810 0%, #ffe566 45%, #1a1808 100%); }
+.Card-art.el-dark { background: linear-gradient(160deg, #1a0a20 0%, #7c3aed 45%, #0a0510 100%); }
+.Card-art.el-neutral { background: linear-gradient(160deg, #1a2228 0%, #53b5a8 45%, #121820 100%); }
+
+.Card[data-card-type="attack"] .Card-type,
+.card-attack .Card-type {
+  background: hsl(0deg 33% 19%);
+}
+
+.Card[data-card-type="skill"] .Card-type,
+.card-skill .Card-type {
+  background: hsl(200deg 33% 19%);
+}
+
+.Card[data-card-type="power"] .Card-type,
+.card-power .Card-type {
+  background: hsl(45deg 33% 19%);
+}
+
+.Card-type {
+  margin: -0.6rem auto 0;
+  padding: 2px 8px 4px;
+  font-size: 0.68rem;
+  background: hsl(191.3, 33.3%, 18.8%);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-bottom-width: 2px;
+  border-radius: 0.4em;
+  width: fit-content;
+}
+
+.Card-name {
+  padding: 0.35rem 0.25rem 0;
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.Card-description {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.35rem 0.5rem;
+  margin: 0;
+  line-height: 1.25;
+  flex: 1;
+}
+
+.Card .Card-energy {
+  position: absolute;
+  top: -1.1rem;
+  left: -0.25rem;
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.purify-card.disabled .EnergyBadge {
+  background: #272d2b;
+  color: #fb1515;
+}
+
+.purify-reward-row .purify-card {
+  width: var(--stw-card-width);
+  height: var(--stw-card-height);
+  margin: 0 0.5rem;
+}
+
+.purify-modal-card {
+  background: hsla(17, 6%, 53%, 1);
+  color: hsl(17, 6%, 7%);
+  border: 2px solid hsla(17, 6%, 3%, 1);
+  border-radius: 0.75rem;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.purify-modal-card h2 {
+  color: #1a1200;
+  text-align: center;
+}
+
+@keyframes stw-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes stw-end-shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+
+@media (max-width: 900px) {
+  .purify-battle {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+  }
+
+  .purify-piles-bar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    grid-column: 1 / -1;
+  }
+
+  .purify-journal {
+    max-height: 100px;
+    grid-column: 1 / -1;
+  }
+
+  :root {
+    --stw-card-width: 8.5rem;
+    --stw-card-height: 14rem;
+  }
+
+  .Card-art {
+    height: 5.5rem;
+  }
+}

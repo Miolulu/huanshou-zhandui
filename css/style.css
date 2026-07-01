@@ -1,32 +1,16 @@
 /**
- * 宝可梦对战风格 · 全局主题层（覆盖 Design System 暗色默认值）
+ * 主菜单 / 登录 · 温暖主题（远征战斗见 slaytheweb-ui.css）
  */
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
 
 :root {
   --bg: #FDF6E3;
-  --sky: #E8F4FD;
   --pika-yellow: #FFCB05;
   --pokeball-red: #EE1515;
   --water-blue: #3B4CCA;
   --grass-green: #4DAD5B;
   --dark-text: #2E2E2E;
-  --gold: #D4AF37;
-
-  --bg-2: #FFF8E1;
-  --bg-3: #FFECB3;
-  --surface: #FFFFFF;
   --panel: rgba(255, 255, 255, 0.94);
-  --panel-light: rgba(255, 252, 240, 0.96);
-  --text: #2E2E2E;
-  --text2: #5a5248;
-  --text-secondary: #5a5248;
-  --primary: var(--water-blue);
-  --secondary: var(--grass-green);
-  --accent: var(--pika-yellow);
-  --success: var(--grass-green);
-  --danger: var(--pokeball-red);
-  --border: rgba(46, 46, 46, 0.18);
   --font-display: 'Fredoka One', 'Comic Sans MS', cursive, sans-serif;
 }
 
@@ -36,315 +20,21 @@ body {
   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
 }
 
-/* ===== 场景背景 ===== */
-.battle-bg,
-#screen-spire {
-  background: radial-gradient(circle at 50% 30%, #FFFDE7, #B3E5FC) !important;
-  color: var(--dark-text) !important;
-}
-
 .menu-bg,
 #screen-menu,
 #screen-auth.active {
   background: linear-gradient(180deg, #FFECB3 0%, #FFF8E1 100%) !important;
 }
 
-#screen-spire .purify-pane-head h2,
-#screen-spire .purify-brand-title {
-  color: var(--dark-text);
-  font-family: var(--font-display);
-}
-
-#screen-spire .purify-pane-desc,
-#screen-spire .purify-brand-sub,
-#screen-spire .purify-map-hint {
-  color: #6b6358;
-}
-
-#screen-spire .purify-topbar {
-  background: rgba(255, 255, 255, 0.88);
-  border-bottom: 3px solid var(--dark-text);
-}
-
-#screen-spire .purify-journal {
-  background: rgba(255, 255, 255, 0.85);
-  border: 3px solid var(--dark-text);
-  color: var(--dark-text);
-}
-
-#screen-spire .purify-log-line:first-child {
-  color: var(--water-blue);
-}
-
-/* ===== 地图节点 ===== */
-.purify-node {
-  background: #fff !important;
+.profile-panel,
+.menu-container,
+.auth-container {
+  background: var(--panel) !important;
   border: 3px solid var(--dark-text) !important;
-  box-shadow: 0 4px 0 var(--dark-text) !important;
-  color: var(--dark-text) !important;
-}
-
-.purify-node.available:not(.cleared) {
-  border-color: var(--dark-text) !important;
-  box-shadow: 0 4px 0 var(--dark-text), 0 0 0 4px var(--pika-yellow) !important;
-}
-
-.purify-node-icon {
-  font-size: 1.6rem;
-}
-
-.purify-path::before {
-  background: linear-gradient(180deg, var(--pika-yellow), var(--grass-green), var(--pika-yellow)) !important;
-}
-
-/* ===== 技法卡 · 宝可梦卡牌风 ===== */
-.purify-card,
-.card {
-  width: 120px;
-  min-height: 170px;
-  background: #fff !important;
-  border: 4px solid var(--dark-text) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 4px 0 var(--dark-text), 0 0 0 6px var(--pika-yellow) !important;
-  font-family: var(--font-display);
-  text-align: center;
-  color: var(--dark-text) !important;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.purify-card.card-attack {
-  box-shadow: 0 4px 0 var(--dark-text), 0 0 0 6px var(--pokeball-red) !important;
-}
-
-.purify-card.card-skill {
-  box-shadow: 0 4px 0 var(--dark-text), 0 0 0 6px var(--grass-green) !important;
-}
-
-.purify-card.card-power {
-  box-shadow: 0 4px 0 var(--dark-text), 0 0 0 6px var(--water-blue) !important;
-}
-
-.purify-card:hover:not(.disabled) {
-  transform: scale(1.12) translateY(-8px) !important;
-  box-shadow: 0 8px 0 var(--dark-text), 0 0 0 8px var(--pika-yellow) !important;
-}
-
-.purify-card.card-attack:hover:not(.disabled) {
-  box-shadow: 0 8px 0 var(--dark-text), 0 0 0 8px var(--pokeball-red) !important;
-}
-
-.purify-card.card-skill:hover:not(.disabled) {
-  box-shadow: 0 8px 0 var(--dark-text), 0 0 0 8px var(--grass-green) !important;
-}
-
-.purify-card-name {
-  color: var(--dark-text) !important;
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-}
-
-.purify-card-type {
-  color: #777 !important;
-}
-
-.purify-card-desc {
-  color: #555 !important;
-  font-size: 0.68rem;
-  line-height: 1.35;
-}
-
-.purify-card-cost {
-  background: radial-gradient(circle at 35% 35%, var(--pika-yellow), #e6a800) !important;
-  border: 3px solid var(--dark-text) !important;
-  color: var(--dark-text) !important;
-}
-
-/* ===== 手牌扇形 ===== */
-.purify-hand {
-  display: flex;
-  justify-content: center;
-  perspective: 800px;
-  padding: 16px 8px 24px;
-  min-height: 200px;
-  align-items: flex-end;
-}
-
-.purify-hand .purify-card {
-  transform-origin: center bottom;
-  margin: 0 -10px;
-  flex-shrink: 0;
-}
-
-.purify-hand .purify-card:nth-child(1) { transform: rotate(-12deg); }
-.purify-hand .purify-card:nth-child(2) { transform: rotate(-6deg); }
-.purify-hand .purify-card:nth-child(3) { transform: rotate(0deg); }
-.purify-hand .purify-card:nth-child(4) { transform: rotate(6deg); }
-.purify-hand .purify-card:nth-child(5) { transform: rotate(12deg); }
-.purify-hand .purify-card:nth-child(n+6) { transform: rotate(0deg); }
-
-.purify-hand .purify-card:hover:not(.disabled) {
-  transform: scale(1.2) rotate(0deg) translateY(-20px) !important;
-  z-index: 10;
-}
-
-/* ===== 血条 ===== */
-.hp-bar {
-  position: relative;
-  height: 18px;
-  background: #ccc;
-  border: 3px solid var(--dark-text);
-  border-radius: 999px;
-  overflow: hidden;
-  margin: 8px 0;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.hp-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.35s ease;
-}
-
-.hp-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: var(--dark-text);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
-  font-family: var(--font-display);
-}
-
-.purify-self-stats .hp-bar {
-  min-width: 160px;
-}
-
-/* ===== 敌人 / 玩家区域 ===== */
-.purify-foe-card {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border: 4px solid var(--dark-text) !important;
   box-shadow: 0 6px 0 var(--dark-text) !important;
-}
-
-.purify-foe-name {
-  color: var(--pokeball-red) !important;
-  font-family: var(--font-display);
-}
-
-.purify-foe-icon {
-  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.15));
-}
-
-.purify-foe-icon.shake {
-  animation: monShake 0.45s ease;
-}
-
-.purify-intent {
-  background: rgba(255, 203, 5, 0.35) !important;
-  border: 2px solid var(--dark-text) !important;
-  color: var(--dark-text) !important;
-}
-
-.purify-stat {
-  background: #fff !important;
-  border: 2px solid var(--dark-text) !important;
-  color: var(--dark-text) !important;
-}
-
-/* ===== 精灵球按钮 ===== */
-.pokeball-btn {
-  background: linear-gradient(180deg, var(--pokeball-red) 50%, #FFFFFF 50%);
-  border: 3px solid var(--dark-text);
-  border-radius: 50%;
-  width: 72px;
-  height: 72px;
-  position: relative;
-  box-shadow: 0 4px 0 var(--dark-text);
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
-  font-family: var(--font-display);
-  font-size: 0.72rem;
-  font-weight: 700;
   color: var(--dark-text);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  line-height: 1.1;
 }
 
-.pokeball-btn::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 3px;
-  background: var(--dark-text);
-  transform: translateY(-50%);
-}
-
-.pokeball-btn::after {
-  content: '';
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--dark-text);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-}
-
-.pokeball-btn span,
-.pokeball-btn .pokeball-label {
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  margin-top: 0;
-  font-size: 0.68rem;
-  white-space: nowrap;
-  background: #fff;
-  padding: 2px 8px;
-  border: 2px solid var(--dark-text);
-  border-radius: 999px;
-  box-shadow: 0 2px 0 var(--dark-text);
-}
-
-.pokeball-btn:active:not(:disabled) {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--dark-text);
-}
-
-.pokeball-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pokeball-btn.pokeball-shake {
-  animation: pokeballShake 0.55s ease;
-}
-
-.purify-end-turn.pokeball-btn {
-  width: 80px;
-  height: 80px;
-}
-
-.purify-action-bar {
-  position: relative;
-  width: 100%;
-  justify-content: flex-end !important;
-  padding-right: 8px;
-}
-
-/* 主菜单 / 通用按钮精灵球化 */
 .solo-start-btn,
 .btn-accent.btn-lg,
 #btn-quick-start {
@@ -367,15 +57,6 @@ body {
   font-family: var(--font-display);
 }
 
-.profile-panel,
-.menu-container,
-.auth-container {
-  background: var(--panel) !important;
-  border: 3px solid var(--dark-text) !important;
-  box-shadow: 0 6px 0 var(--dark-text) !important;
-  color: var(--dark-text);
-}
-
 .solo-hero,
 .solo-title,
 .menu-top-logo {
@@ -388,7 +69,6 @@ body {
   color: var(--dark-text);
 }
 
-/* 引导提示 */
 .purify-tutorial-banner {
   background: #fff !important;
   border: 3px solid var(--dark-text) !important;
@@ -402,49 +82,4 @@ body {
 
 .purify-tutorial-banner p {
   color: #555 !important;
-}
-
-/* 奖励 = 友好商店风 */
-#spire-view-reward .purify-modal-card h2::before {
-  content: '🏪 ';
-}
-
-/* 动效 */
-@keyframes pokeballShake {
-  0%, 100% { transform: rotate(0deg); }
-  20% { transform: rotate(-12deg); }
-  40% { transform: rotate(12deg); }
-  60% { transform: rotate(-8deg); }
-  80% { transform: rotate(8deg); }
-}
-
-@keyframes monShake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-6px); }
-  40% { transform: translateX(6px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
-}
-
-@keyframes evolveGlow {
-  0%, 100% { box-shadow: 0 4px 0 var(--dark-text), 0 0 0 6px var(--pika-yellow); }
-  50% { box-shadow: 0 8px 0 var(--dark-text), 0 0 0 12px var(--gold), 0 0 24px var(--gold); transform: scale(1.08); }
-}
-
-.purify-card.evolve-flash {
-  animation: evolveGlow 0.6s ease 2;
-}
-
-@media (max-width: 768px) {
-  .purify-hand .purify-card {
-    width: 100px;
-    min-height: 150px;
-    margin: 0 -8px;
-  }
-
-  .pokeball-btn,
-  .purify-end-turn.pokeball-btn {
-    width: 64px;
-    height: 64px;
-  }
 }
