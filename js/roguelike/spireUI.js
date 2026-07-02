@@ -529,8 +529,9 @@ export class SpireUI {
       this.el.energyText.textContent = `${c.player.energy}/${c.player.maxEnergy}`;
     }
 
+    const combatEngine = this.run.combat;
     this.el.hand.innerHTML = c.hand.map((card) => {
-      const playable = c.canPlay(card);
+      const playable = combatEngine?.canPlay(card) ?? false;
       return renderPurifyCardHtml(card, { playable, handCard: true });
     }).join('');
 
