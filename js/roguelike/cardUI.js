@@ -32,15 +32,17 @@ export function renderPurifyCardHtml(card, {
   const disabledAttr = actualTag === 'button' && !playable ? 'disabled' : '';
   const roleAttr = useDiv ? `role="button" tabindex="${playable ? 0 : -1}"` : '';
   const dragTarget = cardDragTarget(card.type);
-  const artSrc = cardArtUrl(card.id);
+  const artSrc = cardArtUrl(card.artId || card.id);
+  const specialBadge = card.special ? '<span class="Card-special-badge" title="特殊技法">殊</span>' : '';
   const artInner = artSrc
     ? `<img class="Card-art-img" src="${artSrc}" alt="" loading="lazy" draggable="false">`
     : `<div class="Card-art ${el}" role="img" aria-label="${card.name}"></div>`;
   return `<${actualTag} ${typeAttr} ${roleAttr}
-    class="purify-card Card ${cardTypeClass(card.type)} ${el} ${extraClass} ${playable ? '' : 'disabled'}"
+    class="purify-card Card ${cardTypeClass(card.type)} ${el} ${card.special ? 'Card--special' : ''} ${extraClass} ${playable ? '' : 'disabled'}"
     data-uid="${card.uid}" data-card-id="${card.id}" data-card-type="${card.type}" data-card-target="${dragTarget}" ${disabledAttr}>
     <div class="Card-inner">
       <p class="Card-energy EnergyBadge" title="灵耗"><span>${card.cost}</span></p>
+      ${specialBadge}
       <figure class="Card-media">
         ${artInner}
       </figure>

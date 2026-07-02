@@ -1,7 +1,7 @@
 /** 像素美术资源路径（由 scripts/slice-art.mjs 生成） */
 
 /** 素材版本：抠图/换图后递增，避免浏览器缓存旧 PNG */
-export const ASSET_VER = '20260718';
+export const ASSET_VER = '20260720';
 
 export const INTENT_ICONS = {
   damage: 'assets/intents/damage.png',
@@ -120,4 +120,39 @@ export function elementIconUrl(element) {
 
 export function attackFxUrl(element) {
   return withVer(ATTACK_FX[element] || ATTACK_FX.neutral);
+}
+
+const STATUS_ICONS = {
+  strength: 'assets/status/strength.png',
+  vulnerable: 'assets/status/vulnerable.png',
+  poison: 'assets/status/poison.png',
+  weak: 'assets/status/weak.png',
+  block: 'assets/status/block.png',
+};
+
+const CARD_VFX = {
+  purify_strike_double: 'assets/fx/purify_strike_double.png',
+  purify_strike_triple: 'assets/fx/purify_strike_triple.png',
+};
+
+const DEFEAT_FX = {
+  corrupted_mushroom: 'assets/fx/defeat_corrupted_mushroom.png',
+  corrupted_wolf: 'assets/fx/defeat_corrupted_wolf.png',
+  corrupted_turtle: 'assets/fx/defeat_corrupted_turtle.png',
+  corrupted_cat: 'assets/fx/defeat_corrupted_cat.png',
+  corrupted_crab: 'assets/fx/defeat_corrupted_crab.png',
+  corrupted_shadow: 'assets/fx/defeat_corrupted_shadow.png',
+  boss_dragon: 'assets/fx/defeat_boss_dragon.png',
+};
+
+export function statusIconUrl(name) {
+  return withVer(STATUS_ICONS[name] || STATUS_ICONS.strength);
+}
+
+export function cardVfxUrl(variant) {
+  return withVer(CARD_VFX[variant] || null);
+}
+
+export function defeatFxUrl(enemyId) {
+  return withVer(DEFEAT_FX[enemyId] || DEFEAT_FX.corrupted_shadow);
 }

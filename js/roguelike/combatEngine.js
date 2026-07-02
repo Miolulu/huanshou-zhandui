@@ -3,6 +3,7 @@ import { cloneCard } from './cardPool.js';
 import { advanceIntent, INTENTS, pickEncounter, createEnemy } from './enemies.js';
 import { TERMS } from './lore.js';
 import { COMBAT_EVENT } from './combatEvents.js';
+import { canPlaySpecialCard, resolveSpecialCard } from './specialCards.js';
 
 const HAND_SIZE = 5;
 const BASE_ENERGY = 3;
@@ -56,6 +57,8 @@ export class CombatEngine {
     this.discard = [];
     this.exhaust = [];
     this.combatEvents = [];
+    this.lastAttackDamage = 0;
+    this.purifyStrikeTurnCount = 0;
     if (skipStartTurn) {
       this.phase = 'player';
       this.player.energy = this.player.maxEnergy;
@@ -118,6 +121,7 @@ export class CombatEngine {
   startTurn() {
     this.turn += 1;
     this.phase = 'player';
+    this.purifyStrikeTurnCount = 0;
     this.player.block = 0;
     this.player.energy = this.player.maxEnergy;
     if (this.powers.barrier) {
@@ -145,7 +149,9 @@ export class CombatEngine {
   }
 
   canPlay(card) {
-    return this.phase === 'player' && card.cost <= this.player.energy;
+    if (this.phase !== 'player' || card.cost > this.player.energy) return false;
+    if (card.special && !canPlaySpecialCard(this, card)) return false;
+    return true;
   }
 
   playCard(cardUid, targetIndex = null) {
@@ -154,9 +160,17 @@ export class CombatEngine {
     const idx = this.hand.findIndex((c) => c.uid === cardUid);
     if (idx < 0) return { ok: false, message: '技法不在当前手牌', events: [] };
     const card = this.hand[idx];
-    if (card.cost > this.player.energy) return { ok: false, message: `${TERMS.spirit}不足`, events: [] };
+    if (!this.canPlay(card)) {
+      return { ok: false, message: card.special && !canPlaySpecialCard(this, card) ? '当前无法施展此特殊技法' : `${TERMS.spirit}不足`, events: [] };
+    }
 
     if (targetIndex != null) this.setTarget(targetIndex);
+
+    let strikeCombo = 0;
+    if (card.id === 'purify_strike') {
+      this.purifyStrikeTurnCount += 1;
+      strikeCombo = this.purifyStrikeTurnCount;
+    }
 
     this.emit({
       type: COMBAT_EVENT.CARD_PLAYED,
@@ -164,7 +178,24 @@ export class CombatEngine {
       cardId: card.id,
       cardType: card.type,
       targetIndex: this.targetIndex,
+      strikeCombo,
     });
+
+    if (strikeCombo === 2) {
+      this.emit({
+        type: COMBAT_EVENT.CARD_VFX,
+        cardId: 'purify_strike',
+        variant: 'double',
+        targetIndex: this.targetIndex,
+      });
+    } else if (strikeCombo >= 3) {
+      this.emit({
+        type: COMBAT_EVENT.CARD_VFX,
+        cardId: 'purify_strike',
+        variant: 'triple',
+        targetIndex: this.targetIndex,
+      });
+    }
 
     this.player.energy -= card.cost;
     this.hand.splice(idx, 1);
@@ -174,6 +205,14 @@ export class CombatEngine {
       if (card.power === 'rage') this.powers.rage += 1;
       this.exhaust.push(card);
       this.pushLog(`施展 ${card.name}（${TERMS.cardPower}）`);
+    } else if (card.special) {
+      resolveSpecialCard(this, card);
+      if (card.exhaust) this.exhaust.push(card);
+      else this.discard.push(card);
+      if (this.powers.rage && card.type === 'attack') {
+        this.strength += 1;
+        this.pushLog(TERMS.logRagePower);
+      }
     } else {
       this.resolveCard(card);
       this.discard.push(card);
@@ -227,6 +266,8 @@ export class CombatEngine {
           blocked: result.blocked,
           raw,
         });
+        this.lastAttackDamage = raw;
+        this.checkEnemyDefeat(target);
       }
       this.pushLog(`${card.name} → ${target.name}：${card.damage + dmgBonus}${hits > 1 ? `×${hits}` : ''} 伤害`);
     }
@@ -250,6 +291,57 @@ export class CombatEngine {
       });
     }
     this.clampTargetIndex();
+  }
+
+  checkEnemyDefeat(enemy) {
+    if (!enemy || enemy.hp > 0 || enemy._defeatEmitted) return;
+    enemy._defeatEmitted = true;
+    const enemyIndex = this.enemyIndexOf(enemy);
+    this.pushLog(`${enemy.name} 已被净化`);
+    this.emit({
+      type: COMBAT_EVENT.ENEMY_DEFEATED,
+      enemyIndex,
+      enemyId: enemy.id,
+    });
+    this.clampTargetIndex();
+  }
+
+  dealCardDamage(enemy, amount, cardName = '') {
+    const enemyIndex = this.enemyIndexOf(enemy);
+    const result = this.dealDamageToEnemy(enemy, amount);
+    if (cardName) {
+      this.pushLog(`${cardName} → ${enemy.name}：${amount} 伤害`);
+    }
+    this.emit({
+      type: COMBAT_EVENT.DAMAGE,
+      target: 'enemy',
+      enemyIndex,
+      amount: result.hpLost,
+      blocked: result.blocked,
+      raw: amount,
+    });
+    this.lastAttackDamage = amount;
+    this.checkEnemyDefeat(enemy);
+  }
+
+  dealDamageAllEnemies(amount, cardName = '') {
+    this.aliveEnemies.forEach((enemy) => {
+      this.dealCardDamage(enemy, amount, cardName);
+    });
+  }
+
+  gainPlayerBlock(amount, cardName = '') {
+    this.player.block += amount;
+    if (cardName) this.pushLog(`${cardName}：+${amount} ${TERMS.barrier}`);
+    this.emit({ type: COMBAT_EVENT.BLOCK_GAIN, target: 'player', amount });
+  }
+
+  healPlayer(amount, cardName = '') {
+    const before = this.player.hp;
+    this.player.hp = Math.min(this.player.maxHp, this.player.hp + amount);
+    const healed = this.player.hp - before;
+    if (cardName) this.pushLog(`${cardName}：恢复 ${healed} ${TERMS.mind}`);
+    if (healed > 0) this.emit({ type: COMBAT_EVENT.HEAL, amount: healed });
   }
 
   dealDamageToEnemy(enemy, amount) {
@@ -381,6 +473,7 @@ export class CombatEngine {
         tick: true,
       });
       e.poison = Math.max(0, e.poison - 1);
+      this.checkEnemyDefeat(e);
     }
 
     switch (intent.intent) {

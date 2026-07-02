@@ -1,6 +1,6 @@
 /** 净化远征 · 战斗视觉反馈（飘字 / 震屏 / 卡牌动效） */
 import { combatSounds } from './combatSounds.js';
-import { attackFxUrl } from './assetPaths.js';
+import { attackFxUrl, cardVfxUrl, defeatFxUrl } from './assetPaths.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -39,6 +39,9 @@ export class PurifyBattleEffects {
     switch (event.type) {
       case 'CARD_PLAYED':
         combatSounds.playCard();
+        break;
+      case 'CARD_VFX':
+        await this.playCardVfx(event);
         break;
       case 'BLOCK_GAIN':
         combatSounds.blockGain();
@@ -94,6 +97,9 @@ export class PurifyBattleEffects {
       case 'POISON':
         this.floatOnFoe(event.enemyIndex, `-${event.amount}`, 'poison');
         await delay(300);
+        break;
+      case 'ENEMY_DEFEATED':
+        await this.playEnemyDefeat(event.enemyIndex, event.enemyId);
         break;
       case 'ENEMY_ACTION':
         if (ATTACK_INTENTS.has(event.intent)) {
@@ -251,6 +257,75 @@ export class PurifyBattleEffects {
     node.style.top = `${rect.top - layerRect.top + rect.height * 0.22}px`;
     this.layer.appendChild(node);
     node.addEventListener('animationend', () => node.remove(), { once: true });
+  }
+
+  async playCardVfx(event) {
+    if (event.cardId !== 'purify_strike') return;
+    const variant = event.variant === 'triple' ? 'purify_strike_triple' : 'purify_strike_double';
+    const src = cardVfxUrl(variant);
+    if (!src) return;
+
+    const layer = this.layer || document.getElementById('spire-effect-layer');
+    if (!layer) return;
+
+    const foeCard = this.enemyArea?.querySelector(`.Target[data-target="${event.targetIndex ?? 0}"]`);
+    const foeSprite = foeCard?.querySelector('.Target-sprite');
+    const playerSprite = this.playerArea?.querySelector('.Target--player .Target-sprite')
+      || this.playerArea?.querySelector('.Target-sprite');
+
+    const layerRect = layer.getBoundingClientRect();
+    const node = document.createElement('img');
+    node.className = `CardPlayFx CardPlayFx--${event.variant || 'double'}`;
+    node.src = src;
+    node.alt = '';
+    node.setAttribute('aria-hidden', 'true');
+
+    if (event.variant === 'triple') {
+      const stageRect = this.stage?.getBoundingClientRect() || layerRect;
+      node.style.left = `${stageRect.left - layerRect.left + stageRect.width / 2}px`;
+      node.style.top = `${stageRect.top - layerRect.top + stageRect.height * 0.42}px`;
+    } else if (foeSprite && playerSprite) {
+      const from = playerSprite.getBoundingClientRect();
+      const to = foeSprite.getBoundingClientRect();
+      node.style.left = `${from.left - layerRect.left + from.width / 2}px`;
+      node.style.top = `${from.top - layerRect.top + from.height * 0.35}px`;
+      node.style.setProperty('--fx-dx', `${to.left - from.left}px`);
+      node.style.setProperty('--fx-dy', `${to.top - from.top + (to.height - from.height) * 0.2}px`);
+    } else {
+      node.style.left = `${layerRect.width / 2}px`;
+      node.style.top = `${layerRect.height * 0.45}px`;
+    }
+
+    layer.appendChild(node);
+    await delay(event.variant === 'triple' ? 720 : 560);
+    node.remove();
+  }
+
+  async playEnemyDefeat(index, enemyId) {
+    const card = this.enemyArea?.querySelector(`.Target[data-target="${index}"]`);
+    const sprite = card?.querySelector('.Target-sprite');
+    const layer = this.layer || document.getElementById('spire-effect-layer');
+    if (!card || !sprite || !layer) {
+      await delay(420);
+      return;
+    }
+
+    const src = defeatFxUrl(enemyId);
+    const rect = sprite.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+    const node = document.createElement('img');
+    node.className = 'DefeatFx';
+    node.src = src;
+    node.alt = '';
+    node.setAttribute('aria-hidden', 'true');
+    node.style.left = `${rect.left - layerRect.left + rect.width / 2}px`;
+    node.style.top = `${rect.top - layerRect.top + rect.height / 2}px`;
+    layer.appendChild(node);
+    card.classList.add('foe-purified');
+    combatSounds.hitEnemy();
+    await delay(780);
+    node.remove();
+    card.classList.remove('foe-purified');
   }
 
   async animateEnemyLunge(index, element = 'neutral') {

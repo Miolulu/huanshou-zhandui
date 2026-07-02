@@ -574,9 +574,7 @@ export class SpireUI {
 
     const p = c.player;
     this.el.hand.innerHTML = c.hand.map((card) => {
-      const energyOk = card.cost <= p.energy && c.phase === 'player';
-      const tutorialOk = !this.tutorial?.active || this.tutorial.canPlayCard(card, c);
-      const playable = energyOk && tutorialOk;
+      const playable = c.canPlay(card) && tutorialOk;
       return renderPurifyCardHtml(card, { playable, handCard: true });
     }).join('');
 

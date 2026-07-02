@@ -359,6 +359,98 @@
 .purify-log-line.log-block { color: #afafff; }
 .purify-log-line.log-enemy { color: #ff9f9f; font-weight: 600; }
 
+/* ===== 卡牌连击 / 击败特效 ===== */
+.CardPlayFx {
+  position: absolute;
+  pointer-events: none;
+  z-index: 38;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 18px rgba(255, 210, 80, 0.75));
+}
+
+.CardPlayFx--double {
+  width: clamp(8rem, 24vw, 14rem);
+  animation: card-play-fx-beam 0.56s ease-out forwards;
+}
+
+.CardPlayFx--triple {
+  width: min(92vw, 52rem);
+  animation: card-play-fx-burst 0.72s ease-out forwards;
+}
+
+.DefeatFx {
+  position: absolute;
+  width: clamp(10rem, 28vw, 18rem);
+  pointer-events: none;
+  z-index: 40;
+  transform: translate(-50%, -50%) scale(0.85);
+  filter: drop-shadow(0 0 24px rgba(255, 220, 120, 0.8));
+  animation: defeat-fx-pop 0.78s ease-out forwards;
+}
+
+.Target--enemy.foe-purified .Target-sprite {
+  animation: foe-purify-out 0.78s ease forwards;
+}
+
+.Target-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.08rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  font-size: 0.72rem;
+}
+
+.Target-status-icon {
+  width: 1rem;
+  height: 1rem;
+  object-fit: contain;
+}
+
+.Card-special-badge {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 3;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fff8dc;
+  background: linear-gradient(135deg, #b8860b, #ffd700);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.55);
+}
+
+.Card--special .Card-frame,
+.Card--special.Card {
+  box-shadow: 0 0 0.65em rgba(255, 193, 7, 0.55);
+}
+
+@keyframes card-play-fx-beam {
+  0% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.6); }
+  35% { opacity: 1; transform: translate(calc(-50% + var(--fx-dx, 0px) * 0.35), calc(-50% + var(--fx-dy, 0px) * 0.35)) scale(1); }
+  100% { opacity: 0.1; transform: translate(calc(-50% + var(--fx-dx, 0px)), calc(-50% + var(--fx-dy, 0px))) scale(1.08); }
+}
+
+@keyframes card-play-fx-burst {
+  0% { opacity: 0.15; transform: translate(-50%, -50%) scale(0.55); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.18); }
+}
+
+@keyframes defeat-fx-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.55); }
+  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.22); }
+}
+
+@keyframes foe-purify-out {
+  0% { opacity: 1; filter: brightness(1); }
+  40% { opacity: 0.85; filter: brightness(1.6) saturate(1.2); }
+  100% { opacity: 0.35; filter: brightness(0.6) grayscale(0.35); }
+}
+
 /* ===== 敌方攻击特效 ===== */
 .AttackFx {
   position: absolute;

@@ -2,7 +2,7 @@
 import { cardTypeLabel } from './cardPool.js';
 import { intentIcon, intentLabel } from './enemies.js';
 import { TERMS } from './lore.js';
-import { enemySpriteUrl, playerSpriteUrl } from './assetPaths.js';
+import { enemySpriteUrl, playerSpriteUrl, statusIconUrl } from './assetPaths.js';
 
 export function healthBarStw(current, max, block = 0) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
@@ -21,17 +21,22 @@ export function healthBarStw(current, max, block = 0) {
   </div>`;
 }
 
+function statusChip(iconKey, label) {
+  return `<span class="Target-status"><img class="Target-status-icon" src="${statusIconUrl(iconKey)}" alt="" aria-hidden="true"><span>${label}</span></span>`;
+}
+
 function renderPowers(combat, enemy = null) {
   const chips = [];
   if (enemy) {
-    if (enemy.strength) chips.push(`<span>${TERMS.purifyPower} ${enemy.strength}</span>`);
-    if (enemy.vulnerable) chips.push(`<span>破绽 ${enemy.vulnerable}</span>`);
-    if (enemy.poison) chips.push(`<span>${TERMS.taintStack} ${enemy.poison}</span>`);
+    if (enemy.strength) chips.push(statusChip('strength', `${TERMS.purifyPower} ${enemy.strength}`));
+    if (enemy.vulnerable) chips.push(statusChip('vulnerable', `破绽 ${enemy.vulnerable}`));
+    if (enemy.poison) chips.push(statusChip('poison', `${TERMS.taintStack} ${enemy.poison}`));
+    if (enemy.block) chips.push(statusChip('block', `淤壳 ${enemy.block}`));
   } else if (combat) {
-    if (combat.strength) chips.push(`<span>${TERMS.purifyPower} ${combat.strength}</span>`);
-    if (combat.weak) chips.push(`<span>${TERMS.miasma} ${combat.weak}</span>`);
-    if (combat.powers?.barrier) chips.push(`<span>${TERMS.cardPower}·护幕</span>`);
-    if (combat.powers?.rage) chips.push(`<span>净化之怒</span>`);
+    if (combat.strength) chips.push(statusChip('strength', `${TERMS.purifyPower} ${combat.strength}`));
+    if (combat.weak) chips.push(statusChip('weak', `${TERMS.miasma} ${combat.weak}`));
+    if (combat.powers?.barrier) chips.push(`<span class="Target-status">${TERMS.cardPower}·护幕</span>`);
+    if (combat.powers?.rage) chips.push(`<span class="Target-status">净化之怒</span>`);
   }
   if (!chips.length) return '';
   return `<div class="Target-powers">${chips.join('')}</div>`;

@@ -1,6 +1,7 @@
 /** 幻兽净化师 · 可打出卡牌池 */
 
 import { TERMS } from './lore.js';
+import { SPECIAL_CARD_POOL } from './specialCards.js';
 
 export const CARD_TYPES = { ATTACK: 'attack', SKILL: 'skill', POWER: 'power' };
 
@@ -46,9 +47,13 @@ export function buildStarterDeck() {
 }
 
 export function pickRewardOptions(count = 3, rng = Math.random) {
-  const pool = [...REWARD_POOL];
+  const normalPool = [...REWARD_POOL];
+  const specialPool = [...SPECIAL_CARD_POOL];
   const picks = [];
-  while (picks.length < count && pool.length) {
+  while (picks.length < count && (normalPool.length || specialPool.length)) {
+    const useSpecial = specialPool.length > 0 && rng() < 0.38;
+    const pool = useSpecial ? specialPool : normalPool;
+    if (!pool.length) continue;
     const i = Math.floor(rng() * pool.length);
     picks.push(cloneCard(pool.splice(i, 1)[0]));
   }
