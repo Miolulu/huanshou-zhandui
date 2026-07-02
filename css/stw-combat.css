@@ -122,7 +122,7 @@
 
 #screen-spire .Target--enemy {
   cursor: var(--cursor-point, pointer);
-  max-width: min(100%, 16rem);
+  max-width: min(100%, 34rem);
 }
 
 #screen-spire .Target-intent-badge {
@@ -176,13 +176,16 @@
 }
 
 #screen-spire .Target--enemy .Target-sprite {
-  max-width: 100%;
-  height: min(46vh, 24rem);
+  width: min(52vw, 30rem);
+  max-width: min(52vw, 30rem);
+  height: min(62vh, 36rem);
 }
 
-#screen-spire .Target-sprite--hero {
-  width: min(46vw, 26rem);
-  height: min(56vh, 32rem);
+#screen-spire .Target-sprite--hero,
+#screen-spire .Target--player .Target-sprite {
+  width: min(20vw, 11rem);
+  max-width: min(20vw, 11rem);
+  height: min(24vh, 13rem);
 }
 
 #screen-spire .Card-art-img {
@@ -779,11 +782,17 @@
     width: min(100%, 9rem);
   }
 
-  #screen-spire .Target-sprite,
-  #screen-spire .Target--enemy .Target-sprite,
-  #screen-spire .Target-sprite--hero {
-    width: min(46vw, 11rem);
-    height: min(40vh, 13rem);
+  #screen-spire .Target--enemy .Target-sprite {
+    width: min(58vw, 18rem);
+    max-width: min(58vw, 18rem);
+    height: min(52vh, 22rem);
+  }
+
+  #screen-spire .Target-sprite--hero,
+  #screen-spire .Target--player .Target-sprite {
+    width: min(24vw, 7rem);
+    max-width: min(24vw, 7rem);
+    height: min(28vh, 8rem);
   }
 
   #screen-spire .BlockBadge {
