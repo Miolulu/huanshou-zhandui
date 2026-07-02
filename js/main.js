@@ -8,8 +8,8 @@ import { loadProfile, ensureProfileForAccount, checkDailyLogin } from './playerP
 import { createRun, RUN_MODES } from './roguelike/runEngine.js';
 import { SpireUI } from './roguelike/spireUI.js';
 import {
-  isCombatTutorialDone, markEnemiesSeen, markEnemiesDefeated,
-  completeCombatTutorial, recordRunEnd,
+  markEnemiesSeen, markEnemiesDefeated,
+  recordRunEnd,
 } from './roguelike/purifyProfile.js';
 
 let game;
@@ -32,13 +32,12 @@ function enterMainMenu() {
 
 let spireRunEndRecorded = false;
 
-function startSpireRun(mode = RUN_MODES.EXPEDITION, { forceTutorial = false } = {}) {
+function startSpireRun(mode = RUN_MODES.EXPEDITION) {
   spireRunEndRecorded = false;
   let profile = loadProfile();
   const nickname = profile.nickname || '净化师';
-  const skipTutorial = forceTutorial ? false : isCombatTutorialDone(profile);
 
-  spireRun = createRun(nickname, { mode, skipTutorial, forceTutorial });
+  spireRun = createRun(nickname, { mode });
   spireRun.onCombatWonCallback = (ids) => {
     profile = markEnemiesDefeated(loadProfile(), ids);
   };
@@ -50,9 +49,6 @@ function startSpireRun(mode = RUN_MODES.EXPEDITION, { forceTutorial = false } = 
   }, {
     onEncounter: (ids) => {
       profile = markEnemiesSeen(loadProfile(), ids);
-    },
-    onTutorialComplete: () => {
-      profile = completeCombatTutorial(loadProfile());
     },
     onRunEnd: (result) => {
       if (spireRunEndRecorded) return;
@@ -79,7 +75,6 @@ function initApp() {
     startSpireRun,
     () => startSpireRun(RUN_MODES.TIER),
     () => startSpireRun(RUN_MODES.INFINITE),
-    () => startSpireRun(RUN_MODES.EXPEDITION, { forceTutorial: true }),
   );
 }
 

@@ -3,7 +3,6 @@ import { RUN_PHASES, RUN_MODES, TIER_MAX_FLOOR } from './runEngine.js';
 import { modeLabel } from './floorMap.js';
 import { renderPurifyCardHtml, renderShopOfferHtml } from './cardUI.js';
 import { TERMS } from './lore.js';
-import { CombatTutorial } from './combatTutorial.js';
 import { PurifyBattleEffects } from './purifyBattleEffects.js';
 import { destroyCardDrag, enableCardDrag } from './cardDrag.js';
 import { mountExpeditionMap } from './expeditionMapView.js';
@@ -29,8 +28,6 @@ export class SpireUI {
     this.run = run;
     this.onBack = onBack;
     this.hooks = hooks;
-    this.tutorial = null;
-    this.tutorialDismissed = false;
     this.runEndRecorded = false;
     this.combatBusy = false;
     this.lastRunPhase = null;
@@ -84,7 +81,6 @@ export class SpireUI {
       shopDeckPick: document.getElementById('spire-shop-deck-pick'),
       endTitle: document.getElementById('spire-end-title'),
       endStats: document.getElementById('spire-end-stats'),
-      tutorialHost: document.getElementById('purify-tutorial-host'),
     };
   }
 
@@ -120,13 +116,8 @@ export class SpireUI {
     });
     document.getElementById('btn-spire-end-turn')?.addEventListener('click', () => {
       if (this.combatBusy) return;
-      if (this.tutorial?.active && !this.tutorial.canEndTurn()) {
-        showToast('请按引导步骤操作');
-        return;
-      }
       this.performCombatAction(
         () => this.run.endCombatTurn({ deferNewTurn: true }),
-        () => this.tutorial?.onAction('end_turn'),
       );
     });
     document.getElementById('btn-spire-skip-reward')?.addEventListener('click', () => {
@@ -199,12 +190,6 @@ export class SpireUI {
 
   afterCombatAction(result, stepAction) {
     stepAction?.();
-    if (result?.tutorialFinished && this.tutorial?.active) {
-      this.tutorial.onAction('win');
-    }
-    if (!this.tutorial?.active) {
-      this.clearTutorialOverlay();
-    }
   }
 
   bindBattleEffectRefs() {
@@ -307,7 +292,7 @@ export class SpireUI {
     if (!c) return;
     const endBtn = document.getElementById('btn-spire-end-turn');
     if (endBtn) {
-      const canEnd = c.phase === 'player' && (!this.tutorial?.active || this.tutorial.canEndTurn());
+      const canEnd = c.phase === 'player';
       endBtn.disabled = !canEnd || this.combatBusy;
       const label = TERMS.endTurn;
       endBtn.innerHTML = `<u>${label.charAt(0)}</u>${label.slice(1)}`;
@@ -319,22 +304,6 @@ export class SpireUI {
       const noEnergy = c.phase === 'player' && c.player.energy <= 0;
       this.el.actionBar.classList.toggle('no-energy', noEnergy);
     }
-  }
-
-  clearTutorialOverlay() {
-    const host = this.el.tutorialHost;
-    if (!host) return;
-    host.innerHTML = '';
-    host.classList.add('hidden');
-    document.querySelectorAll('.purify-tutorial-highlight').forEach((el) => {
-      el.classList.remove('purify-tutorial-highlight');
-    });
-  }
-
-  finishTutorialGuide() {
-    this.tutorialDismissed = true;
-    this.tutorial = null;
-    this.clearTutorialOverlay();
   }
 
   recordRunEnd(victory) {
@@ -357,7 +326,6 @@ export class SpireUI {
     this.overlays.updateLabels(state);
 
     if (state.phase !== RUN_PHASES.COMBAT || !state.combat) {
-      this.clearTutorialOverlay();
       destroyCardDrag();
     }
 
@@ -514,7 +482,7 @@ export class SpireUI {
         this.overlays.closeAll();
         const r = this.run.startNode(btn.dataset.node);
         if (!r.ok && r.message) showToast(r.message);
-        if (r.tutorial || r.ok) {
+        if (r.ok) {
           this.hooks.onEncounter?.(this.run.getState().lastEncounterIds, { seen: true });
         }
         this.render();
@@ -533,14 +501,6 @@ export class SpireUI {
 
     document.querySelectorAll('body > .Card-clone').forEach((el) => el.remove());
 
-    if (state.isTutorialCombat && !this.tutorial && !this.tutorialDismissed) {
-      this.tutorial = new CombatTutorial(({ skipped } = {}) => {
-        this.hooks.onTutorialComplete?.();
-        this.finishTutorialGuide();
-        showToast(skipped ? '已跳过实战引导' : '实战引导完成！继续你的净化远征');
-      });
-    }
-
     const enemies = c.enemies || (c.enemy ? [c.enemy] : []);
     this.el.enemyArea.innerHTML = enemies.map((e, i) =>
       renderEnemyTarget(e, i, {
@@ -552,9 +512,6 @@ export class SpireUI {
     this.el.enemyArea.querySelectorAll('.Target--enemy:not(.Target--isDead)').forEach((el) => {
       const pick = () => {
         this.run.setCombatTarget(Number(el.dataset.target));
-        if (this.tutorial?.currentStep?.action === 'observe') {
-          this.tutorial.onAction('observe');
-        }
         this.render();
       };
       el.onclick = pick;
@@ -572,9 +529,8 @@ export class SpireUI {
       this.el.energyText.textContent = `${c.player.energy}/${c.player.maxEnergy}`;
     }
 
-    const p = c.player;
     this.el.hand.innerHTML = c.hand.map((card) => {
-      const playable = c.canPlay(card) && tutorialOk;
+      const playable = c.canPlay(card);
       return renderPurifyCardHtml(card, { playable, handCard: true });
     }).join('');
 
@@ -589,12 +545,6 @@ export class SpireUI {
     }
 
     this.bindBattleEffectRefs();
-
-    if (c.phase === 'won' && this.tutorial?.active) {
-      this.tutorial.onAction('win');
-    }
-
-    this.renderTutorialOverlay(this.tutorial);
 
     this.updateCombatChrome(c);
 
@@ -618,7 +568,6 @@ export class SpireUI {
 
   setupCardDrag(c) {
     if (!this.el.combatBattle || !c || c.phase !== 'player' || this.combatBusy) return;
-    if (typeof window.gsap === 'undefined') return;
 
     enableCardDrag(this.el.combatBattle, {
       getTargetIndex: () => this.run.getState().combat?.targetIndex ?? 0,
@@ -628,48 +577,13 @@ export class SpireUI {
         if (!live) return;
         const card = live.hand.find((x) => x.uid === cardEl.dataset.uid);
         if (!card) return;
-        const tutorialOk = !this.tutorial?.active || this.tutorial.canPlayCard(card, live);
-        if (!tutorialOk) {
-          showToast('请按引导步骤操作');
-          this.render();
-          return;
-        }
         this.performCombatAction(
           () => this.run.playCard(cardEl.dataset.uid, targetIndex),
-          () => {
-            if (card?.type === 'attack') this.tutorial?.onAction('play_attack');
-            else if (card?.type === 'skill') this.tutorial?.onAction('play_skill');
-          },
+          null,
           { cardEl, fromDrag: true },
         );
       },
     });
-  }
-
-  renderTutorialOverlay(tutorial) {
-    const host = this.el.tutorialHost;
-    if (!host) return;
-    if (!tutorial?.active) {
-      this.clearTutorialOverlay();
-      return;
-    }
-    host.classList.remove('hidden');
-    host.innerHTML = tutorial.getOverlayHtml();
-    document.getElementById('btn-tutorial-next')?.addEventListener('click', () => {
-      tutorial.skipObserve();
-      this.render();
-    });
-    document.getElementById('btn-tutorial-skip')?.addEventListener('click', () => {
-      tutorial.skipAll();
-      this.render();
-    });
-    document.querySelectorAll('.purify-tutorial-highlight').forEach((el) => {
-      el.classList.remove('purify-tutorial-highlight');
-    });
-    const step = tutorial.currentStep;
-    if (step?.highlight) {
-      document.querySelector(step.highlight)?.classList.add('purify-tutorial-highlight');
-    }
   }
 
   renderReward(state) {

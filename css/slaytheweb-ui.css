@@ -386,11 +386,21 @@
   left: 0;
   top: 0;
   margin: 0 !important;
+  margin-left: 0 !important;
   pointer-events: none !important;
-  transform-origin: center center;
+  transform-origin: center center !important;
+  --fan-rot: 0deg;
+  --fan-y: 0px;
+  --fan-tilt: 0deg;
+  --fan-z: 1;
   will-change: left, top, transform;
   z-index: 10050;
   touch-action: none;
+}
+
+#screen-spire .StwCombat .Hand .Card-drag-proxy {
+  transform: none;
+  z-index: 10050 !important;
 }
 
 .purify-hand .Card[disabled],

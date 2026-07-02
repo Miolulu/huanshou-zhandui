@@ -13,6 +13,15 @@ function gsap() {
   return window.gsap;
 }
 
+function resetProxyLayout(proxy) {
+  proxy.style.removeProperty('--fan-rot');
+  proxy.style.removeProperty('--fan-y');
+  proxy.style.removeProperty('--fan-z');
+  proxy.style.removeProperty('--fan-tilt');
+  proxy.style.marginLeft = '0';
+  proxy.style.transformOrigin = 'center center';
+}
+
 function cardTargetType(cardType) {
   if (cardType === 'attack') return 'enemy';
   return 'player';
@@ -61,6 +70,7 @@ function hideProxy(proxy) {
       top: 0,
       x: 0,
       y: 0,
+      transformOrigin: 'center center',
     });
   } else {
     Object.assign(proxy.style, {
@@ -69,6 +79,7 @@ function hideProxy(proxy) {
       left: '0px',
       top: '0px',
       transform: '',
+      transformOrigin: 'center center',
     });
   }
 }
@@ -141,6 +152,7 @@ export function enableCardDrag(root, { getTargetIndex, onPlay } = {}) {
     proxy.classList.add('Card-drag-proxy');
     proxy.setAttribute('aria-hidden', 'true');
     proxy.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+    resetProxyLayout(proxy);
     document.body.appendChild(proxy);
     hideProxy(proxy);
 
@@ -183,6 +195,7 @@ export function enableCardDrag(root, { getTargetIndex, onPlay } = {}) {
           rotation: 0,
           x: 0,
           y: 0,
+          transformOrigin: 'center center',
         });
       } else {
         Object.assign(proxy.style, {

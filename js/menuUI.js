@@ -183,12 +183,6 @@ function bindMenuButtons() {
     callbacks.onSpireInfinite?.();
   }));
 
-  document.getElementById('btn-menu-tutorial')?.addEventListener('click', guard(() => {
-    setMenuError('');
-    closeMenuOverlays();
-    callbacks.onTutorialStart?.();
-  }));
-
   document.getElementById('btn-show-compendium')?.addEventListener('click', guardUnlessCloseLocked(() => {
     toggleMenuOverlay('menu-overlay-compendium', () => {
       renderCompendiumPanel(document.getElementById('compendium-panel'));
@@ -214,8 +208,8 @@ function bindMenuButtons() {
   }));
 }
 
-export function initMenu(onSpireStart, onSpireTier, onSpireInfinite, onTutorialStart) {
-  callbacks = { onSpireStart, onSpireTier, onSpireInfinite, onTutorialStart };
+export function initMenu(onSpireStart, onSpireTier, onSpireInfinite) {
+  callbacks = { onSpireStart, onSpireTier, onSpireInfinite };
   renderProfilePanel();
   renderPurifyRecords(document.getElementById('purify-records'));
   renderManualBody();

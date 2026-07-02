@@ -6,7 +6,7 @@ import {
 import {
   RUN_MODES, generateFloorChoices, nodeTier as floorNodeTier, TIER_MAX_FLOOR, createRng,
 } from './floorMap.js';
-import { CombatEngine, createTutorialCombat } from './combatEngine.js';
+import { CombatEngine } from './combatEngine.js';
 import { generateShopInventory, REMOVE_CARD_PRICE } from './shop.js';
 import { resetEncounterMemory } from './enemies.js';
 
@@ -27,8 +27,6 @@ export class RunEngine {
     const {
       seed = Date.now(),
       mode = RUN_MODES.EXPEDITION,
-      skipTutorial = false,
-      forceTutorial = false,
     } = options;
 
     this.playerName = playerName;
@@ -48,8 +46,6 @@ export class RunEngine {
     this.stats = { battlesWon: 0, elitesWon: 0 };
     this.floor = 1;
     this.floorChoices = [];
-    this.pendingTutorial = forceTutorial || !skipTutorial;
-    this.isTutorialCombat = false;
     this.lastEncounterIds = [];
     this.onCombatWonCallback = null;
 
@@ -127,22 +123,12 @@ export class RunEngine {
   }
 
   enterCombat(tier, floor) {
-    if (this.pendingTutorial) {
-      this.combat = createTutorialCombat(this.deck);
-      this.isTutorialCombat = true;
-      this.pendingTutorial = false;
-      this.lastEncounterIds = this.combat.getEncounterIds();
-      this.phase = RUN_PHASES.COMBAT;
-      return { ok: true, phase: RUN_PHASES.COMBAT, tutorial: true };
-    }
-
     this.combat = new CombatEngine(this.deck, tier, {
       startHp: this.runHp,
       maxHp: this.maxHp,
       floor,
       rng: this.rng,
     });
-    this.isTutorialCombat = false;
     this.lastEncounterIds = this.combat.getEncounterIds();
     this.phase = RUN_PHASES.COMBAT;
     return { ok: true, phase: RUN_PHASES.COMBAT };
@@ -150,13 +136,9 @@ export class RunEngine {
 
   playCard(cardUid, targetIndex = null) {
     if (this.phase !== RUN_PHASES.COMBAT || !this.combat) return { ok: false };
-    const wasTutorial = this.isTutorialCombat;
     const r = this.combat.playCard(cardUid, targetIndex);
     if (this.combat?.phase === 'won') this.onCombatWon();
     else if (this.combat?.phase === 'lost') this.onCombatLost();
-    if (wasTutorial && this.phase === RUN_PHASES.MAP) {
-      return { ...r, ok: r.ok !== false, tutorialFinished: true };
-    }
     return r;
   }
 
@@ -167,7 +149,6 @@ export class RunEngine {
 
   endCombatTurn({ deferNewTurn = false } = {}) {
     if (this.phase !== RUN_PHASES.COMBAT || !this.combat) return { ok: false };
-    const wasTutorial = this.isTutorialCombat;
     const r = this.combat.endTurn();
     if (!r.needsEnemySteps && !deferNewTurn && r.needsNewTurn) {
       const next = this.combat.beginPlayerTurn();
@@ -178,21 +159,14 @@ export class RunEngine {
     }
     if (this.combat?.phase === 'won') this.onCombatWon();
     else if (this.combat?.phase === 'lost') this.onCombatLost();
-    if (wasTutorial && this.phase === RUN_PHASES.MAP) {
-      return { ...r, ok: r.ok !== false, tutorialFinished: true };
-    }
     return r;
   }
 
   stepCombatEnemyTurn() {
     if (this.phase !== RUN_PHASES.COMBAT || !this.combat) return { ok: false };
-    const wasTutorial = this.isTutorialCombat;
     const r = this.combat.stepEnemyTurn();
     if (this.combat?.phase === 'won') this.onCombatWon();
     else if (this.combat?.phase === 'lost') this.onCombatLost();
-    if (wasTutorial && this.phase === RUN_PHASES.MAP) {
-      return { ...r, ok: r.ok !== false, tutorialFinished: true };
-    }
     return r;
   }
 
@@ -204,13 +178,6 @@ export class RunEngine {
   onCombatWon() {
     const encounterIds = this.combat?.getEncounterIds() || this.lastEncounterIds;
     this.lastEncounterIds = encounterIds;
-
-    if (this.isTutorialCombat) {
-      this.combat = null;
-      this.isTutorialCombat = false;
-      this.phase = RUN_PHASES.MAP;
-      return;
-    }
 
     this.runHp = this.combat.player.hp;
     this.deck = this.combat.getDeckAfterCombat();
@@ -225,7 +192,7 @@ export class RunEngine {
 
     this.combat = null;
 
-    if (!this.isTutorialCombat && encounterIds.length) {
+    if (encounterIds.length) {
       this.onCombatWonCallback?.(encounterIds);
     }
 
@@ -263,7 +230,6 @@ export class RunEngine {
   onCombatLost() {
     this.phase = RUN_PHASES.DEFEAT;
     this.combat = null;
-    this.isTutorialCombat = false;
   }
 
   pickReward(cardUid) {
@@ -397,7 +363,6 @@ export class RunEngine {
       stats: { ...this.stats },
       runHp: this.runHp,
       maxHp: this.maxHp,
-      isTutorialCombat: this.isTutorialCombat,
       lastEncounterIds: [...this.lastEncounterIds],
     };
   }
