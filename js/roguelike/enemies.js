@@ -1,4 +1,5 @@
 /** 被污染的幻兽 · 敌人定义、图鉴、遭遇池 */
+import { intentIconUrl } from './assetPaths.js';
 
 export const INTENTS = {
   ATTACK: 'attack',
@@ -211,6 +212,7 @@ export function createEnemy(enemyId, rng = Math.random, floor = 1, tier = 'norma
     name: def.name,
     desc: def.desc,
     icon: def.icon,
+    element: def.element,
     maxHp,
     hp: maxHp,
     block: 0,
@@ -315,27 +317,26 @@ export function intentLabel(intent) {
 }
 
 export function intentIcon(intent) {
-  const base = 'assets/intents';
-  let file = 'unknown.png';
+  let name = 'unknown';
   switch (intent.intent) {
     case INTENTS.ATTACK:
     case INTENTS.STRONG_ATTACK:
     case INTENTS.ATTACK_DEFEND:
-      file = 'damage.png';
+      name = 'damage';
       break;
     case INTENTS.DEFEND:
-      file = 'block.png';
+      name = 'block';
       break;
     case INTENTS.BUFF:
-      file = 'buff.png';
+      name = 'buff';
       break;
     case INTENTS.DEBUFF:
-      file = 'debuff.png';
+      name = 'debuff';
       break;
     default:
       break;
   }
-  return `<img class="purify-intent-icon" src="${base}/${file}" alt="" aria-hidden="true">`;
+  return `<img class="purify-intent-icon" src="${intentIconUrl(name)}" alt="" aria-hidden="true">`;
 }
 
 export function getAllEnemyIds() {

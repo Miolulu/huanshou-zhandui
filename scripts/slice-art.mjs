@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 import { matteSprite } from './local-matte.mjs';
 import { encodePipeline, writeMainBackgroundJpeg } from './asset-encode.mjs';
-import { generateUiIcons } from './gen-ui-icons.mjs';
+import { sliceIconsAndFx } from './slice-icons-fx.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -195,8 +195,8 @@ async function main() {
   }
   await upscaleScene('assets/scenes/main-bg.png', 'assets/scenes/scene-5.png');
 
-  console.log('UI icons (vector)…');
-  await generateUiIcons();
+  console.log('UI icons + attack FX…');
+  await sliceIconsAndFx();
 
   console.log('Done.');
 }

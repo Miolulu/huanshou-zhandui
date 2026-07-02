@@ -362,7 +362,12 @@ export class CombatEngine {
 
   executeEnemyIntent(e) {
     const enemyIndex = this.enemyIndexOf(e);
-    this.emit({ type: COMBAT_EVENT.ENEMY_ACTION, enemyIndex, intent: e.intent?.intent });
+    this.emit({
+      type: COMBAT_EVENT.ENEMY_ACTION,
+      enemyIndex,
+      intent: e.intent?.intent,
+      element: e.element || 'neutral',
+    });
     e.block = 0;
     const intent = e.intent;
 

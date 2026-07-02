@@ -359,6 +359,33 @@
 .purify-log-line.log-block { color: #afafff; }
 .purify-log-line.log-enemy { color: #ff9f9f; font-weight: 600; }
 
+/* ===== 敌方攻击特效 ===== */
+.AttackFx {
+  position: absolute;
+  width: clamp(4.5rem, 14vw, 7.5rem);
+  height: auto;
+  pointer-events: none;
+  z-index: 34;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 12px rgba(255, 120, 80, 0.65));
+  animation: attack-fx-fly 0.48s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes attack-fx-fly {
+  0% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+  100% {
+    opacity: 0.15;
+    transform: translate(calc(-50% + var(--fx-dx, 0px)), calc(-50% + var(--fx-dy, 0px))) scale(1.15);
+  }
+}
+
 /* ===== 污意图标 ===== */
 .purify-intent-icon {
   width: 1.25rem;

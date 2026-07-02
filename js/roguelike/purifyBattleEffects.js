@@ -1,5 +1,6 @@
 /** 净化远征 · 战斗视觉反馈（飘字 / 震屏 / 卡牌动效） */
 import { combatSounds } from './combatSounds.js';
+import { attackFxUrl } from './assetPaths.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -96,7 +97,7 @@ export class PurifyBattleEffects {
         break;
       case 'ENEMY_ACTION':
         if (ATTACK_INTENTS.has(event.intent)) {
-          await this.animateEnemyLunge(event.enemyIndex);
+          await this.animateEnemyLunge(event.enemyIndex, event.element);
         } else {
           this.highlightFoe(event.enemyIndex);
           await delay(420);
@@ -252,15 +253,47 @@ export class PurifyBattleEffects {
     node.addEventListener('animationend', () => node.remove(), { once: true });
   }
 
-  async animateEnemyLunge(index) {
+  async animateEnemyLunge(index, element = 'neutral') {
     const card = this.enemyArea?.querySelector(`.Target[data-target="${index}"]`);
     const sprite = card?.querySelector('.Target-sprite');
     if (!card || !sprite) return;
     card.classList.add('foe-acting');
     sprite.classList.add('foe-lunge');
+    const fx = this.spawnAttackFx(sprite, element);
     await delay(480);
+    fx?.remove();
     sprite.classList.remove('foe-lunge');
     card.classList.remove('foe-acting');
+  }
+
+  spawnAttackFx(fromSprite, element) {
+    const layer = this.layer || document.getElementById('spire-effect-layer');
+    const playerSprite = this.playerArea?.querySelector('.Target--player .Target-sprite')
+      || this.playerArea?.querySelector('.Target-sprite');
+    if (!layer || !fromSprite || !playerSprite) return null;
+
+    const from = fromSprite.getBoundingClientRect();
+    const to = playerSprite.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+    const startX = from.left - layerRect.left + from.width / 2;
+    const startY = from.top - layerRect.top + from.height * 0.45;
+    const endX = to.left - layerRect.left + to.width / 2;
+    const endY = to.top - layerRect.top + to.height * 0.4;
+    const dx = endX - startX;
+    const dy = endY - startY;
+
+    const node = document.createElement('img');
+    node.className = 'AttackFx';
+    node.src = attackFxUrl(element);
+    node.alt = '';
+    node.setAttribute('aria-hidden', 'true');
+    node.style.setProperty('--fx-dx', `${dx}px`);
+    node.style.setProperty('--fx-dy', `${dy}px`);
+    node.style.left = `${startX}px`;
+    node.style.top = `${startY}px`;
+    layer.appendChild(node);
+    node.addEventListener('animationend', () => node.remove(), { once: true });
+    return node;
   }
 
   shakePlayer() {

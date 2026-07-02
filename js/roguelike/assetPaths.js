@@ -1,7 +1,40 @@
 /** 像素美术资源路径（由 scripts/slice-art.mjs 生成） */
 
 /** 素材版本：抠图/换图后递增，避免浏览器缓存旧 PNG */
-export const ASSET_VER = '20260715';
+export const ASSET_VER = '20260718';
+
+export const INTENT_ICONS = {
+  damage: 'assets/intents/damage.png',
+  block: 'assets/intents/block.png',
+  buff: 'assets/intents/buff.png',
+  debuff: 'assets/intents/debuff.png',
+  unknown: 'assets/intents/unknown.png',
+};
+
+export const ELEMENT_ICONS = {
+  light: 'assets/elements/light.png',
+  fire: 'assets/elements/fire.png',
+  water: 'assets/elements/water.png',
+  grass: 'assets/elements/grass.png',
+  electric: 'assets/elements/electric.png',
+  earth: 'assets/elements/earth.png',
+  wind: 'assets/elements/wind.png',
+  dark: 'assets/elements/dark.png',
+  neutral: 'assets/elements/neutral.png',
+};
+
+const ATTACK_FX = {
+  light: 'assets/fx/attack_light.png',
+  fire: 'assets/fx/attack_fire.png',
+  water: 'assets/fx/attack_water.png',
+  grass: 'assets/fx/attack_grass.png',
+  electric: 'assets/fx/attack_electric.png',
+  earth: 'assets/fx/attack_earth.png',
+  wind: 'assets/fx/attack_wind.png',
+  dark: 'assets/fx/attack_dark.png',
+  neutral: 'assets/fx/attack_slash.png',
+  slash: 'assets/fx/attack_slash.png',
+};
 
 function withVer(path) {
   return path ? `${path}?v=${ASSET_VER}` : null;
@@ -75,4 +108,16 @@ export function sceneBackgroundUrl(index) {
 
 export function mainBackgroundUrl() {
   return MAIN_BACKGROUND;
+}
+
+export function intentIconUrl(name) {
+  return withVer(INTENT_ICONS[name] || INTENT_ICONS.unknown);
+}
+
+export function elementIconUrl(element) {
+  return withVer(ELEMENT_ICONS[element] || ELEMENT_ICONS.neutral);
+}
+
+export function attackFxUrl(element) {
+  return withVer(ATTACK_FX[element] || ATTACK_FX.neutral);
 }
