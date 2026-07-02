@@ -113,6 +113,19 @@
   pointer-events: none;
 }
 
+#screen-menu .menu-close-shield {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: transparent;
+  pointer-events: auto;
+}
+
+#screen-menu .menu-close-shield.is-active {
+  display: block;
+}
+
 #screen-menu .MenuOverlay .Box {
   max-width: 36rem;
   width: 100%;

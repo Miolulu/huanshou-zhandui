@@ -41,6 +41,7 @@ export function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const menu = document.getElementById('screen-menu');
   menu?.classList.remove('menu-overlay-open', 'menu-close-lock');
+  menu?.querySelector('.menu-close-shield')?.classList.remove('is-active');
   document.querySelectorAll('#screen-menu .MenuOverlay.is-open').forEach((el) => {
     el.classList.remove('is-open');
   });

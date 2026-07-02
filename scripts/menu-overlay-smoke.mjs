@@ -37,9 +37,9 @@ async function main() {
   const { window } = dom;
   const { document } = window;
 
-  // 模拟 initMenu 中的弹窗绑定
   const MENU_OVERLAY_OPEN = '#screen-menu .MenuOverlay.is-open';
   let closeLockTimer = 0;
+  let closeShieldEl = null;
 
   function syncMenuOverlayState() {
     const menu = document.getElementById('screen-menu');
@@ -53,11 +53,25 @@ async function main() {
     syncMenuOverlayState();
   }
 
+  function ensureCloseShield() {
+    const menu = document.getElementById('screen-menu');
+    if (!closeShieldEl) {
+      closeShieldEl = document.createElement('div');
+      closeShieldEl.className = 'menu-close-shield';
+      menu.appendChild(closeShieldEl);
+    }
+    return closeShieldEl;
+  }
+
   function armMenuCloseLock() {
     const menu = document.getElementById('screen-menu');
     menu?.classList.add('menu-close-lock');
+    ensureCloseShield()?.classList.add('is-active');
     clearTimeout(closeLockTimer);
-    closeLockTimer = window.setTimeout(() => menu?.classList.remove('menu-close-lock'), 320);
+    closeLockTimer = window.setTimeout(() => {
+      menu?.classList.remove('menu-close-lock');
+      closeShieldEl?.classList.remove('is-active');
+    }, 380);
   }
 
   function requestCloseMenuOverlays(e) {
@@ -69,14 +83,17 @@ async function main() {
 
   const menu = document.getElementById('screen-menu');
   menu.classList.add('active');
-  menu.addEventListener('click', (e) => {
-    if (e.target.closest('[data-close-overlay]')) {
-      requestCloseMenuOverlays(e);
-      return;
-    }
-    if (e.target.classList.contains('MenuOverlay')) {
-      requestCloseMenuOverlays(e);
-    }
+  menu.querySelectorAll('.MenuOverlay').forEach((overlay) => {
+    overlay.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest('[data-close-overlay]')) {
+        requestCloseMenuOverlays(e);
+        return;
+      }
+      if (e.target === overlay) {
+        requestCloseMenuOverlays(e);
+      }
+    });
   });
 
   const overlays = [
@@ -94,20 +111,19 @@ async function main() {
 
     const closeBtn = el.querySelector('[data-close-overlay]');
     assert(closeBtn, `${id} needs close button`);
-    closeBtn.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    closeBtn.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0 }));
     assert(!el.classList.contains('is-open'), `${id} should close via ×`);
     assert(!menu.classList.contains('menu-overlay-open'), 'menu should clear overlay-open');
     assert(menu.classList.contains('menu-close-lock'), 'close lock should arm after ×');
+    assert(closeShieldEl?.classList.contains('is-active'), 'close shield should be active');
   }
 
-  // 遮罩点击关闭
   const profile = document.getElementById('menu-overlay-profile');
   profile.classList.add('is-open');
   syncMenuOverlayState();
-  profile.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  profile.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0 }));
   assert(!profile.classList.contains('is-open'), 'profile should close via backdrop');
 
-  // 打开档案内每日任务后关闭应一并收起
   profile.classList.add('is-open');
   const tasks = document.getElementById('tasks-panel');
   tasks.classList.remove('hidden');
