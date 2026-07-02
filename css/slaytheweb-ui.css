@@ -27,14 +27,29 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 90% 60% at 50% 35%, hsl(160, 30%, 18%), transparent 65%),
-    radial-gradient(ellipse 70% 50% at 50% 80%, hsl(220, 40%, 12%), transparent 60%),
-    linear-gradient(180deg, hsl(220, 30%, 10%), hsl(160, 20%, 8%) 45%, hsl(220, 35%, 6%));
+  background-color: hsl(220, 35%, 6%);
+  transform: scale(1.01);
+}
+
+.bg-slideshow-host {
+  background-image: none !important;
+}
+
+.bg-slideshow-host > .bg-slide {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  transform: scale(1.01);
+  opacity: 0;
+  transition: opacity 2s ease-in-out;
+  transform: scale(1.03);
+  will-change: opacity;
+}
+
+.bg-slideshow-host > .bg-slide.is-active {
+  opacity: 1;
 }
 
 .purify-scene-bg::before,
@@ -44,7 +59,8 @@
   left: 0;
   width: 100%;
   height: 28vh;
-  z-index: 1;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .purify-scene-bg::before {

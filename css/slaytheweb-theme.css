@@ -39,7 +39,6 @@
   z-index: 0;
   pointer-events: none;
   background-color: var(--stw-bg);
-  background-image: url('../assets/scenes/main-bg.jpg');
   background-size: cover;
   background-position: center;
 }

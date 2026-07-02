@@ -1,7 +1,7 @@
 /** 像素美术资源路径（由 scripts/slice-art.mjs 生成） */
 
 /** 素材版本：抠图/换图后递增，避免浏览器缓存旧 PNG */
-export const ASSET_VER = '20260724';
+export const ASSET_VER = '20260725';
 
 export const INTENT_ICONS = {
   damage: 'assets/intents/damage.png',
@@ -75,12 +75,11 @@ export const PLAYER_SPRITE = 'assets/player/purifier_battle.png';
 export const PLAYER_PORTRAIT = 'assets/player/purifier_portrait.png';
 
 export const SCENE_BACKGROUNDS = [
-  'assets/scenes/scene-0.png',
-  'assets/scenes/scene-1.png',
-  'assets/scenes/scene-2.png',
-  'assets/scenes/scene-3.png',
-  'assets/scenes/scene-4.png',
-  'assets/scenes/scene-5.png',
+  'assets/scenes/scene-0.jpg',
+  'assets/scenes/scene-1.jpg',
+  'assets/scenes/scene-2.jpg',
+  'assets/scenes/scene-3.jpg',
+  'assets/scenes/scene-4.jpg',
 ];
 
 export const MAIN_BACKGROUND = 'assets/scenes/main-bg.jpg';
@@ -103,11 +102,11 @@ export function playerPortraitUrl() {
 
 export function sceneBackgroundUrl(index) {
   const i = Math.max(0, Math.min(SCENE_BACKGROUNDS.length - 1, index));
-  return SCENE_BACKGROUNDS[i];
+  return withVer(SCENE_BACKGROUNDS[i]);
 }
 
 export function mainBackgroundUrl() {
-  return MAIN_BACKGROUND;
+  return withVer(MAIN_BACKGROUND);
 }
 
 export function intentIconUrl(name) {

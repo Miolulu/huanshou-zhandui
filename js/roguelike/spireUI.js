@@ -10,7 +10,7 @@ import { mountExpeditionMap } from './expeditionMapView.js';
 import { SpireOverlays } from './spireOverlays.js';
 import { renderPlayerTarget, renderEnemyTarget } from './combatView.js';
 import { renderPileInto } from './pileOverlay.js';
-import { mainBackgroundUrl } from './assetPaths.js';
+import { refreshBackgroundHosts } from './backgroundSlideshow.js';
 import { showToast } from '../appShell.js';
 import { TooltipManager } from '../components/Tooltip.js';
 import { applyCardFan } from './cardFan.js';
@@ -323,7 +323,7 @@ export class SpireUI {
   render() {
     const state = this.run.getState();
     this.renderHud(state);
-    this.updateSceneBg(state);
+    this.updateSceneBg();
     this.overlays.updateLabels(state);
 
     if (state.phase !== RUN_PHASES.COMBAT || !state.combat) {
@@ -395,11 +395,8 @@ export class SpireUI {
     }
   }
 
-  updateSceneBg(state) {
-    if (!this.el.sceneBg) return;
-    const idx = Math.min(5, Math.max(0, (state.floor || 1) - 1));
-    this.el.sceneBg.dataset.roomIndex = String(idx);
-    this.el.sceneBg.style.backgroundImage = `url('${mainBackgroundUrl()}')`;
+  updateSceneBg() {
+    refreshBackgroundHosts();
   }
 
   onOverlayOpen(id) {

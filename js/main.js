@@ -14,6 +14,7 @@ import {
 import {
   bindAudioUnlock, bindAudioToggleButton, setAmbientScene, unlockPurifyAudio,
 } from './roguelike/purifyAudio.js';
+import { startBackgroundSlideshow, refreshBackgroundHosts } from './roguelike/backgroundSlideshow.js';
 
 let game;
 let ui;
@@ -26,6 +27,7 @@ function enterMainMenu() {
   checkDailyLogin(loadProfile());
   showScreen('menu');
   setAmbientScene('menu');
+  startBackgroundSlideshow();
   if (!appReady) {
     initApp();
     appReady = true;
@@ -73,12 +75,14 @@ function startSpireRun(mode = RUN_MODES.EXPEDITION) {
   });
   showScreen('spire');
   unlockPurifyAudio();
+  refreshBackgroundHosts();
   spireUI.render();
 }
 
 function initApp() {
   bindAudioUnlock();
   bindAudioToggleButton();
+  startBackgroundSlideshow();
   initMenu(
     startSpireRun,
     () => startSpireRun(RUN_MODES.TIER),
