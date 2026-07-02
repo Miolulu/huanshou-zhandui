@@ -261,6 +261,7 @@ export class PurifyBattleEffects {
 
   async playCardVfx(event) {
     if (event.cardId !== 'purify_strike') return;
+    combatSounds.purifyStrike();
     const variant = event.variant === 'triple' ? 'purify_strike_triple' : 'purify_strike_double';
     const src = cardVfxUrl(variant);
     if (!src) return;
@@ -322,7 +323,7 @@ export class PurifyBattleEffects {
     node.style.top = `${rect.top - layerRect.top + rect.height / 2}px`;
     layer.appendChild(node);
     card.classList.add('foe-purified');
-    combatSounds.hitEnemy();
+    combatSounds.enemyDefeat();
     await delay(780);
     node.remove();
     card.classList.remove('foe-purified');

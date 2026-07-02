@@ -1,7 +1,7 @@
 /** 像素美术资源路径（由 scripts/slice-art.mjs 生成） */
 
 /** 素材版本：抠图/换图后递增，避免浏览器缓存旧 PNG */
-export const ASSET_VER = '20260723';
+export const ASSET_VER = '20260724';
 
 export const INTENT_ICONS = {
   damage: 'assets/intents/damage.png',

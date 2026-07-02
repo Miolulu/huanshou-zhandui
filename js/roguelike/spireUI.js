@@ -5,6 +5,7 @@ import { renderPurifyCardHtml, renderShopOfferHtml } from './cardUI.js';
 import { TERMS } from './lore.js';
 import { PurifyBattleEffects } from './purifyBattleEffects.js';
 import { destroyCardDrag, enableCardDrag } from './cardDrag.js';
+import { setAmbientScene, sceneForRunPhase } from './purifyAudio.js';
 import { mountExpeditionMap } from './expeditionMapView.js';
 import { SpireOverlays } from './spireOverlays.js';
 import { renderPlayerTarget, renderEnemyTarget } from './combatView.js';
@@ -365,6 +366,7 @@ export class SpireUI {
         break;
     }
     this.lastRunPhase = state.phase;
+    setAmbientScene(sceneForRunPhase(state.phase, RUN_PHASES));
   }
 
   renderHud(state) {

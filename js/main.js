@@ -11,6 +11,9 @@ import {
   markEnemiesSeen, markEnemiesDefeated,
   recordRunEnd,
 } from './roguelike/purifyProfile.js';
+import {
+  bindAudioUnlock, bindAudioToggleButton, setAmbientScene, unlockPurifyAudio,
+} from './roguelike/purifyAudio.js';
 
 let game;
 let ui;
@@ -22,6 +25,7 @@ function enterMainMenu() {
   ensureProfileForAccount();
   checkDailyLogin(loadProfile());
   showScreen('menu');
+  setAmbientScene('menu');
   if (!appReady) {
     initApp();
     appReady = true;
@@ -44,6 +48,7 @@ function startSpireRun(mode = RUN_MODES.EXPEDITION) {
   spireUI = new SpireUI(spireRun, () => {
     spireRun = null;
     spireUI = null;
+    setAmbientScene('menu');
     showScreen('menu');
     refreshMenuProfile();
   }, {
@@ -67,10 +72,13 @@ function startSpireRun(mode = RUN_MODES.EXPEDITION) {
     },
   });
   showScreen('spire');
+  unlockPurifyAudio();
   spireUI.render();
 }
 
 function initApp() {
+  bindAudioUnlock();
+  bindAudioToggleButton();
   initMenu(
     startSpireRun,
     () => startSpireRun(RUN_MODES.TIER),
