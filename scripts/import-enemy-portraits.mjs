@@ -22,7 +22,7 @@ const PORTRAITS = [
   ['boss_dragon', 'c__Users_hortor_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_d57b1967-3346-46c3-82a4-d42dccd6469d-c6fc36f4-d81e-45c7-9725-076f8d46b310.png'],
 ];
 
-const OUT_MAX = 640;
+const OUT_MAX = 520;
 
 for (const [id, fileName] of PORTRAITS) {
   const src = path.join(ASSET_DIR, fileName);

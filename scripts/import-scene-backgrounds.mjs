@@ -33,8 +33,8 @@ for (let i = 0; i < SCENES.length; i++) {
   }
   const out = path.join(OUT_DIR, `scene-${i}.jpg`);
   await sharp(src)
-    .resize(1920, 1080, { fit: 'cover', kernel: sharp.kernel.lanczos3 })
-    .jpeg({ quality: 84, mozjpeg: true })
+    .resize(1280, 720, { fit: 'cover', kernel: sharp.kernel.lanczos3 })
+    .jpeg({ quality: 76, mozjpeg: true, chromaSubsampling: '4:2:0' })
     .toFile(out);
   const size = fs.statSync(out).size;
   console.log(`scene-${i}.jpg ${(size / 1024).toFixed(0)}KB`);
